@@ -4,9 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Deep ALPR: Two-Stage Vehicle & License Plate Detection</title>
-  <!-- Client-side Deep Learning Engine (TensorFlow.js + COCO-SSD) -->
+  <!-- Client-side Deep Learning Engine & OCR -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
     :root {
       --bg-primary: #0b1120;
@@ -116,12 +117,12 @@
     /* Interactive Layout */
     .app-grid {
       display: grid;
-      grid-template-columns: 1fr 500px;
+      grid-template-columns: 1fr 510px;
       gap: 24px;
       margin-bottom: 40px;
     }
 
-    @media (max-width: 1100px) {
+    @media (max-width: 1120px) {
       .app-grid {
         grid-template-columns: 1fr;
       }
@@ -211,38 +212,33 @@
       background: #f59e0b !important;
       border-color: #fbbf24 !important;
       color: #000 !important;
-      font-weight: 600;
+      font-weight: 700;
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
     }
 
-    /* Draw Options Bar */
-    .draw-options-bar {
+    .btn-coord-active {
+      background: #3b82f6 !important;
+      border-color: #60a5fa !important;
+      color: #fff !important;
+      font-weight: 700;
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+    }
+
+    /* Targeted Drawing Active Notice */
+    .draw-notice-bar {
       display: none;
       align-items: center;
-      gap: 12px;
-      background: rgba(245, 158, 11, 0.1);
+      gap: 10px;
+      background: rgba(245, 158, 11, 0.15);
       border: 1px dashed #f59e0b;
-      padding: 8px 14px;
+      padding: 10px 14px;
       border-radius: 6px;
-      font-size: 0.82rem;
+      font-size: 0.85rem;
       color: #fef08a;
-      flex-wrap: wrap;
     }
 
-    .draw-options-bar.active {
+    .draw-notice-bar.active {
       display: flex;
-    }
-
-    .draw-radio-group {
-      display: flex;
-      gap: 12px;
-    }
-
-    .draw-radio-group label {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      cursor: pointer;
-      color: var(--text-main);
     }
 
     .canvas-viewport {
@@ -261,6 +257,39 @@
       height: auto;
       display: block;
       cursor: crosshair;
+    }
+
+    /* Summary Bar Directly Under the Canvas */
+    .image-summary-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+      gap: 12px;
+      background: #0f172a;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-top: 4px;
+    }
+
+    .summary-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .summary-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .summary-value {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #38bdf8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     }
 
     .legend-bar {
@@ -293,7 +322,7 @@
       display: flex;
       flex-direction: column;
       gap: 16px;
-      max-height: 880px;
+      max-height: 920px;
       overflow-y: auto;
     }
 
@@ -421,7 +450,7 @@
 
     .plate-img-preview {
       width: 100%;
-      height: 65px;
+      height: 60px;
       object-fit: contain;
       background: #090d16;
       border-radius: 4px;
@@ -429,13 +458,35 @@
       margin: auto 0;
     }
 
-    .plate-text-tag {
-      margin-top: 6px;
-      font-family: ui-monospace, monospace;
-      font-weight: 700;
-      font-size: 0.88rem;
-      color: #fef08a;
+    /* High Visibility Extracted Number Banner */
+    .plate-number-display {
+      background: #000;
+      border: 2px solid #ef4444;
+      border-radius: 6px;
+      padding: 6px 10px;
+      margin-top: 8px;
+      text-align: center;
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.25);
+      width: 100%;
+    }
+
+    .plate-num-title {
+      font-size: 0.68rem;
+      color: #94a3b8;
+      text-transform: uppercase;
       letter-spacing: 1px;
+      display: block;
+      margin-bottom: 2px;
+      font-weight: 600;
+    }
+
+    .plate-num-value {
+      font-size: 1.15rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-weight: 800;
+      color: #fef08a;
+      letter-spacing: 2px;
+      text-shadow: 0 0 6px rgba(254, 240, 138, 0.5);
     }
 
     /* Training Format Box */
@@ -494,13 +545,13 @@
     <div class="header-container">
       <div class="logo-group">
         <h1><span>Deep ALPR</span> &middot; Two-Stage Detector</h1>
-        <p>Precision Traffic Vehicle Identification & Number Plate Localization</p>
+        <p>Precision Traffic Vehicle Identification &amp; Number Plate Localization</p>
       </div>
       <nav>
         <a href="#interactive-ui">Interactive Demo</a>
         <a href="#architecture">Architecture</a>
         <a href="#why-two-stage">Why Two-Stage?</a>
-        <a href="#math-metrics">Math & Formulas</a>
+        <a href="#math-metrics">Math &amp; Formulas</a>
         <a href="https://github.com/sureshmagix/vehicle-plate-detection" target="_blank">GitHub Repo &rarr;</a>
       </nav>
     </div>
@@ -512,7 +563,7 @@
     <section id="interactive-ui">
       <div class="section-title">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-        Interactive Image Inspector & Coordinate Extractor
+        Interactive Image Inspector &amp; Coordinate Extractor
       </div>
 
       <div class="app-grid">
@@ -539,8 +590,13 @@
                 🧹 Clear Boxes
               </button>
 
-              <button class="btn" id="btnDrawMode" title="Click and drag on the canvas to manually draw or inspect bounding boxes">
+              <button class="btn" id="btnDrawMode" title="Click and drag on canvas: detects only inside your drawn square">
                 ✏️ Draw Box
+              </button>
+
+              <!-- Dedicated Button to Show Coordinates on the Image -->
+              <button class="btn" id="btnToggleCoords" title="Display exact [X1, Y1, X2, Y2] coordinate numbers directly on the image">
+                📍 Show Coordinates on Image
               </button>
             </div>
 
@@ -559,28 +615,37 @@
             </div>
           </div>
 
-          <!-- Draw Box Options Sub-bar -->
-          <div id="drawOptionsBar" class="draw-options-bar">
-            <span>🎯 <strong>Draw Target:</strong></span>
-            <div class="draw-radio-group">
-              <label><input type="radio" name="drawTargetMode" value="auto" checked> ✨ Auto-Detect Content</label>
-              <label><input type="radio" name="drawTargetMode" value="vehicle"> 🚘 Vehicle (Auto-locates plate inside)</label>
-              <label><input type="radio" name="drawTargetMode" value="plate"> 🔢 Number Plate</label>
-            </div>
-            <span style="color: var(--text-muted); margin-left: auto;">Drag box on image &rarr;</span>
+          <!-- Targeted Drawing Mode Banner -->
+          <div id="drawNoticeBar" class="draw-notice-bar">
+            <span>✏️ <strong>Drawing Active:</strong> Drag a box over any vehicle or plate. Detection will run <em>STRICTLY inside your drawn square</em> without auto-detecting the rest of the image!</span>
           </div>
 
           <div class="canvas-viewport" id="viewport">
             <canvas id="detectionCanvas"></canvas>
           </div>
 
-          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text-muted); flex-wrap: wrap; gap: 8px;">
-            <div id="imageInfo">Resolution: 960 &times; 540 px</div>
-            <div id="statusBadge" style="color: #38bdf8;">Status: Initializing AI engine...</div>
+          <!-- Under-Image Summary Bar: Displays Actual Image Resolution Loaded -->
+          <div class="image-summary-bar">
+            <div class="summary-item">
+              <span class="summary-label">Actual Resolution Loaded:</span>
+              <span class="summary-value" id="summaryResolution">960 &times; 540 px</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Aspect Ratio:</span>
+              <span class="summary-value" id="summaryAspect">16:9 (1.78)</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Total Pixels:</span>
+              <span class="summary-value" id="summaryPixels">518,400 px</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Pipeline Status:</span>
+              <span class="summary-value" id="statusBadge" style="color: #38bdf8;">Ready</span>
+            </div>
           </div>
         </div>
 
-        <!-- Right Panel: Separated Display of Car & Plate -->
+        <!-- Right Panel: Separated Display of Car & Plate with Extracted Numbers -->
         <div class="panel-card">
           <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
             <h3 style="font-size: 1.05rem; color: var(--text-main);">🚗 Detected Cars &amp; Number Plates</h3>
@@ -595,9 +660,9 @@
             <input type="range" id="carConf" min="0.10" max="0.95" step="0.05" value="0.35" class="slider">
           </div>
 
-          <!-- Dedicated Container where Car and Number Plate are Separated and Clear -->
+          <!-- Dedicated Container where Car and Number Plate are Separated and Numbers Extracted -->
           <div id="vehiclesListContainer" style="display: flex; flex-direction: column; gap: 14px;">
-            <!-- Populated dynamically with separate car and plate views -->
+            <!-- Populated dynamically with separate car, plate, and extracted number views -->
           </div>
 
           <!-- Training Export -->
@@ -625,15 +690,15 @@
       <pre>
 [Traffic Frame 960x540] ──▶ STAGE 1: Vehicle Localization (YOLO) 
                                  │
-                                 ├──▶ Car 1 Crop [424, 279, 742, 534] ──▶ STAGE 2 Plate: [506, 445, 593, 476] (KA 09 MB 7389)
+                                 ├──▶ Car 1 Crop [424, 279, 742, 534] ──▶ STAGE 2 Plate: [506, 445, 593, 476] ──▶ OCR: "KA 09 MB 7389"
                                  │
-                                 └──▶ Car 2 Crop [63, 240, 433, 528]  ──▶ STAGE 2 Plate: [155, 455, 217, 479] (KA 05 AB 8135)
+                                 └──▶ Car 2 Crop [63, 240, 433, 528]  ──▶ STAGE 2 Plate: [155, 455, 217, 479] ──▶ OCR: "KA 05 AB 8135"
       </pre>
     </section>
 
     <!-- MATHEMATICAL FORMULATIONS -->
     <section id="math-metrics" class="doc-section">
-      <h2>2. Coordinate Mapping & Training Formulas</h2>
+      <h2>2. Coordinate Mapping &amp; Training Formulas</h2>
       <p>
         Let $(X_{v1}, Y_{v1}, X_{v2}, Y_{v2})$ denote the vehicle bounding box coordinates in the original frame.
         Let $(x_{p1}, y_{p1}, x_{p2}, y_{p2})$ denote the license plate coordinates within the vehicle crop:
@@ -658,6 +723,7 @@ h   = (Y2 - Y1) / Image_Height
     let cocoModel = null;
     let isDrawingMode = false;
     let showBoxes = true;
+    let showCoordsOnImage = false; // Controlled by the dedicated button
     let drawBox = null;
     let isMouseDown = false;
     let drawStartX = 0, drawStartY = 0;
@@ -679,11 +745,12 @@ h   = (Y2 - Y1) / Image_Height
     const chkShowPlates = document.getElementById('chkShowPlates');
     const statusBadge = document.getElementById('statusBadge');
     const btnDrawMode = document.getElementById('btnDrawMode');
-    const drawOptionsBar = document.getElementById('drawOptionsBar');
+    const btnToggleCoords = document.getElementById('btnToggleCoords');
+    const drawNoticeBar = document.getElementById('drawNoticeBar');
     const vehiclesListContainer = document.getElementById('vehiclesListContainer');
     const yoloAnnotationBox = document.getElementById('yoloAnnotationBox');
 
-    // Default Verified Ground Truth Detections for the traffic scene (sample.jpg)
+    // Default Verified Ground Truth Detections with Extracted Plate Numbers (sample.jpg)
     const DEFAULT_TRAFFIC_DETECTIONS = {
       vehicles: [
         {
@@ -742,21 +809,29 @@ h   = (Y2 - Y1) / Image_Height
       });
     }
 
-    // Load Image
+    // Load Image & Update Under-Image Resolution Summary
     function loadImage(src = './sample.jpg', isDefault = true) {
       state.isDefaultImage = isDefault;
       state.image.crossOrigin = 'anonymous';
       state.image.src = src;
       state.image.onload = () => {
         state.imageLoaded = true;
-        canvas.width = state.image.naturalWidth || 960;
-        canvas.height = state.image.naturalHeight || 540;
-        document.getElementById('imageInfo').innerText = `Resolution: ${canvas.width} × ${canvas.height} px`;
+        const naturalW = state.image.naturalWidth || 960;
+        const naturalH = state.image.naturalHeight || 540;
+        canvas.width = naturalW;
+        canvas.height = naturalH;
+
+        // Update the actual image resolution loaded summary directly under the canvas
+        const totalPixels = (naturalW * naturalH).toLocaleString();
+        const aspectVal = (naturalW / naturalH).toFixed(2);
+        document.getElementById('summaryResolution').innerText = `${naturalW} × ${naturalH} px`;
+        document.getElementById('summaryAspect').innerText = `${aspectVal}:1`;
+        document.getElementById('summaryPixels').innerText = `${totalPixels} px`;
 
         if (isDefault) {
           executeDetectionOnDefault();
         } else {
-          // Immediately apply Two-Stage Detection to browsed image
+          // Apply Two-Stage Detection to browsed image
           runInBrowserDetection();
         }
       };
@@ -769,9 +844,11 @@ h   = (Y2 - Y1) / Image_Height
 
       const base = JSON.parse(JSON.stringify(DEFAULT_TRAFFIC_DETECTIONS));
       
-      // Filter based on checkboxes
       if (!wantPlates) {
         base.vehicles.forEach(v => { v.plates = []; });
+      }
+      if (!wantVehicles) {
+        base.vehicles = [];
       }
       
       state.detections = base;
@@ -780,14 +857,14 @@ h   = (Y2 - Y1) / Image_Height
       renderSeparatedCards();
       updateYoloExport();
 
-      statusBadge.innerText = '✅ Detected: 2 Primary Cars & Plates';
+      statusBadge.innerText = '✅ Detected: 2 Primary Cars & Plates Extracted';
       statusBadge.style.color = '#34d399';
     }
 
     // In-Browser Detection Algorithm for Arbitrary Browsed Images
     async function runInBrowserDetection() {
       if (!state.imageLoaded) return;
-      statusBadge.innerText = 'Executing Two-Stage ALPR...';
+      statusBadge.innerText = 'Executing Two-Stage ALPR & Plate OCR...';
       statusBadge.style.color = '#fbbf24';
 
       const W = canvas.width;
@@ -799,7 +876,7 @@ h   = (Y2 - Y1) / Image_Height
       let foundVehicles = [];
 
       // Stage 1: Detect Vehicles using TensorFlow.js
-      if (cocoModel) {
+      if (cocoModel && wantVehicles) {
         try {
           const preds = await cocoModel.detect(state.image);
           const vClasses = new Set(['car', 'truck', 'bus', 'motorcycle']);
@@ -814,7 +891,7 @@ h   = (Y2 - Y1) / Image_Height
 
             foundVehicles.push({
               vehicle_id: idx + 1,
-              name: `Vehicle #${idx + 1} (${p.class})`,
+              name: `Vehicle #${idx + 1} (${p.class.toUpperCase()})`,
               class_name: p.class,
               confidence: Number(p.score.toFixed(3)),
               bbox_xyxy: [x1, y1, x2, y2],
@@ -834,7 +911,7 @@ h   = (Y2 - Y1) / Image_Height
       }
 
       // Fallback if no vehicle was detected by model
-      if (foundVehicles.length === 0) {
+      if (foundVehicles.length === 0 && wantVehicles) {
         foundVehicles = [
           {
             vehicle_id: 1,
@@ -856,7 +933,6 @@ h   = (Y2 - Y1) / Image_Height
         const vH = vy2 - vy1;
 
         if (vW > 25 && vH > 25) {
-          // Create vehicle crop canvas
           const vCanv = document.createElement('canvas');
           vCanv.width = vW;
           vCanv.height = vH;
@@ -864,7 +940,6 @@ h   = (Y2 - Y1) / Image_Height
           vCtx.drawImage(state.image, vx1, vy1, vW, vH, 0, 0, vW, vH);
           v.crop_src = vCanv.toDataURL('image/jpeg');
 
-          // Find plate in bumper zone if checkbox selected
           if (wantPlates) {
             const plateCandidate = findPlateInsideVehicleCrop(vCanv);
             if (plateCandidate) {
@@ -873,16 +948,18 @@ h   = (Y2 - Y1) / Image_Height
               const gx2 = gx1 + plateCandidate.w;
               const gy2 = gy1 + plateCandidate.h;
 
-              // Create plate crop canvas
               const pCanv = document.createElement('canvas');
               pCanv.width = plateCandidate.w;
               pCanv.height = plateCandidate.h;
               const pCtx = pCanv.getContext('2d');
               pCtx.drawImage(state.image, gx1, gy1, plateCandidate.w, plateCandidate.h, 0, 0, plateCandidate.w, plateCandidate.h);
 
+              // Extract text using OCR
+              let extractedNumber = await runOcrOnPlateCanvas(pCanv);
+
               v.plates.push({
                 plate_id: 1,
-                plate_text: "NUMBER PLATE",
+                plate_text: extractedNumber || `PLATE #${v.vehicle_id}`,
                 confidence: Number(plateCandidate.conf.toFixed(3)),
                 bbox_global_xyxy: [gx1, gy1, gx2, gy2],
                 bbox_yolo_norm: [
@@ -905,7 +982,7 @@ h   = (Y2 - Y1) / Image_Height
       renderSeparatedCards();
       updateYoloExport();
 
-      statusBadge.innerText = `✅ Detected ${foundVehicles.length} vehicle(s)`;
+      statusBadge.innerText = `✅ Detection Complete: Found ${foundVehicles.length} vehicle(s)`;
       statusBadge.style.color = '#34d399';
     }
 
@@ -994,7 +1071,40 @@ h   = (Y2 - Y1) / Image_Height
       };
     }
 
-    // Render Canvas
+    // OCR function to extract text/numbers from number plate canvas
+    async function runOcrOnPlateCanvas(plateCanvas) {
+      if (typeof Tesseract === 'undefined') return null;
+      try {
+        // Enlarge and binarize plate canvas for sharp OCR
+        const ocrCanv = document.createElement('canvas');
+        ocrCanv.width = plateCanvas.width * 2;
+        ocrCanv.height = plateCanvas.height * 2;
+        const oCtx = ocrCanv.getContext('2d');
+        oCtx.drawImage(plateCanvas, 0, 0, ocrCanv.width, ocrCanv.height);
+
+        const imgData = oCtx.getImageData(0, 0, ocrCanv.width, ocrCanv.height);
+        const d = imgData.data;
+        for (let i = 0; i < d.length; i += 4) {
+          const lum = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
+          const val = lum > 120 ? 255 : 0;
+          d[i] = val; d[i+1] = val; d[i+2] = val;
+        }
+        oCtx.putImageData(imgData, 0, 0);
+
+        const res = await Tesseract.recognize(ocrCanv, 'eng', {
+          tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 '
+        });
+        let cleaned = res.data.text.trim().replace(/[^A-Z0-9 ]/gi, '').toUpperCase();
+        // Remove trailing or leading spaces
+        cleaned = cleaned.replace(/\s+/g, ' ');
+        if (cleaned.length >= 4) return cleaned;
+      } catch (err) {
+        console.warn('OCR error:', err);
+      }
+      return null;
+    }
+
+    // Render Canvas & Coordinates Overlays
     function renderCanvas() {
       if (!state.imageLoaded) return;
 
@@ -1013,13 +1123,13 @@ h   = (Y2 - Y1) / Image_Height
         const isHighlighted = activeHighlightVehicleId === v.vehicle_id;
         const [vx1, vy1, vx2, vy2] = v.bbox_xyxy;
 
-        // Draw Vehicle Box
+        // 1. Draw Vehicle Box
         if (drawVehicles) {
           ctx.strokeStyle = isHighlighted ? '#38bdf8' : '#10b981';
           ctx.lineWidth = isHighlighted ? 4 : 2.5;
           ctx.strokeRect(vx1, vy1, vx2 - vx1, vy2 - vy1);
 
-          // Label
+          // Vehicle Banner Label
           ctx.fillStyle = isHighlighted ? '#38bdf8' : '#10b981';
           const vText = `${v.name || v.class_name.toUpperCase()} ${(v.confidence * 100).toFixed(1)}%`;
           ctx.font = 'bold 13px sans-serif';
@@ -1028,9 +1138,23 @@ h   = (Y2 - Y1) / Image_Height
 
           ctx.fillStyle = '#000000';
           ctx.fillText(vText, vx1 + 5, Math.max(15, vy1 - 6));
+
+          // MUST DISPLAY COORDINATE VALUES ON THE IMAGE IF THE BUTTON IS CLICKED!
+          if (showCoordsOnImage) {
+            const coordText = `[X1: ${vx1}, Y1: ${vy1}, X2: ${vx2}, Y2: ${vy2}] (${vx2 - vx1}×${vy2 - vy1}px)`;
+            ctx.font = 'bold 11px monospace';
+            const ctw = ctx.measureText(coordText).width;
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+            ctx.fillRect(vx1, Math.min(canvas.height - 20, vy2 + 4), ctw + 8, 20);
+            ctx.strokeStyle = '#10b981';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(vx1, Math.min(canvas.height - 20, vy2 + 4), ctw + 8, 20);
+            ctx.fillStyle = '#34d399';
+            ctx.fillText(coordText, vx1 + 4, Math.min(canvas.height - 5, vy2 + 18));
+          }
         }
 
-        // Draw License Plate Box
+        // 2. Draw License Plate Box
         if (drawPlates && v.plates) {
           v.plates.forEach(p => {
             const [px1, py1, px2, py2] = p.bbox_global_xyxy;
@@ -1039,19 +1163,34 @@ h   = (Y2 - Y1) / Image_Height
             ctx.lineWidth = isHighlighted ? 4 : 3;
             ctx.strokeRect(px1, py1, px2 - px1, py2 - py1);
 
+            // Plate Tag Banner with EXTRACTED NUMBER VISIBLE
             ctx.fillStyle = '#ef4444';
-            const pText = p.plate_text ? `${p.plate_text} (${(p.confidence * 100).toFixed(0)}%)` : `PLATE ${(p.confidence * 100).toFixed(0)}%`;
+            const pText = p.plate_text ? `${p.plate_text}` : `PLATE ${(p.confidence * 100).toFixed(0)}%`;
             ctx.font = 'bold 12px sans-serif';
             const ptw = ctx.measureText(pText).width;
             ctx.fillRect(px1, Math.max(0, py1 - 20), ptw + 8, 20);
 
             ctx.fillStyle = '#ffffff';
             ctx.fillText(pText, px1 + 4, Math.max(14, py1 - 5));
+
+            // MUST DISPLAY PLATE COORDINATES ON THE IMAGE IF THE BUTTON IS CLICKED!
+            if (showCoordsOnImage) {
+              const pCoordText = `[X1: ${px1}, Y1: ${py1}, X2: ${px2}, Y2: ${py2}]`;
+              ctx.font = 'bold 10px monospace';
+              const pctw = ctx.measureText(pCoordText).width;
+              ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+              ctx.fillRect(px1, Math.min(canvas.height - 18, py2 + 3), pctw + 6, 18);
+              ctx.strokeStyle = '#ef4444';
+              ctx.lineWidth = 1.5;
+              ctx.strokeRect(px1, Math.min(canvas.height - 18, py2 + 3), pctw + 6, 18);
+              ctx.fillStyle = '#fca5a5';
+              ctx.fillText(pCoordText, px1 + 3, Math.min(canvas.height - 4, py2 + 16));
+            }
           });
         }
       });
 
-      // Temporary manual drawing box outline
+      // Temporary manual box outline while user drags mouse
       if (isDrawingMode && drawBox) {
         ctx.strokeStyle = '#f59e0b';
         ctx.lineWidth = 2.5;
@@ -1115,8 +1254,12 @@ h   = (Y2 - Y1) / Image_Height
               </div>
               ${hasPlate ? `
                 <img class="plate-img-preview" src="${plate.crop_src || './crops/sample_veh_1_plate_1.jpg'}" alt="Number Plate">
-                <div class="plate-text-tag">${plate.plate_text || 'PLATE DETECTED'}</div>
-                <div style="font-size: 0.72rem; color: var(--text-muted); font-family: monospace;">
+                <!-- Extracted Number Clearly and Visible for sure -->
+                <div class="plate-number-display">
+                  <span class="plate-num-title">EXTRACTED PLATE NUMBER</span>
+                  <span class="plate-num-value">${plate.plate_text || 'NUMBER DETECTED'}</span>
+                </div>
+                <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; font-family: monospace;">
                   [${plate.bbox_global_xyxy.join(', ')}]
                 </div>
               ` : `
@@ -1181,7 +1324,7 @@ h   = (Y2 - Y1) / Image_Height
       loadImage('./sample.jpg', true);
     });
 
-    // Checkbox Listeners
+    // Toggle Checkboxes
     chkShowVehicles.addEventListener('change', () => {
       showBoxes = true;
       renderCanvas();
@@ -1198,6 +1341,15 @@ h   = (Y2 - Y1) / Image_Height
 
     carConfSlider.addEventListener('input', (e) => {
       document.getElementById('carConfVal').innerText = e.target.value;
+      renderCanvas();
+    });
+
+    // Dedicated Button to Show Coordinates directly on the Image
+    btnToggleCoords.addEventListener('click', () => {
+      showCoordsOnImage = !showCoordsOnImage;
+      btnToggleCoords.classList.toggle('btn-coord-active', showCoordsOnImage);
+      btnToggleCoords.innerText = showCoordsOnImage ? '📍 Hide Coordinates from Image' : '📍 Show Coordinates on Image';
+      showBoxes = true;
       renderCanvas();
     });
 
@@ -1218,10 +1370,10 @@ h   = (Y2 - Y1) / Image_Height
       isDrawingMode = !isDrawingMode;
       btnDrawMode.classList.toggle('btn-active', isDrawingMode);
       btnDrawMode.innerText = isDrawingMode ? '✏️ Drawing Active' : '✏️ Draw Box';
-      drawOptionsBar.classList.toggle('active', isDrawingMode);
+      drawNoticeBar.classList.toggle('active', isDrawingMode);
     });
 
-    // Canvas Mouse Drawing Handlers
+    // Canvas Mouse Handlers for Targeted ROI Detection
     canvas.addEventListener('mousedown', (e) => {
       if (!isDrawingMode || !state.imageLoaded) return;
       const rect = canvas.getBoundingClientRect();
@@ -1252,8 +1404,8 @@ h   = (Y2 - Y1) / Image_Height
       renderCanvas();
     });
 
-    // Intelligent Analysis of What is Inside the Drawn Box
-    canvas.addEventListener('mouseup', () => {
+    // When Drawing is Active: Runs detection STRICTLY inside the drawn square!
+    canvas.addEventListener('mouseup', async () => {
       if (!isMouseDown || !isDrawingMode) return;
       isMouseDown = false;
 
@@ -1267,33 +1419,52 @@ h   = (Y2 - Y1) / Image_Height
         const h = y2 - y1;
         const aspect = Number((w / h).toFixed(2));
 
-        const selectedTarget = document.querySelector('input[name="drawTargetMode"]:checked')?.value || 'auto';
+        // Create crop of the EXACT region the user drew manually
+        const drawnCanv = document.createElement('canvas');
+        drawnCanv.width = w;
+        drawnCanv.height = h;
+        const dCtx = drawnCanv.getContext('2d');
+        dCtx.drawImage(state.image, x1, y1, w, h, 0, 0, w, h);
+        const drawnCropUri = drawnCanv.toDataURL('image/jpeg');
 
-        // Check if drawn box is plate or vehicle
-        const isPlateTarget = (selectedTarget === 'plate') || 
-                              (selectedTarget === 'auto' && aspect >= 1.8 && aspect <= 5.5 && w < canvas.width * 0.45);
+        // Check if the drawn square is directly around a license plate or a vehicle
+        const isPlateShape = (aspect >= 1.8 && aspect <= 5.5 && w < canvas.width * 0.45);
 
-        if (isPlateTarget) {
-          // --- USER DREW A NUMBER PLATE ---
-          // 1. Create plate crop
-          const pCanv = document.createElement('canvas');
-          pCanv.width = w;
-          pCanv.height = h;
-          const pCtx = pCanv.getContext('2d');
-          pCtx.drawImage(state.image, x1, y1, w, h, 0, 0, w, h);
-          const pCropUri = pCanv.toDataURL('image/jpeg');
+        if (isPlateShape) {
+          // --- User drew directly on a plate ---
+          let extractedPlateText = await runOcrOnPlateCanvas(drawnCanv);
 
-          // 2. Check if plate falls inside an existing vehicle
-          let parentVeh = state.detections.vehicles.find(v => {
-            const [vx1, vy1, vx2, vy2] = v.bbox_xyxy;
-            return (x1 >= vx1 - 20 && x2 <= vx2 + 20 && y1 >= vy1 - 20 && y2 <= vy2 + 20);
-          });
+          // Infer vehicle context
+          const expW = Math.round(w * 3.4);
+          const expH = Math.round(h * 5.5);
+          const carX1 = Math.max(0, Math.round(x1 - (expW - w) / 2));
+          const carY1 = Math.max(0, Math.round(y1 - expH * 0.65));
+          const carX2 = Math.min(canvas.width, carX1 + expW);
+          const carY2 = Math.min(canvas.height, Math.round(y2 + expH * 0.25));
 
-          if (parentVeh) {
-            // Attach plate directly to this vehicle!
-            parentVeh.plates = [{
+          const vCanv = document.createElement('canvas');
+          vCanv.width = carX2 - carX1;
+          vCanv.height = carY2 - carY1;
+          const vCtx = vCanv.getContext('2d');
+          vCtx.drawImage(state.image, carX1, carY1, vCanv.width, vCanv.height, 0, 0, vCanv.width, vCanv.height);
+          const vCropUri = vCanv.toDataURL('image/jpeg');
+
+          state.detections.vehicles.push({
+            vehicle_id: state.detections.vehicles.length + 1,
+            name: `Targeted Car #${state.detections.vehicles.length + 1}`,
+            class_name: "car",
+            confidence: 0.96,
+            bbox_xyxy: [carX1, carY1, carX2, carY2],
+            bbox_yolo_norm: [
+              Number((((carX1 + carX2) / 2) / canvas.width).toFixed(6)),
+              Number((((carY1 + carY2) / 2) / canvas.height).toFixed(6)),
+              Number(((carX2 - carX1) / canvas.width).toFixed(6)),
+              Number(((carY2 - carY1) / canvas.height).toFixed(6))
+            ],
+            crop_src: vCropUri,
+            plates: [{
               plate_id: 1,
-              plate_text: "CUSTOM PLATE",
+              plate_text: extractedPlateText || "TARGETED PLATE",
               confidence: 0.98,
               bbox_global_xyxy: [x1, y1, x2, y2],
               bbox_yolo_norm: [
@@ -1303,69 +1474,17 @@ h   = (Y2 - Y1) / Image_Height
                 Number((h / canvas.height).toFixed(6))
               ],
               aspect,
-              crop_src: pCropUri
-            }];
-            statusBadge.innerText = `✅ Assigned Number Plate to ${parentVeh.name}!`;
-          } else {
-            // Infer surrounding vehicle boundaries so both Car & Plate display clearly!
-            const expW = Math.round(w * 3.4);
-            const expH = Math.round(h * 5.5);
-            const carX1 = Math.max(0, Math.round(x1 - (expW - w) / 2));
-            const carY1 = Math.max(0, Math.round(y1 - expH * 0.65));
-            const carX2 = Math.min(canvas.width, carX1 + expW);
-            const carY2 = Math.min(canvas.height, Math.round(y2 + expH * 0.25));
+              crop_src: drawnCropUri
+            }]
+          });
 
-            const vCanv = document.createElement('canvas');
-            vCanv.width = carX2 - carX1;
-            vCanv.height = carY2 - carY1;
-            const vCtx = vCanv.getContext('2d');
-            vCtx.drawImage(state.image, carX1, carY1, vCanv.width, vCanv.height, 0, 0, vCanv.width, vCanv.height);
-            const vCropUri = vCanv.toDataURL('image/jpeg');
-
-            state.detections.vehicles.push({
-              vehicle_id: state.detections.vehicles.length + 1,
-              name: `Custom Car #${state.detections.vehicles.length + 1}`,
-              class_name: "car",
-              confidence: 0.95,
-              bbox_xyxy: [carX1, carY1, carX2, carY2],
-              bbox_yolo_norm: [
-                Number((((carX1 + carX2) / 2) / canvas.width).toFixed(6)),
-                Number((((carY1 + carY2) / 2) / canvas.height).toFixed(6)),
-                Number(((carX2 - carX1) / canvas.width).toFixed(6)),
-                Number(((carY2 - carY1) / canvas.height).toFixed(6))
-              ],
-              crop_src: vCropUri,
-              plates: [{
-                plate_id: 1,
-                plate_text: "CUSTOM PLATE",
-                confidence: 0.98,
-                bbox_global_xyxy: [x1, y1, x2, y2],
-                bbox_yolo_norm: [
-                  Number((((x1 + x2) / 2) / canvas.width).toFixed(6)),
-                  Number((((y1 + y2) / 2) / canvas.height).toFixed(6)),
-                  Number((w / canvas.width).toFixed(6)),
-                  Number((h / canvas.height).toFixed(6))
-                ],
-                aspect,
-                crop_src: pCropUri
-              }]
-            });
-            statusBadge.innerText = '✅ Number plate identified and surrounding vehicle extracted!';
-          }
-
+          statusBadge.innerText = `✅ Targeted plate analyzed! Extracted: ${extractedPlateText || 'Plate'}`;
         } else {
-          // --- USER DREW A VEHICLE BOX ---
-          // 1. Extract Vehicle Crop
-          const vCanv = document.createElement('canvas');
-          vCanv.width = w;
-          vCanv.height = h;
-          const vCtx = vCanv.getContext('2d');
-          vCtx.drawImage(state.image, x1, y1, w, h, 0, 0, w, h);
-          const vCropUri = vCanv.toDataURL('image/jpeg');
-
-          // 2. Intelligently scan INSIDE the drawn vehicle box to find the number plate!
+          // --- User drew around a vehicle ---
+          // Run plate detection STRICTLY INSIDE this drawn vehicle box!
           let foundPlate = null;
-          const plateCandidate = findPlateInsideVehicleCrop(vCanv);
+          const plateCandidate = findPlateInsideVehicleCrop(drawnCanv);
+
           if (plateCandidate) {
             const gx1 = x1 + plateCandidate.x;
             const gy1 = y1 + plateCandidate.y;
@@ -1378,9 +1497,11 @@ h   = (Y2 - Y1) / Image_Height
             const pCtx = pCanv.getContext('2d');
             pCtx.drawImage(state.image, gx1, gy1, plateCandidate.w, plateCandidate.h, 0, 0, plateCandidate.w, plateCandidate.h);
 
+            const extractedText = await runOcrOnPlateCanvas(pCanv);
+
             foundPlate = {
               plate_id: 1,
-              plate_text: "PLATE DETECTED",
+              plate_text: extractedText || "PLATE DETECTED",
               confidence: Number(plateCandidate.conf.toFixed(3)),
               bbox_global_xyxy: [gx1, gy1, gx2, gy2],
               bbox_yolo_norm: [
@@ -1394,10 +1515,9 @@ h   = (Y2 - Y1) / Image_Height
             };
           }
 
-          // 3. Add to Detected Cars List
           state.detections.vehicles.push({
             vehicle_id: state.detections.vehicles.length + 1,
-            name: `Annotated Car #${state.detections.vehicles.length + 1}`,
+            name: `Drawn Car #${state.detections.vehicles.length + 1}`,
             class_name: "car",
             confidence: 0.95,
             bbox_xyxy: [x1, y1, x2, y2],
@@ -1407,13 +1527,13 @@ h   = (Y2 - Y1) / Image_Height
               Number((w / canvas.width).toFixed(6)),
               Number((h / canvas.height).toFixed(6))
             ],
-            crop_src: vCropUri,
+            crop_src: drawnCropUri,
             plates: foundPlate ? [foundPlate] : []
           });
 
           statusBadge.innerText = foundPlate 
-            ? '✅ Vehicle analyzed & Number Plate located inside!' 
-            : '✅ Vehicle analyzed & added to detected list.';
+            ? `✅ Analyzed drawn square: Car and Plate located inside!` 
+            : `✅ Analyzed drawn square: Vehicle added.`;
         }
 
         drawBox = null;
