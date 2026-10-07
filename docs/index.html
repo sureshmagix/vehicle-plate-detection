@@ -999,6 +999,10 @@ git push -u origin main</pre>
       triggerBackendDetection(state.image.src);
     });
 
+    // Intelligent backend detection (Local server vs GitHub Pages)
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    let backendApiUrl = isLocal ? '/api/detect' : 'http://localhost:8080/api/detect';
+
     async function triggerBackendDetection(imageSrc) {
       const statusBadge = document.getElementById('statusBadge');
       statusBadge.innerText = 'Detecting...';
@@ -1012,11 +1016,16 @@ git push -u origin main</pre>
           image_base64: imageSrc.startsWith('data:') ? imageSrc : ''
         };
 
-        const res = await fetch('/api/detect', {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3500);
+
+        const res = await fetch(backendApiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payload),
+          signal: controller.signal
         });
+        clearTimeout(timeoutId);
 
         if (!res.ok) throw new Error('API server returned ' + res.status);
         const data = await res.json();
