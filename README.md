@@ -162,3 +162,4 @@ The `docs/` folder contains the static documentation and interactive web applica
    - Click **Save**.
 4. Your study documentation will be live at:
    `https://<your-username>.github.io/vehicle-plate-detection/`
+# vehicle-plate-detection
