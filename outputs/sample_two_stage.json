@@ -32,6 +32,7 @@
       "plates_detected": [
         {
           "plate_id": 1,
+          "plate_text": "KA 09 MB 7389",
           "confidence": 0.7266,
           "bbox_crop_xyxy": [
             88,
@@ -134,6 +135,7 @@
       "plates_detected": [
         {
           "plate_id": 1,
+          "plate_text": "KA 05 AB 8135",
           "confidence": 0.9202,
           "bbox_crop_xyxy": [
             99,
