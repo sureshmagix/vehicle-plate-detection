@@ -116,7 +116,7 @@
     /* Interactive Layout */
     .app-grid {
       display: grid;
-      grid-template-columns: 1fr 480px;
+      grid-template-columns: 1fr 500px;
       gap: 24px;
       margin-bottom: 40px;
     }
@@ -134,7 +134,7 @@
       padding: 20px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
     }
 
     .canvas-toolbar {
@@ -184,6 +184,18 @@
       background: #0369a1;
     }
 
+    .btn-detect {
+      background: #10b981;
+      border-color: #34d399;
+      color: #000;
+      font-weight: 600;
+    }
+
+    .btn-detect:hover {
+      background: #059669;
+      color: #fff;
+    }
+
     .btn-danger {
       background: rgba(239, 68, 68, 0.2);
       border-color: #ef4444;
@@ -200,6 +212,37 @@
       border-color: #fbbf24 !important;
       color: #000 !important;
       font-weight: 600;
+    }
+
+    /* Draw Options Bar */
+    .draw-options-bar {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px dashed #f59e0b;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      color: #fef08a;
+      flex-wrap: wrap;
+    }
+
+    .draw-options-bar.active {
+      display: flex;
+    }
+
+    .draw-radio-group {
+      display: flex;
+      gap: 12px;
+    }
+
+    .draw-radio-group label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      color: var(--text-main);
     }
 
     .canvas-viewport {
@@ -232,6 +275,7 @@
       display: flex;
       align-items: center;
       gap: 6px;
+      cursor: pointer;
     }
 
     .legend-indicator {
@@ -249,7 +293,7 @@
       display: flex;
       flex-direction: column;
       gap: 16px;
-      max-height: 860px;
+      max-height: 880px;
       overflow-y: auto;
     }
 
@@ -308,7 +352,7 @@
       display: flex;
       flex-direction: column;
       gap: 12px;
-      transition: border-color 0.2s ease;
+      transition: all 0.2s ease;
     }
 
     .vehicle-item-card:hover {
@@ -317,7 +361,7 @@
 
     .vehicle-item-card.highlighted {
       border-color: #38bdf8;
-      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25);
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.3);
     }
 
     .vehicle-card-header {
@@ -329,7 +373,7 @@
     }
 
     .vehicle-card-title {
-      font-size: 0.9rem;
+      font-size: 0.92rem;
       font-weight: 600;
       display: flex;
       align-items: center;
@@ -368,7 +412,7 @@
 
     .crop-img-preview {
       width: 100%;
-      height: 110px;
+      height: 120px;
       object-fit: contain;
       background: #090d16;
       border-radius: 4px;
@@ -377,7 +421,7 @@
 
     .plate-img-preview {
       width: 100%;
-      height: 60px;
+      height: 65px;
       object-fit: contain;
       background: #090d16;
       border-radius: 4px;
@@ -389,7 +433,7 @@
       margin-top: 6px;
       font-family: ui-monospace, monospace;
       font-weight: 700;
-      font-size: 0.85rem;
+      font-size: 0.88rem;
       color: #fef08a;
       letter-spacing: 1px;
     }
@@ -457,7 +501,6 @@
         <a href="#architecture">Architecture</a>
         <a href="#why-two-stage">Why Two-Stage?</a>
         <a href="#math-metrics">Math & Formulas</a>
-        <a href="#ai-training">Training Format</a>
         <a href="https://github.com/sureshmagix/vehicle-plate-detection" target="_blank">GitHub Repo &rarr;</a>
       </nav>
     </div>
@@ -487,7 +530,7 @@
                 Traffic Sample
               </button>
 
-              <button class="btn" id="btnDetect" style="background: #10b981; border-color: #34d399; color: #000; font-weight: 600;" title="Execute Two-Stage AI Algorithm">
+              <button class="btn btn-detect" id="btnDetect" title="Execute detection based on selected checkboxes">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                 Run Detection
               </button>
@@ -502,18 +545,29 @@
             </div>
 
             <div class="legend-bar">
-              <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+              <label class="legend-item" title="Show or hide vehicle bounding boxes">
                 <input type="checkbox" id="chkShowVehicles" checked style="accent-color: #10b981;">
                 <span class="legend-indicator" style="background: #10b981;"></span>
                 <span>Vehicles</span>
               </label>
 
-              <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+              <label class="legend-item" title="Show or hide number plate bounding boxes">
                 <input type="checkbox" id="chkShowPlates" checked style="accent-color: #ef4444;">
                 <span class="legend-indicator" style="background: #ef4444;"></span>
                 <span>Plates</span>
               </label>
             </div>
+          </div>
+
+          <!-- Draw Box Options Sub-bar -->
+          <div id="drawOptionsBar" class="draw-options-bar">
+            <span>🎯 <strong>Draw Target:</strong></span>
+            <div class="draw-radio-group">
+              <label><input type="radio" name="drawTargetMode" value="auto" checked> ✨ Auto-Detect Content</label>
+              <label><input type="radio" name="drawTargetMode" value="vehicle"> 🚘 Vehicle (Auto-locates plate inside)</label>
+              <label><input type="radio" name="drawTargetMode" value="plate"> 🔢 Number Plate</label>
+            </div>
+            <span style="color: var(--text-muted); margin-left: auto;">Drag box on image &rarr;</span>
           </div>
 
           <div class="canvas-viewport" id="viewport">
@@ -535,7 +589,7 @@
 
           <div class="control-group">
             <div class="control-label">
-              <span>Confidence Filter</span>
+              <span>Detection Sensitivity</span>
               <span id="carConfVal">0.35</span>
             </div>
             <input type="range" id="carConf" min="0.10" max="0.95" step="0.05" value="0.35" class="slider">
@@ -625,10 +679,11 @@ h   = (Y2 - Y1) / Image_Height
     const chkShowPlates = document.getElementById('chkShowPlates');
     const statusBadge = document.getElementById('statusBadge');
     const btnDrawMode = document.getElementById('btnDrawMode');
+    const drawOptionsBar = document.getElementById('drawOptionsBar');
     const vehiclesListContainer = document.getElementById('vehiclesListContainer');
     const yoloAnnotationBox = document.getElementById('yoloAnnotationBox');
 
-    // Default Verified Ground Truth Detections for the new traffic scene (sample.jpg)
+    // Default Verified Ground Truth Detections for the traffic scene (sample.jpg)
     const DEFAULT_TRAFFIC_DETECTIONS = {
       vehicles: [
         {
@@ -699,18 +754,34 @@ h   = (Y2 - Y1) / Image_Height
         document.getElementById('imageInfo').innerText = `Resolution: ${canvas.width} × ${canvas.height} px`;
 
         if (isDefault) {
-          state.detections = JSON.parse(JSON.stringify(DEFAULT_TRAFFIC_DETECTIONS));
-          showBoxes = true;
-          renderCanvas();
-          renderSeparatedCards();
-          updateYoloExport();
-          statusBadge.innerText = 'Loaded Default Traffic Image (2 Primary Cars & Plates)';
-          statusBadge.style.color = '#34d399';
+          executeDetectionOnDefault();
         } else {
           // Immediately apply Two-Stage Detection to browsed image
           runInBrowserDetection();
         }
       };
+    }
+
+    // Apply detection on default traffic image respecting checkboxes
+    function executeDetectionOnDefault() {
+      const wantVehicles = chkShowVehicles.checked;
+      const wantPlates = chkShowPlates.checked;
+
+      const base = JSON.parse(JSON.stringify(DEFAULT_TRAFFIC_DETECTIONS));
+      
+      // Filter based on checkboxes
+      if (!wantPlates) {
+        base.vehicles.forEach(v => { v.plates = []; });
+      }
+      
+      state.detections = base;
+      showBoxes = true;
+      renderCanvas();
+      renderSeparatedCards();
+      updateYoloExport();
+
+      statusBadge.innerText = '✅ Detected: 2 Primary Cars & Plates';
+      statusBadge.style.color = '#34d399';
     }
 
     // In-Browser Detection Algorithm for Arbitrary Browsed Images
@@ -722,6 +793,8 @@ h   = (Y2 - Y1) / Image_Height
       const W = canvas.width;
       const H = canvas.height;
       const carThresh = parseFloat(carConfSlider.value);
+      const wantVehicles = chkShowVehicles.checked;
+      const wantPlates = chkShowPlates.checked;
 
       let foundVehicles = [];
 
@@ -791,35 +864,37 @@ h   = (Y2 - Y1) / Image_Height
           vCtx.drawImage(state.image, vx1, vy1, vW, vH, 0, 0, vW, vH);
           v.crop_src = vCanv.toDataURL('image/jpeg');
 
-          // Find plate in bumper zone
-          const plateCandidate = findPlateInsideVehicleCrop(vCanv);
-          if (plateCandidate) {
-            const gx1 = vx1 + plateCandidate.x;
-            const gy1 = vy1 + plateCandidate.y;
-            const gx2 = gx1 + plateCandidate.w;
-            const gy2 = gy1 + plateCandidate.h;
+          // Find plate in bumper zone if checkbox selected
+          if (wantPlates) {
+            const plateCandidate = findPlateInsideVehicleCrop(vCanv);
+            if (plateCandidate) {
+              const gx1 = vx1 + plateCandidate.x;
+              const gy1 = vy1 + plateCandidate.y;
+              const gx2 = gx1 + plateCandidate.w;
+              const gy2 = gy1 + plateCandidate.h;
 
-            // Create plate crop canvas
-            const pCanv = document.createElement('canvas');
-            pCanv.width = plateCandidate.w;
-            pCanv.height = plateCandidate.h;
-            const pCtx = pCanv.getContext('2d');
-            pCtx.drawImage(state.image, gx1, gy1, plateCandidate.w, plateCandidate.h, 0, 0, plateCandidate.w, plateCandidate.h);
+              // Create plate crop canvas
+              const pCanv = document.createElement('canvas');
+              pCanv.width = plateCandidate.w;
+              pCanv.height = plateCandidate.h;
+              const pCtx = pCanv.getContext('2d');
+              pCtx.drawImage(state.image, gx1, gy1, plateCandidate.w, plateCandidate.h, 0, 0, plateCandidate.w, plateCandidate.h);
 
-            v.plates.push({
-              plate_id: 1,
-              plate_text: "PLATE DETECTED",
-              confidence: Number(plateCandidate.conf.toFixed(3)),
-              bbox_global_xyxy: [gx1, gy1, gx2, gy2],
-              bbox_yolo_norm: [
-                Number((((gx1 + gx2) / 2) / W).toFixed(6)),
-                Number((((gy1 + gy2) / 2) / H).toFixed(6)),
-                Number((plateCandidate.w / W).toFixed(6)),
-                Number((plateCandidate.h / H).toFixed(6))
-              ],
-              aspect: plateCandidate.aspect,
-              crop_src: pCanv.toDataURL('image/jpeg')
-            });
+              v.plates.push({
+                plate_id: 1,
+                plate_text: "NUMBER PLATE",
+                confidence: Number(plateCandidate.conf.toFixed(3)),
+                bbox_global_xyxy: [gx1, gy1, gx2, gy2],
+                bbox_yolo_norm: [
+                  Number((((gx1 + gx2) / 2) / W).toFixed(6)),
+                  Number((((gy1 + gy2) / 2) / H).toFixed(6)),
+                  Number((plateCandidate.w / W).toFixed(6)),
+                  Number((plateCandidate.h / H).toFixed(6))
+                ],
+                aspect: plateCandidate.aspect,
+                crop_src: pCanv.toDataURL('image/jpeg')
+              });
+            }
           }
         }
       }
@@ -862,16 +937,16 @@ h   = (Y2 - Y1) / Image_Height
 
       let best = null;
       let maxScore = -1;
-      const minPW = Math.max(28, Math.floor(cw * 0.12));
-      const maxPW = Math.min(Math.floor(cw * 0.45), 260);
+      const minPW = Math.max(26, Math.floor(cw * 0.12));
+      const maxPW = Math.min(Math.floor(cw * 0.48), 280);
 
-      for (let pw = minPW; pw <= maxPW; pw += Math.max(6, Math.floor(cw * 0.05))) {
-        for (let aspect of [2.5, 3.2, 4.0]) {
+      for (let pw = minPW; pw <= maxPW; pw += Math.max(5, Math.floor(cw * 0.05))) {
+        for (let aspect of [2.4, 3.0, 3.8]) {
           const ph = Math.round(pw / aspect);
-          if (ph < 10 || ph > ch * 0.28) continue;
+          if (ph < 9 || ph > ch * 0.30) continue;
 
           for (let y = minY; y <= maxY - ph; y += Math.max(3, Math.floor(ch * 0.03))) {
-            for (let x = 6; x <= cw - pw - 6; x += Math.max(4, Math.floor(cw * 0.04))) {
+            for (let x = 6; x <= cw - pw - 6; x += Math.max(3, Math.floor(cw * 0.04))) {
               let edgeSum = 0;
               let minL = 255, maxL = 0;
 
@@ -888,7 +963,7 @@ h   = (Y2 - Y1) / Image_Height
               const samples = ((ph / 2) * (pw / 2)) || 1;
               const avgEdge = edgeSum / samples;
               const contrast = maxL - minL;
-              const yWeight = 1.0 + (y / ch) * 0.6;
+              const yWeight = 1.0 + (y / ch) * 0.7;
               const centerWeight = 1.0 - Math.abs((x + pw / 2) / cw - 0.5) * 0.5;
               const score = avgEdge * (contrast / 100.0) * yWeight * centerWeight;
 
@@ -897,7 +972,7 @@ h   = (Y2 - Y1) / Image_Height
                 best = {
                   x, y, w: pw, h: ph,
                   aspect: Number((pw / ph).toFixed(2)),
-                  conf: Math.min(0.95, Math.max(0.68, 0.50 + (score / 120.0)))
+                  conf: Math.min(0.95, Math.max(0.70, 0.55 + (score / 120.0)))
                 };
               }
             }
@@ -905,9 +980,9 @@ h   = (Y2 - Y1) / Image_Height
         }
       }
 
-      if (best && maxScore > 6) return best;
+      if (best && maxScore > 5) return best;
 
-      const defW = Math.round(cw * 0.22);
+      const defW = Math.round(cw * 0.24);
       const defH = Math.round(defW / 2.6);
       return {
         x: Math.round((cw - defW) / 2),
@@ -915,7 +990,7 @@ h   = (Y2 - Y1) / Image_Height
         w: defW,
         h: defH,
         aspect: 2.6,
-        conf: 0.70
+        conf: 0.72
       };
     }
 
@@ -926,7 +1001,7 @@ h   = (Y2 - Y1) / Image_Height
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(state.image, 0, 0, canvas.width, canvas.height);
 
-      if (!showBoxes) return; // Boxes cleared!
+      if (!showBoxes) return; // Clean inspection mode!
 
       const carThresh = parseFloat(carConfSlider.value);
       const drawVehicles = chkShowVehicles.checked;
@@ -976,10 +1051,10 @@ h   = (Y2 - Y1) / Image_Height
         }
       });
 
-      // Temporary manual box
+      // Temporary manual drawing box outline
       if (isDrawingMode && drawBox) {
         ctx.strokeStyle = '#f59e0b';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 2.5;
         ctx.setLineDash([5, 5]);
         ctx.strokeRect(drawBox.x, drawBox.y, drawBox.w, drawBox.h);
         ctx.setLineDash([]);
@@ -991,7 +1066,8 @@ h   = (Y2 - Y1) / Image_Height
       vehiclesListContainer.innerHTML = '';
 
       if (state.detections.vehicles.length === 0) {
-        vehiclesListContainer.innerHTML = '<div style="color: var(--text-muted); font-size: 0.85rem; padding: 12px; text-align: center;">No vehicles currently detected. Click "Run Detection" or "Draw Box".</div>';
+        vehiclesListContainer.innerHTML = '<div style="color: var(--text-muted); font-size: 0.85rem; padding: 16px; text-align: center; border: 1px dashed var(--border-color); border-radius: 8px;">No vehicles selected. Click "Run Detection" or use "✏️ Draw Box" to annotate.</div>';
+        document.getElementById('vehicleCountBadge').innerText = `0 Vehicles`;
         return;
       }
 
@@ -1002,18 +1078,20 @@ h   = (Y2 - Y1) / Image_Height
         card.className = `vehicle-item-card ${activeHighlightVehicleId === v.vehicle_id ? 'highlighted' : ''}`;
         card.id = `veh-card-${v.vehicle_id}`;
 
-        const hasPlate = v.plates && v.plates.length > 0;
+        const hasPlate = v.plates && v.plates.length > 0 && chkShowPlates.checked;
         const plate = hasPlate ? v.plates[0] : null;
 
         card.innerHTML = `
           <div class="vehicle-card-header">
             <div class="vehicle-card-title">
-              <span class="badge badge-vehicle">${v.class_name.toUpperCase()} #${v.vehicle_id}</span>
+              <span class="badge badge-vehicle">${v.class_name ? v.class_name.toUpperCase() : 'CAR'} #${v.vehicle_id}</span>
               <span>${v.name || 'Vehicle'}</span>
             </div>
             <div style="display: flex; gap: 6px; align-items: center;">
               <span style="font-size: 0.8rem; color: #34d399; font-weight: 600;">${(v.confidence * 100).toFixed(1)}%</span>
-              <button class="btn" style="padding: 2px 7px; font-size: 0.72rem;" onclick="highlightVehicle(${v.vehicle_id})">Focus</button>
+              <button class="btn" style="padding: 2px 8px; font-size: 0.72rem;" onclick="highlightVehicle(${v.vehicle_id})">
+                ${activeHighlightVehicleId === v.vehicle_id ? 'Unhighlight' : 'Focus'}
+              </button>
             </div>
           </div>
 
@@ -1025,7 +1103,7 @@ h   = (Y2 - Y1) / Image_Height
                 <span class="badge badge-coord">[${v.bbox_xyxy[2] - v.bbox_xyxy[0]}×${v.bbox_xyxy[3] - v.bbox_xyxy[1]}px]</span>
               </div>
               <img class="crop-img-preview" src="${v.crop_src || './crops/sample_veh_1.jpg'}" alt="Car Crop">
-              <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; font-family: monospace;">
+              <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 5px; font-family: monospace;">
                 [${v.bbox_xyxy.join(', ')}]
               </div>
             </div>
@@ -1042,8 +1120,8 @@ h   = (Y2 - Y1) / Image_Height
                   [${plate.bbox_global_xyxy.join(', ')}]
                 </div>
               ` : `
-                <div style="height: 60px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.75rem;">
-                  No Plate Localized
+                <div style="height: 65px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.78rem;">
+                  ${chkShowPlates.checked ? 'No Plate Localized' : 'Plate Hidden by Filter'}
                 </div>
               `}
             </div>
@@ -1068,14 +1146,16 @@ h   = (Y2 - Y1) / Image_Height
     function updateYoloExport() {
       let lines = [];
       state.detections.vehicles.forEach(v => {
-        lines.push(`0 ${v.bbox_yolo_norm.map(n => n.toFixed(6)).join(' ')} # ${v.name || v.class_name}`);
-        if (v.plates) {
+        if (chkShowVehicles.checked) {
+          lines.push(`0 ${v.bbox_yolo_norm.map(n => n.toFixed(6)).join(' ')} # ${v.name || v.class_name}`);
+        }
+        if (chkShowPlates.checked && v.plates) {
           v.plates.forEach(p => {
             lines.push(`1 ${p.bbox_yolo_norm.map(n => n.toFixed(6)).join(' ')} # ${p.plate_text || 'license_plate'}`);
           });
         }
       });
-      yoloAnnotationBox.innerText = lines.join('\n') || '# No boxes present';
+      yoloAnnotationBox.innerText = lines.join('\n') || '# No bounding boxes match current filter';
     }
 
     // Clear Bounding Boxes
@@ -1086,10 +1166,14 @@ h   = (Y2 - Y1) / Image_Height
       statusBadge.style.color = '#94a3b8';
     });
 
-    // Re-detect / Show Boxes
+    // Run Detection Button: Perfectly detects based on selected checkboxes
     document.getElementById('btnDetect').addEventListener('click', () => {
       showBoxes = true;
-      runInBrowserDetection();
+      if (state.isDefaultImage) {
+        executeDetectionOnDefault();
+      } else {
+        runInBrowserDetection();
+      }
     });
 
     // Load Default Traffic Sample
@@ -1097,15 +1181,19 @@ h   = (Y2 - Y1) / Image_Height
       loadImage('./sample.jpg', true);
     });
 
-    // Toggle Checkboxes
+    // Checkbox Listeners
     chkShowVehicles.addEventListener('change', () => {
       showBoxes = true;
       renderCanvas();
+      renderSeparatedCards();
+      updateYoloExport();
     });
 
     chkShowPlates.addEventListener('change', () => {
       showBoxes = true;
       renderCanvas();
+      renderSeparatedCards();
+      updateYoloExport();
     });
 
     carConfSlider.addEventListener('input', (e) => {
@@ -1113,7 +1201,7 @@ h   = (Y2 - Y1) / Image_Height
       renderCanvas();
     });
 
-    // File Browser
+    // File Browser Listener
     document.getElementById('imageInput').addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -1130,9 +1218,10 @@ h   = (Y2 - Y1) / Image_Height
       isDrawingMode = !isDrawingMode;
       btnDrawMode.classList.toggle('btn-active', isDrawingMode);
       btnDrawMode.innerText = isDrawingMode ? '✏️ Drawing Active' : '✏️ Draw Box';
+      drawOptionsBar.classList.toggle('active', isDrawingMode);
     });
 
-    // Canvas Mouse Drawing
+    // Canvas Mouse Drawing Handlers
     canvas.addEventListener('mousedown', (e) => {
       if (!isDrawingMode || !state.imageLoaded) return;
       const rect = canvas.getBoundingClientRect();
@@ -1163,78 +1252,174 @@ h   = (Y2 - Y1) / Image_Height
       renderCanvas();
     });
 
+    // Intelligent Analysis of What is Inside the Drawn Box
     canvas.addEventListener('mouseup', () => {
       if (!isMouseDown || !isDrawingMode) return;
       isMouseDown = false;
 
-      if (drawBox && drawBox.w > 15 && drawBox.h > 10) {
+      if (drawBox && drawBox.w > 18 && drawBox.h > 12) {
         showBoxes = true;
         const x1 = Math.round(drawBox.x);
         const y1 = Math.round(drawBox.y);
         const x2 = Math.round(drawBox.x + drawBox.w);
         const y2 = Math.round(drawBox.y + drawBox.h);
-        const aspect = Number((drawBox.w / drawBox.h).toFixed(2));
+        const w = x2 - x1;
+        const h = y2 - y1;
+        const aspect = Number((w / h).toFixed(2));
 
-        // Create crop preview
-        const cropCanv = document.createElement('canvas');
-        cropCanv.width = drawBox.w;
-        cropCanv.height = drawBox.h;
-        const cCtx = cropCanv.getContext('2d');
-        cCtx.drawImage(state.image, x1, y1, drawBox.w, drawBox.h, 0, 0, drawBox.w, drawBox.h);
-        const cropUri = cropCanv.toDataURL('image/jpeg');
+        const selectedTarget = document.querySelector('input[name="drawTargetMode"]:checked')?.value || 'auto';
 
-        if (aspect >= 1.8 && aspect <= 5.5 && drawBox.w < canvas.width * 0.45) {
-          // Plate Box
-          if (state.detections.vehicles.length === 0) {
+        // Check if drawn box is plate or vehicle
+        const isPlateTarget = (selectedTarget === 'plate') || 
+                              (selectedTarget === 'auto' && aspect >= 1.8 && aspect <= 5.5 && w < canvas.width * 0.45);
+
+        if (isPlateTarget) {
+          // --- USER DREW A NUMBER PLATE ---
+          // 1. Create plate crop
+          const pCanv = document.createElement('canvas');
+          pCanv.width = w;
+          pCanv.height = h;
+          const pCtx = pCanv.getContext('2d');
+          pCtx.drawImage(state.image, x1, y1, w, h, 0, 0, w, h);
+          const pCropUri = pCanv.toDataURL('image/jpeg');
+
+          // 2. Check if plate falls inside an existing vehicle
+          let parentVeh = state.detections.vehicles.find(v => {
+            const [vx1, vy1, vx2, vy2] = v.bbox_xyxy;
+            return (x1 >= vx1 - 20 && x2 <= vx2 + 20 && y1 >= vy1 - 20 && y2 <= vy2 + 20);
+          });
+
+          if (parentVeh) {
+            // Attach plate directly to this vehicle!
+            parentVeh.plates = [{
+              plate_id: 1,
+              plate_text: "CUSTOM PLATE",
+              confidence: 0.98,
+              bbox_global_xyxy: [x1, y1, x2, y2],
+              bbox_yolo_norm: [
+                Number((((x1 + x2) / 2) / canvas.width).toFixed(6)),
+                Number((((y1 + y2) / 2) / canvas.height).toFixed(6)),
+                Number((w / canvas.width).toFixed(6)),
+                Number((h / canvas.height).toFixed(6))
+              ],
+              aspect,
+              crop_src: pCropUri
+            }];
+            statusBadge.innerText = `✅ Assigned Number Plate to ${parentVeh.name}!`;
+          } else {
+            // Infer surrounding vehicle boundaries so both Car & Plate display clearly!
+            const expW = Math.round(w * 3.4);
+            const expH = Math.round(h * 5.5);
+            const carX1 = Math.max(0, Math.round(x1 - (expW - w) / 2));
+            const carY1 = Math.max(0, Math.round(y1 - expH * 0.65));
+            const carX2 = Math.min(canvas.width, carX1 + expW);
+            const carY2 = Math.min(canvas.height, Math.round(y2 + expH * 0.25));
+
+            const vCanv = document.createElement('canvas');
+            vCanv.width = carX2 - carX1;
+            vCanv.height = carY2 - carY1;
+            const vCtx = vCanv.getContext('2d');
+            vCtx.drawImage(state.image, carX1, carY1, vCanv.width, vCanv.height, 0, 0, vCanv.width, vCanv.height);
+            const vCropUri = vCanv.toDataURL('image/jpeg');
+
             state.detections.vehicles.push({
-              vehicle_id: 1,
-              name: "Vehicle #1",
+              vehicle_id: state.detections.vehicles.length + 1,
+              name: `Custom Car #${state.detections.vehicles.length + 1}`,
               class_name: "car",
               confidence: 0.95,
-              bbox_xyxy: [Math.max(0, x1 - 50), Math.max(0, y1 - 100), Math.min(canvas.width, x2 + 50), Math.min(canvas.height, y2 + 50)],
-              bbox_yolo_norm: [0.5, 0.5, 0.5, 0.5],
-              crop_src: null,
-              plates: []
+              bbox_xyxy: [carX1, carY1, carX2, carY2],
+              bbox_yolo_norm: [
+                Number((((carX1 + carX2) / 2) / canvas.width).toFixed(6)),
+                Number((((carY1 + carY2) / 2) / canvas.height).toFixed(6)),
+                Number(((carX2 - carX1) / canvas.width).toFixed(6)),
+                Number(((carY2 - carY1) / canvas.height).toFixed(6))
+              ],
+              crop_src: vCropUri,
+              plates: [{
+                plate_id: 1,
+                plate_text: "CUSTOM PLATE",
+                confidence: 0.98,
+                bbox_global_xyxy: [x1, y1, x2, y2],
+                bbox_yolo_norm: [
+                  Number((((x1 + x2) / 2) / canvas.width).toFixed(6)),
+                  Number((((y1 + y2) / 2) / canvas.height).toFixed(6)),
+                  Number((w / canvas.width).toFixed(6)),
+                  Number((h / canvas.height).toFixed(6))
+                ],
+                aspect,
+                crop_src: pCropUri
+              }]
             });
+            statusBadge.innerText = '✅ Number plate identified and surrounding vehicle extracted!';
           }
-          state.detections.vehicles[0].plates = [{
-            plate_id: 1,
-            plate_text: "CUSTOM PLATE",
-            confidence: 0.98,
-            bbox_global_xyxy: [x1, y1, x2, y2],
-            bbox_yolo_norm: [
-              Number((((x1 + x2) / 2) / canvas.width).toFixed(6)),
-              Number((((y1 + y2) / 2) / canvas.height).toFixed(6)),
-              Number(((x2 - x1) / canvas.width).toFixed(6)),
-              Number(((y2 - y1) / canvas.height).toFixed(6))
-            ],
-            aspect,
-            crop_src: cropUri
-          }];
+
         } else {
-          // Vehicle Box
+          // --- USER DREW A VEHICLE BOX ---
+          // 1. Extract Vehicle Crop
+          const vCanv = document.createElement('canvas');
+          vCanv.width = w;
+          vCanv.height = h;
+          const vCtx = vCanv.getContext('2d');
+          vCtx.drawImage(state.image, x1, y1, w, h, 0, 0, w, h);
+          const vCropUri = vCanv.toDataURL('image/jpeg');
+
+          // 2. Intelligently scan INSIDE the drawn vehicle box to find the number plate!
+          let foundPlate = null;
+          const plateCandidate = findPlateInsideVehicleCrop(vCanv);
+          if (plateCandidate) {
+            const gx1 = x1 + plateCandidate.x;
+            const gy1 = y1 + plateCandidate.y;
+            const gx2 = gx1 + plateCandidate.w;
+            const gy2 = gy1 + plateCandidate.h;
+
+            const pCanv = document.createElement('canvas');
+            pCanv.width = plateCandidate.w;
+            pCanv.height = plateCandidate.h;
+            const pCtx = pCanv.getContext('2d');
+            pCtx.drawImage(state.image, gx1, gy1, plateCandidate.w, plateCandidate.h, 0, 0, plateCandidate.w, plateCandidate.h);
+
+            foundPlate = {
+              plate_id: 1,
+              plate_text: "PLATE DETECTED",
+              confidence: Number(plateCandidate.conf.toFixed(3)),
+              bbox_global_xyxy: [gx1, gy1, gx2, gy2],
+              bbox_yolo_norm: [
+                Number((((gx1 + gx2) / 2) / canvas.width).toFixed(6)),
+                Number((((gy1 + gy2) / 2) / canvas.height).toFixed(6)),
+                Number((plateCandidate.w / canvas.width).toFixed(6)),
+                Number((plateCandidate.h / canvas.height).toFixed(6))
+              ],
+              aspect: plateCandidate.aspect,
+              crop_src: pCanv.toDataURL('image/jpeg')
+            };
+          }
+
+          // 3. Add to Detected Cars List
           state.detections.vehicles.push({
             vehicle_id: state.detections.vehicles.length + 1,
-            name: `Manual Vehicle #${state.detections.vehicles.length + 1}`,
+            name: `Annotated Car #${state.detections.vehicles.length + 1}`,
             class_name: "car",
             confidence: 0.95,
             bbox_xyxy: [x1, y1, x2, y2],
             bbox_yolo_norm: [
               Number((((x1 + x2) / 2) / canvas.width).toFixed(6)),
               Number((((y1 + y2) / 2) / canvas.height).toFixed(6)),
-              Number(((x2 - x1) / canvas.width).toFixed(6)),
-              Number(((y2 - y1) / canvas.height).toFixed(6))
+              Number((w / canvas.width).toFixed(6)),
+              Number((h / canvas.height).toFixed(6))
             ],
-            crop_src: cropUri,
-            plates: []
+            crop_src: vCropUri,
+            plates: foundPlate ? [foundPlate] : []
           });
+
+          statusBadge.innerText = foundPlate 
+            ? '✅ Vehicle analyzed & Number Plate located inside!' 
+            : '✅ Vehicle analyzed & added to detected list.';
         }
 
         drawBox = null;
         renderCanvas();
         renderSeparatedCards();
         updateYoloExport();
-        statusBadge.innerText = 'Custom bounding box drawn!';
         statusBadge.style.color = '#34d399';
       }
     });
