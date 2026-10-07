@@ -1,65 +1,383 @@
 {
   "source_image": "plate_identify/sample.jpg",
   "image_dimensions": {
-    "width": 1024,
-    "height": 576
+    "width": 960,
+    "height": 540
   },
-  "vehicle_count": 1,
-  "plate_count": 1,
+  "vehicle_count": 13,
+  "plate_count": 2,
   "vehicles": [
     {
       "vehicle_id": 1,
       "class_name": "car",
-      "confidence": 0.9335,
+      "confidence": 0.8919,
       "bbox_xyxy": [
-        122,
-        149,
-        482,
-        360
+        424,
+        279,
+        742,
+        534
       ],
       "bbox_xywh": [
-        122,
-        149,
-        360,
-        211
+        424,
+        279,
+        318,
+        255
       ],
       "bbox_yolo_norm": [
-        0.294922,
-        0.44184,
-        0.351562,
-        0.366319
+        0.607292,
+        0.752778,
+        0.33125,
+        0.472222
       ],
       "plates_detected": [
         {
           "plate_id": 1,
-          "confidence": 0.8363,
+          "confidence": 0.7266,
           "bbox_crop_xyxy": [
-            46,
-            160,
-            108,
-            185
+            88,
+            171,
+            175,
+            202
           ],
           "bbox_global_xyxy": [
-            161,
-            305,
-            223,
-            330
+            506,
+            445,
+            593,
+            476
           ],
           "bbox_global_xywh": [
-            161,
-            305,
-            62,
-            25
+            506,
+            445,
+            87,
+            31
           ],
           "bbox_yolo_norm": [
-            0.1875,
-            0.551215,
-            0.060547,
-            0.043403
+            0.572396,
+            0.852778,
+            0.090625,
+            0.057407
           ],
-          "aspect_ratio": 2.48
+          "aspect_ratio": 2.81
         }
       ]
+    },
+    {
+      "vehicle_id": 2,
+      "class_name": "truck",
+      "confidence": 0.8202,
+      "bbox_xyxy": [
+        725,
+        112,
+        908,
+        270
+      ],
+      "bbox_xywh": [
+        725,
+        112,
+        183,
+        158
+      ],
+      "bbox_yolo_norm": [
+        0.850521,
+        0.353704,
+        0.190625,
+        0.292593
+      ],
+      "plates_detected": []
+    },
+    {
+      "vehicle_id": 3,
+      "class_name": "car",
+      "confidence": 0.7676,
+      "bbox_xyxy": [
+        620,
+        261,
+        780,
+        433
+      ],
+      "bbox_xywh": [
+        620,
+        261,
+        160,
+        172
+      ],
+      "bbox_yolo_norm": [
+        0.729167,
+        0.642593,
+        0.166667,
+        0.318519
+      ],
+      "plates_detected": []
+    },
+    {
+      "vehicle_id": 4,
+      "class_name": "car",
+      "confidence": 0.7431,
+      "bbox_xyxy": [
+        63,
+        240,
+        433,
+        528
+      ],
+      "bbox_xywh": [
+        63,
+        240,
+        370,
+        288
+      ],
+      "bbox_yolo_norm": [
+        0.258333,
+        0.711111,
+        0.385417,
+        0.533333
+      ],
+      "plates_detected": [
+        {
+          "plate_id": 1,
+          "confidence": 0.9202,
+          "bbox_crop_xyxy": [
+            99,
+            220,
+            161,
+            244
+          ],
+          "bbox_global_xyxy": [
+            155,
+            455,
+            217,
+            479
+          ],
+          "bbox_global_xywh": [
+            155,
+            455,
+            62,
+            24
+          ],
+          "bbox_yolo_norm": [
+            0.19375,
+            0.864815,
+            0.064583,
+            0.044444
+          ],
+          "aspect_ratio": 2.58
+        }
+      ]
+    },
+    {
+      "vehicle_id": 5,
+      "class_name": "truck",
+      "confidence": 0.6464,
+      "bbox_xyxy": [
+        296,
+        189,
+        480,
+        345
+      ],
+      "bbox_xywh": [
+        296,
+        189,
+        184,
+        156
+      ],
+      "bbox_yolo_norm": [
+        0.404167,
+        0.494444,
+        0.191667,
+        0.288889
+      ],
+      "plates_detected": []
+    },
+    {
+      "vehicle_id": 6,
+      "class_name": "car",
+      "confidence": 0.6299,
+      "bbox_xyxy": [
+        0,
+        292,
+        118,
+        509
+      ],
+      "bbox_xywh": [
+        0,
+        292,
+        118,
+        217
+      ],
+      "bbox_yolo_norm": [
+        0.061458,
+        0.741667,
+        0.122917,
+        0.401852
+      ],
+      "plates_detected": []
+    },
+    {
+      "vehicle_id": 7,
+      "class_name": "car",
+      "confidence": 0.5191,
+      "bbox_xyxy": [
+        478,
+        229,
+        559,
+        292
+      ],
+      "bbox_xywh": [
+        478,
+        229,
+        81,
+        63
+      ],
+      "bbox_yolo_norm": [
+        0.540104,
+        0.482407,
+        0.084375,
+        0.116667
+      ],
+      "plates_detected": []
+    },
+    {
+      "vehicle_id": 8,
+      "class_name": "car",
+      "confidence": 0.4505,
+      "bbox_xyxy": [
+        498,
+        242,
+        619,
+        312
+      ],
+      "bbox_xywh": [
+        498,
+        242,
+        121,
+        70
+      ],
+      "bbox_yolo_norm": [
+        0.581771,
+        0.512963,
+        0.126042,
+        0.12963
+      ],
+      "plates_detected": []
+    },
+    {
+      "vehicle_id": 9,
+      "class_name": "truck",
+      "confidence": 0.4273,
+      "bbox_xyxy": [
+        538,
+        164,
+        640,
+        237
+      ],
+      "bbox_xywh": [
+        538,
+        164,
+        102,
+        73
+      ],
+      "bbox_yolo_norm": [
+        0.613542,
+        0.371296,
+        0.10625,
+        0.135185
+      ],
+      "plates_detected": []
+    },
+    {
+      "vehicle_id": 10,
+      "class_name": "car",
+      "confidence": 0.4179,
+      "bbox_xyxy": [
+        608,
+        186,
+        703,
+        257
+      ],
+      "bbox_xywh": [
+        608,
+        186,
+        95,
+        71
+      ],
+      "bbox_yolo_norm": [
+        0.682813,
+        0.410185,
+        0.098958,
+        0.131481
+      ],
+      "plates_detected": []
+    },
+    {
+      "vehicle_id": 11,
+      "class_name": "truck",
+      "confidence": 0.3987,
+      "bbox_xyxy": [
+        0,
+        292,
+        118,
+        514
+      ],
+      "bbox_xywh": [
+        0,
+        292,
+        118,
+        222
+      ],
+      "bbox_yolo_norm": [
+        0.061458,
+        0.746296,
+        0.122917,
+        0.411111
+      ],
+      "plates_detected": []
+    },
+    {
+      "vehicle_id": 12,
+      "class_name": "motorcycle",
+      "confidence": 0.3613,
+      "bbox_xyxy": [
+        784,
+        274,
+        841,
+        368
+      ],
+      "bbox_xywh": [
+        784,
+        274,
+        57,
+        94
+      ],
+      "bbox_yolo_norm": [
+        0.846354,
+        0.594444,
+        0.059375,
+        0.174074
+      ],
+      "plates_detected": []
+    },
+    {
+      "vehicle_id": 13,
+      "class_name": "car",
+      "confidence": 0.3593,
+      "bbox_xyxy": [
+        594,
+        233,
+        677,
+        276
+      ],
+      "bbox_xywh": [
+        594,
+        233,
+        83,
+        43
+      ],
+      "bbox_yolo_norm": [
+        0.661979,
+        0.471296,
+        0.086458,
+        0.07963
+      ],
+      "plates_detected": []
     }
   ]
 }
