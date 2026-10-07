@@ -1,0 +1,65 @@
+{
+  "source_image": "plate_identify/sample.jpg",
+  "image_dimensions": {
+    "width": 1024,
+    "height": 576
+  },
+  "vehicle_count": 1,
+  "plate_count": 1,
+  "vehicles": [
+    {
+      "vehicle_id": 1,
+      "class_name": "car",
+      "confidence": 0.9335,
+      "bbox_xyxy": [
+        122,
+        149,
+        482,
+        360
+      ],
+      "bbox_xywh": [
+        122,
+        149,
+        360,
+        211
+      ],
+      "bbox_yolo_norm": [
+        0.294922,
+        0.44184,
+        0.351562,
+        0.366319
+      ],
+      "plates_detected": [
+        {
+          "plate_id": 1,
+          "confidence": 0.8363,
+          "bbox_crop_xyxy": [
+            46,
+            160,
+            108,
+            185
+          ],
+          "bbox_global_xyxy": [
+            161,
+            305,
+            223,
+            330
+          ],
+          "bbox_global_xywh": [
+            161,
+            305,
+            62,
+            25
+          ],
+          "bbox_yolo_norm": [
+            0.1875,
+            0.551215,
+            0.060547,
+            0.043403
+          ],
+          "aspect_ratio": 2.48
+        }
+      ]
+    }
+  ]
+}
