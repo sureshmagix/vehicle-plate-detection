@@ -663,6 +663,317 @@
       border-bottom: 1px solid #1e293b;
       padding-bottom: 10px;
     }
+
+    /* Main Navigation Tab Bar */
+    .tabs-header-nav {
+      display: flex;
+      gap: 10px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 8px;
+      margin-bottom: 24px;
+      overflow-x: auto;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      color: #ffffff;
+      border-color: #38bdf8;
+      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
+    }
+
+    .tab-badge {
+      font-size: 0.72rem;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    /* Tab Panes */
+    .tab-pane {
+      display: none;
+    }
+
+    .tab-pane.active {
+      display: block;
+      animation: fadeInTab 0.22s ease-in-out;
+    }
+
+    @keyframes fadeInTab {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Learning Callout Banner inside Interactive Tab */
+    .learning-banner {
+      background: linear-gradient(90deg, rgba(2, 132, 199, 0.15) 0%, rgba(99, 102, 241, 0.15) 100%);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 10px;
+      padding: 14px 20px;
+      margin-bottom: 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .learning-banner-text {
+      font-size: 0.9rem;
+      color: #e0f2fe;
+      line-height: 1.5;
+    }
+
+    /* Methods Hub Sub-Navigation */
+    .methods-subnav {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      background: #0f172a;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      margin-bottom: 24px;
+      position: sticky;
+      top: 76px;
+      z-index: 40;
+      backdrop-filter: blur(8px);
+    }
+
+    .subnav-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 6px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      transition: all 0.2s ease;
+    }
+
+    .subnav-link:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: #24324d;
+    }
+
+    /* Method Cards */
+    .method-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 22px;
+      margin-bottom: 22px;
+      transition: border-color 0.2s ease;
+    }
+
+    .method-card:hover {
+      border-color: #475569;
+    }
+
+    .method-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid #1e293b;
+      padding-bottom: 10px;
+    }
+
+    .method-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #f8fafc;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .method-badge {
+      font-size: 0.73rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    .badge-classical {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+    }
+
+    .badge-deep {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+
+    .badge-transformer {
+      background: rgba(168, 85, 247, 0.15);
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.4);
+    }
+
+    .badge-ocr {
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+
+    .badge-math {
+      background: rgba(236, 72, 153, 0.15);
+      color: #f472b6;
+      border: 1px solid rgba(236, 72, 153, 0.4);
+    }
+
+    .method-desc {
+      color: #cbd5e1;
+      font-size: 0.93rem;
+      line-height: 1.65;
+      margin-bottom: 14px;
+    }
+
+    .method-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    @media (max-width: 768px) {
+      .method-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .pros-box {
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: 6px;
+      padding: 12px 14px;
+      font-size: 0.85rem;
+    }
+
+    .pros-box h5 {
+      color: #34d399;
+      margin-bottom: 6px;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 700;
+    }
+
+    .cons-box {
+      background: rgba(239, 68, 68, 0.08);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      border-radius: 6px;
+      padding: 12px 14px;
+      font-size: 0.85rem;
+    }
+
+    .cons-box h5 {
+      color: #f87171;
+      margin-bottom: 6px;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 700;
+    }
+
+    .usecase-box {
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin-top: 14px;
+      font-size: 0.85rem;
+      color: #bae6fd;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Comparison Table Styling */
+    .table-responsive {
+      overflow-x: auto;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      margin-top: 16px;
+    }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.84rem;
+      text-align: left;
+      min-width: 820px;
+    }
+
+    .comparison-table th {
+      background: #0f172a;
+      color: var(--accent);
+      padding: 12px 14px;
+      border-bottom: 2px solid var(--border-color);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .comparison-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #1e293b;
+      color: #cbd5e1;
+      vertical-align: middle;
+    }
+
+    .comparison-table tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Architecture Visual Diagram Box */
+    .arch-flow-box {
+      background: #090d16;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 18px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.82rem;
+      color: #38bdf8;
+      overflow-x: auto;
+      line-height: 1.6;
+      margin: 14px 0;
+    }
+
   </style>
 </head>
 <body>
@@ -674,10 +985,10 @@
         <p>Precision Traffic Vehicle Identification &amp; Number Plate Localization</p>
       </div>
       <nav>
-        <a href="#interactive-ui">Interactive Demo</a>
-        <a href="#architecture">Architecture</a>
-        <a href="#why-two-stage">Why Two-Stage?</a>
-        <a href="#math-metrics">Math &amp; Formulas</a>
+        <a href="#interactive-ui" class="nav-link active" data-tab="interactive-ui">🚗 Interactive Demo</a>
+        <a href="#methods-guide" class="nav-link" data-tab="methods-guide">📚 Methods &amp; Algorithms</a>
+        <a href="#architecture" class="nav-link" data-tab="architecture">🏗️ Architecture</a>
+        <a href="#math-metrics" class="nav-link" data-tab="math-metrics">📐 Math &amp; Formulas</a>
         <a href="https://github.com/sureshmagix/vehicle-plate-detection" target="_blank">GitHub Repo &rarr;</a>
       </nav>
     </div>
@@ -685,8 +996,35 @@
 
   <main class="main-container">
 
-    <!-- INTERACTIVE UI SECTION -->
-    <section id="interactive-ui">
+    <!-- Top-Level Tab Switcher -->
+    <div class="tabs-header-nav">
+      <button class="tab-btn active" data-tab="interactive-ui">
+        <span>🚗 Live Detection Demo</span>
+      </button>
+      <button class="tab-btn" data-tab="methods-guide">
+        <span>📚 Identification Methods &amp; Algorithms</span>
+        <span class="tab-badge" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid #f59e0b;">Learning Hub</span>
+      </button>
+      <button class="tab-btn" data-tab="architecture">
+        <span>🏗️ Two-Stage Architecture</span>
+      </button>
+      <button class="tab-btn" data-tab="math-metrics">
+        <span>📐 Coordinate Math &amp; Formats</span>
+      </button>
+    </div>
+
+    <!-- TAB 1: INTERACTIVE UI SECTION -->
+    <div id="interactive-ui" class="tab-pane active">
+      <!-- Educational Callout Banner -->
+      <div class="learning-banner">
+        <div class="learning-banner-text">
+          💡 <strong>ALPR Learning Hub:</strong> Want to understand all traditional &amp; modern algorithms for detecting vehicles and license plates (YOLO, Haar, HOG, STN, CRNN, ViT)? Explore our comprehensive educational guide in the Methods tab.
+        </div>
+        <button class="btn btn-primary" onclick="switchTab('methods-guide')">
+          Explore Methods Guide &rarr;
+        </button>
+      </div>
+
       <div class="section-title">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
         Interactive Image Inspector &amp; Plate Crop Extractor
@@ -820,48 +1158,783 @@
           </div>
         </div>
       </div>
-    </section>
+    </div><!-- End Tab 1: interactive-ui -->
 
-    <!-- ARCHITECTURE DOCUMENTATION -->
-    <section id="architecture" class="doc-section">
-      <h2>1. Dense Traffic Two-Stage Pipeline</h2>
-      <p>
-        In high-density traffic scenes (such as Indian arterial corridors with multiple overlapping cars, commercial cabs, and trucks), direct number plate detectors struggle with false positives caused by vehicle logos, advertising decals, and rear-window text.
-      </p>
-      <p>
-        Our two-stage architecture solves this by enforcing a spatial hierarchy that isolates the vehicle boundary first, and then accurately extracts the high-resolution license plate image crop:
-      </p>
-      <pre>
-[Traffic Frame 960x540] ──▶ STAGE 1: Vehicle Localization (YOLO) 
+    <!-- TAB 2: COMPREHENSIVE LEARNING HUB (METHODS & ALGORITHMS) -->
+    <div id="methods-guide" class="tab-pane">
+      <div class="doc-section">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+          <h2>📚 Vehicle &amp; License Plate Identification: Complete Technical Guide</h2>
+          <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid #f59e0b; font-size: 0.8rem; padding: 4px 10px;">Educational Reference</span>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.96rem; line-height: 1.7; margin-bottom: 20px;">
+          An engineering breakdown of all computer vision and deep learning paradigms used in Intelligent Transportation Systems (ITS) and Automated License Plate Recognition (ALPR / ANPR). Covers classical edge heuristics, modern anchor-free detectors, oriented bounding boxes (OBB), landmark homography unwarping, and sequence-to-sequence OCR.
+        </p>
+
+        <!-- Sticky Quick Navigation Submenu -->
+        <div class="methods-subnav">
+          <a href="#methods-vehicle" class="subnav-link">🚗 1. Vehicle Detection</a>
+          <a href="#methods-plate" class="subnav-link">🪪 2. Plate Localization (LPD)</a>
+          <a href="#methods-ocr" class="subnav-link">🔤 3. Character OCR (LPR)</a>
+          <a href="#methods-cascade" class="subnav-link">⚖️ 4. Single vs. Two-Stage</a>
+          <a href="#methods-matrix" class="subnav-link">📊 5. Comparison Matrix</a>
+          <a href="#methods-code" class="subnav-link">💻 6. Implementation Code</a>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- PART 1: VEHICLE DETECTION METHODS -->
+        <!-- ========================================== -->
+        <div id="methods-vehicle" style="margin-top: 32px;">
+          <h3 style="font-size: 1.3rem; color: #38bdf8; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+            🚗 Part 1: Vehicle Detection &amp; Identification Methods
+          </h3>
+          <p style="color: var(--text-muted); font-size: 0.92rem; margin-bottom: 18px;">
+            Detecting the vehicle boundary is the critical first stage of modern ALPR. It provides spatial context, suppresses false background triggers (roadside text, billboards, shop signboards), and preserves resolution for small plates.
+          </p>
+
+          <!-- Method V1: Background Subtraction -->
+          <div class="method-card">
+            <div class="method-header">
+              <div class="method-title">1.1 Background Subtraction &amp; Motion Modeling (GMM / MOG2 / Frame Difference)</div>
+              <span class="method-badge badge-classical">Classical CV &bull; Temporal</span>
+            </div>
+            <div class="method-desc">
+              <strong>How it works:</strong> In stationary traffic surveillance cameras, each background pixel is modeled statistically using a Gaussian Mixture Model (GMM). When a moving car enters the frame, its pixel values deviate from the Gaussian background distribution, segmenting the foreground silhouette into a moving blob.
+            </div>
+            <div class="arch-flow-box">
+Static Highway Camera Feed ──▶ Gaussian Background Model P(x_t) ──▶ Foreground Binary Mask |I_t - B_t| > θ ──▶ Vehicle Contour Blob
+            </div>
+            <div class="method-grid">
+              <div class="pros-box">
+                <h5>Advantages</h5>
+                &bull; Extremely fast (120+ FPS on low-power CPU).<br>
+                &bull; Unsupervised; requires zero labeled training data.<br>
+                &bull; Ideal for hardware-constrained edge IoT devices.
+              </div>
+              <div class="cons-box">
+                <h5>Limitations</h5>
+                &bull; Completely fails when vehicles stop (traffic jams, red lights).<br>
+                &bull; Vulnerable to headlight glare, swaying tree branches, and shadows.<br>
+                &bull; Inapplicable to moving dashcams or pan-tilt-zoom (PTZ) cameras.
+              </div>
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> Fixed highway gantry speed sensors, toll barrier vehicle triggers, and rudimentary traffic density counters.
+            </div>
+          </div>
+
+          <!-- Method V2: Optical Flow -->
+          <div class="method-card">
+            <div class="method-header">
+              <div class="method-title">1.2 Optical Flow &amp; Motion Trajectory Tracking (Lucas-Kanade &amp; Farnebäck)</div>
+              <span class="method-badge badge-classical">Classical CV &bull; Motion Vector</span>
+            </div>
+            <div class="method-desc">
+              <strong>How it works:</strong> Solves the brightness constancy equation <code>I_x*u + I_y*v + I_t = 0</code> between consecutive video frames. Spatiotemporal gradient fields provide velocity vectors (speed and direction) for moving vehicle centroids, enabling multi-lane vehicle tracking without deep neural networks.
+            </div>
+            <div class="method-grid">
+              <div class="pros-box">
+                <h5>Advantages</h5>
+                &bull; Delivers directional heading and velocity metrics.<br>
+                &bull; Effective for tracking multi-lane vehicle trajectories over time.
+              </div>
+              <div class="cons-box">
+                <h5>Limitations</h5>
+                &bull; Dense optical flow is computationally expensive at 4K resolution.<br>
+                &bull; Fails during rapid acceleration, lighting flicker, or occlusions.
+              </div>
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> Wrong-way driving detection, red-light crossing enforcement, and intersection velocity estimation.
+            </div>
+          </div>
+
+          <!-- Method V3: Handcrafted Feature Descriptors (HOG + SVM, Haar) -->
+          <div class="method-card">
+            <div class="method-header">
+              <div class="method-title">1.3 Handcrafted Descriptors &amp; Machine Learning (Haar Cascades &amp; HOG + Linear SVM)</div>
+              <span class="method-badge badge-classical">Machine Learning &bull; Handcrafted</span>
+            </div>
+            <div class="method-desc">
+              <strong>How it works:</strong>
+              <br>&bull; <strong>Haar Cascades (Viola-Jones):</strong> Evaluates difference of sums over adjacent rectangular regions using Integral Images, selecting discriminative features via AdaBoost.
+              <br>&bull; <strong>HOG + Linear SVM (Dalal-Triggs):</strong> Computes gradient orientation histograms across 8x8 pixel cells, normalized over 16x16 blocks to capture vehicle structural contours (roofline, wheels, hood). A Support Vector Machine classifies whether the sliding window contains a vehicle.
+            </div>
+            <div class="method-grid">
+              <div class="pros-box">
+                <h5>Advantages</h5>
+                &bull; Interpretable, deterministic mathematical formulation.<br>
+                &bull; Runs efficiently on embedded microprocessors (Raspberry Pi / Cortex-M).
+              </div>
+              <div class="cons-box">
+                <h5>Limitations</h5>
+                &bull; Poor generalization to diverse vehicle angles, trucks, or auto-rickshaws.<br>
+                &bull; High false positive rate in complex urban scenes with buildings and signs.
+              </div>
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> Legacy automated toll gates and early 2000s electronic parking access systems.
+            </div>
+          </div>
+
+          <!-- Method V4: Two-Stage Region-Based Deep Detectors -->
+          <div class="method-card">
+            <div class="method-header">
+              <div class="method-title">1.4 Two-Stage Region-Proposal Deep Detectors (Faster R-CNN &amp; Cascade R-CNN)</div>
+              <span class="method-badge badge-deep">Deep Learning &bull; Region Proposal</span>
+            </div>
+            <div class="method-desc">
+              <strong>How it works:</strong>
+              <br>&bull; <strong>Stage 1 (Region Proposal Network - RPN):</strong> Slides over deep convolutional feature maps to propose candidate bounding boxes (Regions of Interest - RoIs).
+              <br>&bull; <strong>Stage 2 (RoIAlign &amp; Fast R-CNN Head):</strong> Extracts fixed-size feature vectors from proposals using bilinear interpolation and predicts class probabilities and refined box regression offsets.
+              <br>&bull; <strong>Cascade R-CNN:</strong> Employs a sequence of detector stages trained with progressively higher IoU thresholds (0.5 &rarr; 0.6 &rarr; 0.7) to eliminate close false positives.
+            </div>
+            <div class="method-grid">
+              <div class="pros-box">
+                <h5>Advantages</h5>
+                &bull; Unsurpassed spatial precision on heavily overlapping vehicles.<br>
+                &bull; Exceptional recall for small and distant vehicles in wide-angle traffic footage.
+              </div>
+              <div class="cons-box">
+                <h5>Limitations</h5>
+                &bull; High inference latency (12–25 FPS on high-end GPUs).<br>
+                &bull; High VRAM memory footprint; unsuitable for edge mobile processors.
+              </div>
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> Forensic traffic accident analysis, precision highway census surveys, and offline law enforcement investigations.
+            </div>
+          </div>
+
+          <!-- Method V5: One-Stage Anchor-Based Deep Detectors -->
+          <div class="method-card">
+            <div class="method-header">
+              <div class="method-title">1.5 One-Stage Anchor-Based Detectors (SSD, YOLOv3–v7 &amp; RetinaNet)</div>
+              <span class="method-badge badge-deep">Deep Learning &bull; Real-Time</span>
+            </div>
+            <div class="method-desc">
+              <strong>How it works:</strong> Eliminates the RPN proposal step. The network divides the feature map into a spatial grid and directly predicts bounding box coordinate offsets and class scores for predefined anchor boxes across multi-scale feature pyramids (FPN / PANet).
+              <br>&bull; <strong>RetinaNet Focal Loss:</strong> Mitigates extreme class imbalance between road background and vehicles:
+              <br><code style="color: #38bdf8;">FL(p_t) = -&alpha;_t &bull; (1 - p_t)^&gamma; &bull; log(p_t)</code>, which dynamically downweights easy background gradients.
+              <br>&bull; <strong>MobileNet-SSD:</strong> Employs depthwise separable convolutions for real-time mobile and in-browser execution (used in our client-side TensorFlow.js engine).
+            </div>
+            <div class="method-grid">
+              <div class="pros-box">
+                <h5>Advantages</h5>
+                &bull; High throughput (45–100+ FPS on modern GPUs).<br>
+                &bull; Readily exportable to ONNX, TensorRT, and WebAssembly / WebGL.
+              </div>
+              <div class="cons-box">
+                <h5>Limitations</h5>
+                &bull; Sensitive to anchor box aspect ratio priors; sub-optimal for atypical vehicles.<br>
+                &bull; Dense overlapping vehicles can suffer from suppression during Non-Maximum Suppression (NMS).
+              </div>
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> Smart city CCTV traffic management, electronic toll booths, and edge embedded cameras.
+            </div>
+          </div>
+
+          <!-- Method V6: Modern Anchor-Free Deep Detectors -->
+          <div class="method-card">
+            <div class="method-header">
+              <div class="method-title">1.6 Modern Anchor-Free Detectors (YOLOv8, YOLOv9, YOLOv10, YOLOv11 &amp; CenterNet)</div>
+              <span class="method-badge badge-deep">Deep Learning &bull; State-of-the-Art</span>
+            </div>
+            <div class="method-desc">
+              <strong>How it works:</strong> Replaces anchor boxes with direct point regression:
+              <br>&bull; <strong>Anchor-Free Center Regression:</strong> Predicts object center points directly along with distance offsets to the Left, Top, Right, Bottom (LTRB) borders using Distribution Focal Loss (DFL).
+              <br>&bull; <strong>Decoupled Detection Heads:</strong> Separates classification scores from bounding box coordinate regression, eliminating conflicting gradient updates.
+              <br>&bull; <strong>Task-Aligned Assigner (TAL):</strong> Dynamically assigns positive training samples based on the geometric product of classification score and IoU metric (<code>t = s^&alpha; &bull; IoU^&beta;</code>).
+            </div>
+            <div class="method-grid">
+              <div class="pros-box">
+                <h5>Advantages</h5>
+                &bull; Superior speed-to-accuracy Pareto frontier.<br>
+                &bull; No anchor tuning; seamlessly adapts to diverse vehicle shapes (buses, trucks, autos, bikes).<br>
+                &bull; Rapid convergence during custom dataset training.
+              </div>
+              <div class="cons-box">
+                <h5>Limitations</h5>
+                &bull; Requires PyTorch 2.x / modern TensorRT runtimes for peak NPU acceleration.
+              </div>
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> State-of-the-art ALPR backends (including this project's Python engine), vehicle dashcam ADAS, and smart city sensors.
+            </div>
+          </div>
+
+          <!-- Method V7: Vision Transformers -->
+          <div class="method-card">
+            <div class="method-header">
+              <div class="method-title">1.7 Vision Transformers &amp; Real-Time DETR (DETR, Deformable DETR &amp; RT-DETR)</div>
+              <span class="method-badge badge-transformer">Vision Transformer &bull; Global Attention</span>
+            </div>
+            <div class="method-desc">
+              <strong>How it works:</strong> Treats object detection as a direct set prediction problem. Feature maps from a CNN/ViT backbone are fed into a Transformer encoder-decoder. Learned object queries interact via multi-head self-attention and cross-attention across the global scene, supervised using bipartite matching (Hungarian loss).
+              <br>&bull; <strong>RT-DETR:</strong> Eliminates Non-Maximum Suppression (NMS) entirely, achieving real-time transformer speed on GPUs.
+            </div>
+            <div class="method-grid">
+              <div class="pros-box">
+                <h5>Advantages</h5>
+                &bull; Captures global spatial context (vehicle relationships to road lanes and barriers).<br>
+                &bull; Zero NMS post-processing eliminates latency bottlenecks in dense traffic.
+              </div>
+              <div class="cons-box">
+                <h5>Limitations</h5>
+                &bull; High memory usage; slower convergence during training.<br>
+                &bull; Challenging to deploy on ultra-low-power microcontrollers.
+              </div>
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> Autonomous driving perception suites and next-generation cloud traffic surveillance servers.
+            </div>
+          </div>
+
+          <!-- Method V8: Vehicle Make, Model, Color & Re-ID -->
+          <div class="method-card">
+            <div class="method-header">
+              <div class="method-title">1.8 Vehicle Attribute Recognition (MMR / VCR) &amp; Deep Metric Re-Identification (ReID)</div>
+              <span class="method-badge badge-deep">Metric Learning &bull; Forensic</span>
+            </div>
+            <div class="method-desc">
+              <strong>How it works:</strong>
+              <br>&bull; <strong>Multi-Task Classification:</strong> A CNN backbone with multiple heads simultaneously predicts vehicle category (Sedan, SUV, Hatchback, Truck, Bus, 2-Wheeler, Auto-rickshaw), manufacturer (Hyundai, Toyota, etc.), and exterior color.
+              <br>&bull; <strong>Deep Metric Learning (Vehicle ReID):</strong> Maps vehicle visual features into a high-dimensional metric embedding using Triplet Margin Loss:
+              <br><code style="color: #38bdf8;">L_triplet = max(0, ||f(a) - f(p)||^2 - ||f(a) - f(n)||^2 + &alpha;)</code>
+              <br>This allows law enforcement to track identical vehicles across multiple non-overlapping city cameras even if license plates are obscured, cloned, or missing!
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> Cross-camera fugitive tracking, stolen vehicle recovery, and cloned plate anomaly detection.
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- PART 2: LICENSE PLATE LOCALIZATION METHODS -->
+        <!-- ========================================== -->
+        <div id="methods-plate" style="margin-top: 36px;">
+          <h3 style="font-size: 1.3rem; color: #ef4444; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+            🪪 Part 2: License Plate Localization (LPD) Methods
+          </h3>
+          <p style="color: var(--text-muted); font-size: 0.92rem; margin-bottom: 18px;">
+            Once the vehicle ROI is localized, the system must pinpoint the high-resolution license plate within the car's bounding box. Below are the classical and deep learning methods used to isolate plates without locking onto grilles or headlights.
+          </p>
+
+          <!-- Method P1: Vertical Edge Dominance -->
+          <div class="method-card" style="border-left: 3px solid #ef4444;">
+            <div class="method-header">
+              <div class="method-title">2.1 Vertical-Edge Dominance &amp; Character Stroke Clustering (Our Client-Side ALPR Algorithm)</div>
+              <span class="method-badge badge-math">Edge Heuristic &bull; Morphological</span>
+            </div>
+            <div class="method-desc">
+              <strong>The Mathematical Intuition:</strong> Car radiator grilles, bumper ribs, hood contours, and pavement markings consist primarily of horizontal edges (<code>G_y &gt;&gt; G_x</code>). Conversely, alphanumeric license plate characters consist of dense vertical strokes (<code>G_x &gt;&gt; G_y</code>).
+              <br><br>
+              <strong>Algorithmic Formulation:</strong>
+              <br>1. <strong>Vertical-Edge Dominance Filter:</strong>
+              <br><code style="color: #38bdf8;">V(x, y) = max(0, G_x(x, y) - 0.5 &bull; G_y(x, y))</code>
+              <br>This completely cancels out radiator grille slats while amplifying character glyphs!
+              <br>2. <strong>Horizontal Morphological Closing:</strong> Applying a bilateral kernel of dimensions <code>k_w &approx; 0.05 &bull; W_car, k_h &approx; 0.015 &bull; H_car</code> bridges individual letter strokes into a solid rectangular component.
+              <br>3. <strong>Centerline Transition Frequency:</strong> Counts alternating light/dark transitions across the horizontal centerline. True plates yield 6–22 transitions corresponding to characters; uniform textures or headlights yield &lt; 3.
+              <br>4. <strong>Bezel Margin Padding:</strong> Expands character boundaries by +8% horizontal and +28% vertical to encompass the entire physical plate frame.
+            </div>
+            <div class="method-grid">
+              <div class="pros-box">
+                <h5>Advantages</h5>
+                &bull; Zero neural network weights needed; runs at 60 FPS in pure JavaScript inside web browsers.<br>
+                &bull; Robustly rejects car grilles and bumper slats.<br>
+                &bull; Operates locally with total privacy.
+              </div>
+              <div class="cons-box">
+                <h5>Limitations</h5>
+                &bull; Vulnerable to severe perspective distortion (&gt; 45&deg; camera tilt).<br>
+                &bull; Requires adequate contrast between characters and plate background.
+              </div>
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> Web browser in-browser detectors (this live demo!), low-cost microcontrollers, and edge IoT smart cameras.
+            </div>
+          </div>
+
+          <!-- Method P2: Color Segmentation -->
+          <div class="method-card">
+            <div class="method-header">
+              <div class="method-title">2.2 Chromaticity &amp; Color Space Thresholding (HSV / HSL / CIELAB)</div>
+              <span class="method-badge badge-classical">Color Space &bull; Heuristic</span>
+            </div>
+            <div class="method-desc">
+              <strong>How it works:</strong> Segments pixels using specialized color distributions in the HSV (Hue, Saturation, Value) color space:
+              <br>&bull; <strong>Indian Commercial Vehicles (Yellow):</strong> <code>H &isin; [20&deg;, 35&deg;], S &gt; 0.35, V &gt; 0.40</code>
+              <br>&bull; <strong>Electric Vehicles (Green):</strong> <code>H &isin; [65&deg;, 140&deg;], S &gt; 0.30</code>
+              <br>&bull; <strong>Private Vehicles (White):</strong> Low Saturation <code>S &lt; 0.18</code> and high Luminance <code>V &gt; 0.65</code>.
+            </div>
+            <div class="method-grid">
+              <div class="pros-box">
+                <h5>Advantages</h5>
+                &bull; Rapid execution with simple threshold lookup tables.<br>
+                &bull; Disregards vehicle bodywork when color contrast is high.
+              </div>
+              <div class="cons-box">
+                <h5>Limitations</h5>
+                &bull; Highly fragile under night sodium street lamps, direct headlight glare, or dirt/mud.<br>
+                &bull; Color gamut variations across camera sensors.
+              </div>
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> Regulated commercial vehicle lane monitoring and parking garage access control.
+            </div>
+          </div>
+
+          <!-- Method P3: 2D Wavelet Transform -->
+          <div class="method-card">
+            <div class="method-header">
+              <div class="method-title">2.3 2D Discrete Wavelet Transform (Haar DWT - Sub-band Energy)</div>
+              <span class="method-badge badge-classical">Frequency Domain &bull; Texture</span>
+            </div>
+            <div class="method-desc">
+              <strong>How it works:</strong> Decomposes the vehicle image into four spatial frequency sub-bands: LL (Approximation), LH (Horizontal edges), HL (Vertical edges), and HH (Diagonal edges). License plate regions exhibit high energy specifically in the HL and HH high-frequency sub-bands, allowing plate candidate isolation regardless of lighting intensity variations.
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> Variable lighting highway surveillance and rain/fog weather conditions.
+            </div>
+          </div>
+
+          <!-- Method P4: Deep Learning Plate Detectors -->
+          <div class="method-card">
+            <div class="method-header">
+              <div class="method-title">2.4 Dedicated Deep Learning Plate Detectors (YOLOv8-nano Plate Model)</div>
+              <span class="method-badge badge-deep">Deep Learning &bull; Custom Trained</span>
+            </div>
+            <div class="method-desc">
+              <strong>How it works:</strong> A lightweight CNN trained explicitly on hundreds of thousands of diverse license plate crops (CCPD, OpenALPR, Indian ALPR datasets). Trained to predict plate bounding boxes directly inside the vehicle crop:
+              <br>&bull; Robust against dirty plates, non-standard fonts, bumper stickers, and partial shadows.
+              <br>&bull; Achieves 97.8%+ localization mAP50 inside pre-localized vehicle ROIs.
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> Production ALPR backends, mobile patrol dashcams, and municipal parking enforcement vehicles.
+            </div>
+          </div>
+
+          <!-- Method P5: Oriented Bounding Boxes (OBB) -->
+          <div class="method-card">
+            <div class="method-header">
+              <div class="method-title">2.5 Oriented Bounding Boxes (OBB / Rotated YOLO)</div>
+              <span class="method-badge badge-deep">Deep Learning &bull; Angular Rotation</span>
+            </div>
+            <div class="method-desc">
+              <strong>Why Standard Boxes Fail:</strong> In roadside gantry cameras, cars approach at oblique angles (15&deg;–45&deg;). Standard Axis-Aligned Bounding Boxes (AABB <code>[x1, y1, x2, y2]</code>) encompass irrelevant bumper background and clip characters at acute corners.
+              <br><br>
+              <strong>How OBB Works:</strong> Predicts 5 parameters <code>[x_c, y_c, width, height, &theta;]</code> or the 4 polygon vertices <code>[(x1,y1), (x2,y2), (x3,y3), (x4,y4)]</code>. Uses Rotated IoU loss (ProbIoU) to tightly fit the license plate rectangle at any orientation.
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> Overhead highway toll gantries, curbside parking surveillance, and drone aerial vehicle tracking.
+            </div>
+          </div>
+
+          <!-- Method P6: Landmark Keypoint Detection & STN -->
+          <div class="method-card" style="border-left: 3px solid #38bdf8;">
+            <div class="method-header">
+              <div class="method-title">2.6 Landmark 4-Corner Keypoints &amp; Spatial Homography Rectification (STN)</div>
+              <span class="method-badge badge-math">Keypoint &bull; Perspective Geometry</span>
+            </div>
+            <div class="method-desc">
+              <strong>How it works:</strong>
+              <br>1. <strong>Keypoint Detection:</strong> A landmark regression network detects the exact 4 physical plate corners: Top-Left (P1), Top-Right (P2), Bottom-Right (P3), Bottom-Left (P4).
+              <br>2. <strong>Perspective Homography Matrix:</strong> Computes the 3x3 transformation matrix <strong>H</strong> that maps quadrilateral corners to a canonical flat rectangle (e.g., 240 &times; 60 px):
+              <br><code style="color: #38bdf8;">[x', y', 1]^T &sim; H &bull; [x, y, 1]^T</code>
+              <br>3. <strong>Warp Perspective Rectification:</strong> Executes <code>cv2.warpPerspective()</code> to unwarp, de-skew, and flatten the plate.
+              <br><br>
+              <strong style="color: #34d399;">Result:</strong> Downstream character recognition accuracy leaps from ~52% on skewed plates to over 98.5%!
+            </div>
+            <div class="arch-flow-box">
+Tilted Plate Crop ──▶ 4-Corner Landmark Net ──▶ Homography Matrix H ──▶ cv2.warpPerspective() ──▶ Rectified Flat 240x60 Plate
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> High-speed automated toll collection (FASTag / Electronic Toll Collection) and police speed cameras.
+            </div>
+          </div>
+
+          <!-- Method P7: Semantic / Instance Segmentation -->
+          <div class="method-card">
+            <div class="method-header">
+              <div class="method-title">2.7 Semantic &amp; Instance Segmentation (Mask R-CNN &amp; SegFormer)</div>
+              <span class="method-badge badge-deep">Pixel-Level Segmentation</span>
+            </div>
+            <div class="method-desc">
+              <strong>How it works:</strong> Predicts a pixel-wise binary segmentation mask for the license plate contour. Ideal for non-rectangular plates, curved vintage bumpers, or damaged/bent license plates where bounding boxes cannot fit tightly.
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> Damaged vehicle forensic analysis, international plates with irregular geometries, and motorcycle double-row plates.
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- PART 3: LICENSE PLATE CHARACTER RECOGNITION (OCR) -->
+        <!-- ========================================== -->
+        <div id="methods-ocr" style="margin-top: 36px;">
+          <h3 style="font-size: 1.3rem; color: #a855f7; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+            🔤 Part 3: License Plate Character Recognition (LPR / OCR)
+          </h3>
+          <p style="color: var(--text-muted); font-size: 0.92rem; margin-bottom: 18px;">
+            Once the plate crop is extracted and rectified, the system can optionally transcribe alphanumeric characters. Below are the core OCR paradigms.
+          </p>
+
+          <!-- Method O1: Segmentation + CNN -->
+          <div class="method-card">
+            <div class="method-header">
+              <div class="method-title">3.1 Character Segmentation + CNN Classifier (Two-Stage OCR)</div>
+              <span class="method-badge badge-classical">Segmentation-Based</span>
+            </div>
+            <div class="method-desc">
+              <strong>How it works:</strong>
+              <br>1. <strong>Binarization &amp; Projection:</strong> Converts plate crop to binary using Otsu thresholding. Computes vertical projection profile <code>P_v(x) = &sum;_y I(x,y)</code> to identify valleys between characters.
+              <br>2. <strong>Connected Component Analysis (CCA):</strong> Isolates character bounding boxes.
+              <br>3. <strong>Character CNN:</strong> A 5-layer CNN classifies each isolated character into 36 classes (0–9, A–Z).
+              <br><em>Limitation:</em> Breaks completely when characters touch due to blur, rust, or mounting screws/bolts.
+            </div>
+          </div>
+
+          <!-- Method O2: CRNN + CTC -->
+          <div class="method-card" style="border-left: 3px solid #a855f7;">
+            <div class="method-header">
+              <div class="method-title">3.2 CRNN + CTC: Convolutional Recurrent Neural Network (Industry Gold Standard)</div>
+              <span class="method-badge badge-ocr">Sequence-to-Sequence &bull; Segmentation-Free</span>
+            </div>
+            <div class="method-desc">
+              <strong>The Industrial Workhorse:</strong> Reads license plate text as an unsegmented continuous sequence without ever segmenting individual characters:
+              <br>&bull; <strong>CNN Feature Extractor:</strong> Extracts sequential feature columns of dimension <code>W' &times; D</code>.
+              <br>&bull; <strong>Bidirectional LSTM:</strong> Models contextual character transitions (e.g., learning that Indian plates begin with 2 state code letters like <code>TN</code>, <code>DL</code>, <code>MH</code> followed by 2 district digits).
+              <br>&bull; <strong>Connectionist Temporal Classification (CTC) Loss:</strong> Decodes variable-length sequences by collapsing identical repeating characters separated by a blank token &epsilon; (e.g. <code>_T_N__8_8_</code> &rarr; <code>TN88</code>).
+            </div>
+            <div class="arch-flow-box">
+Plate Image [100x32] ──▶ CNN Feature Map [25x512] ──▶ BiLSTM Context [25x256] ──▶ CTC Transcription ──▶ "TN87C7355"
+            </div>
+            <div class="method-grid">
+              <div class="pros-box">
+                <h5>Advantages</h5>
+                &bull; Exceptionally resilient to motion blur, low resolution, and dirt.<br>
+                &bull; Requires zero manual character segmentation labeling.<br>
+                &bull; Lightweight and deployable in real-time.
+              </div>
+              <div class="cons-box">
+                <h5>Limitations</h5>
+                &bull; Requires rectified horizontal text alignment.<br>
+                &bull; Struggles with stacked two-row motorcycle plates without prior splitting.
+              </div>
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> Worldwide commercial ALPR engines, highway tolling, and law enforcement speed radars.
+            </div>
+          </div>
+
+          <!-- Method O3: Vision Transformer OCR -->
+          <div class="method-card">
+            <div class="method-header">
+              <div class="method-title">3.3 Vision Transformer OCR (TrOCR, PARSeq &amp; SVTR)</div>
+              <span class="method-badge badge-transformer">Transformer &bull; Vision-Language</span>
+            </div>
+            <div class="method-desc">
+              <strong>How it works:</strong> Utilizes a Vision Transformer (ViT) patch encoder coupled with an autoregressive language model decoder. Eliminates recurrence and processes 2D character patch relationships directly, delivering robust accuracy on arbitrary artistic fonts, non-standard spacing, and degraded surfaces.
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> Cloud batch auditing, vintage car plate transcription, and multi-lingual international plates.
+            </div>
+          </div>
+
+          <!-- Method O4: End-to-End ALPR -->
+          <div class="method-card">
+            <div class="method-header">
+              <div class="method-title">3.4 Unified End-to-End ALPR Networks (WPOD-NET &amp; TE-ALPR)</div>
+              <span class="method-badge badge-deep">End-to-End &bull; Differentiable</span>
+            </div>
+            <div class="method-desc">
+              <strong>How it works:</strong> Replaces distinct detection, unwarping, and OCR steps with a single unified neural network. The network takes the vehicle crop, directly predicts the warped quadrilateral surface (Warped Planar Object Detection), applies internal differentiable bilinear grid sampling, and transcribes the text string in a single forward pass.
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> Unified embedded AI cameras and single-model edge deployments.
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- PART 4: ARCHITECTURE TRADE-OFF: SINGLE VS TWO-STAGE -->
+        <!-- ========================================== -->
+        <div id="methods-cascade" style="margin-top: 36px;">
+          <h3 style="font-size: 1.3rem; color: #10b981; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+            ⚖️ Part 4: System Architecture: Single-Stage vs. Two-Stage Cascade
+          </h3>
+          <p style="color: var(--text-muted); font-size: 0.92rem; margin-bottom: 16px;">
+            Why does virtually every production-grade ALPR system (including this project) employ a Two-Stage Cascade architecture?
+          </p>
+
+          <div class="method-grid" style="margin-bottom: 20px;">
+            <div class="method-card" style="margin-bottom: 0;">
+              <h4 style="color: #f87171; margin-bottom: 8px; font-size: 1.05rem;">❌ Single-Stage Direct Plate Detection</h4>
+              <p style="color: var(--text-muted); font-size: 0.88rem; line-height: 1.6;">
+                Running a license plate detector directly on the full 1080p/4K traffic image creates major failure modes:
+              </p>
+              <ul style="margin-left: 18px; margin-top: 8px; color: #cbd5e1; font-size: 0.85rem; line-height: 1.8;">
+                <li><strong>High False Positives:</strong> Billboards, phone numbers on commercial trailers, bus ads, and street signs trigger false detections.</li>
+                <li><strong>Pixel Degradation:</strong> Resizing a 4K frame directly to 640x640 destroys small plate character pixels.</li>
+                <li><strong>Zero Context:</strong> Cannot bind the plate to vehicle make, model, or color.</li>
+              </ul>
+            </div>
+
+            <div class="method-card" style="margin-bottom: 0; border-color: #10b981;">
+              <h4 style="color: #34d399; margin-bottom: 8px; font-size: 1.05rem;">✅ Two-Stage Cascaded ALPR (Our System)</h4>
+              <p style="color: var(--text-muted); font-size: 0.88rem; line-height: 1.6;">
+                Enforces a strict spatial hierarchy:
+                <br><code>Frame &rarr; Localize Vehicle &rarr; Crop Vehicle &rarr; Localize Plate inside ROI</code>:
+              </p>
+              <ul style="margin-left: 18px; margin-top: 8px; color: #cbd5e1; font-size: 0.85rem; line-height: 1.8;">
+                <li><strong>100% Background Rejection:</strong> Eliminates false positives from roadside signs and shops.</li>
+                <li><strong>Resolution Preservation:</strong> Vehicle crop retains native optical resolution for plate localization.</li>
+                <li><strong>Full Context Association:</strong> Directly pairs each license plate crop with vehicle type, color, and bounding box.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- PART 5: COMPREHENSIVE COMPARISON MATRIX -->
+        <!-- ========================================== -->
+        <div id="methods-matrix" style="margin-top: 36px;">
+          <h3 style="font-size: 1.3rem; color: #fbbf24; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+            📊 Part 5: Comprehensive Method Comparison Matrix
+          </h3>
+          <p style="color: var(--text-muted); font-size: 0.92rem; margin-bottom: 14px;">
+            A comparative engineering benchmark across real-world operational criteria:
+          </p>
+
+          <div class="table-responsive">
+            <table class="comparison-table">
+              <thead>
+                <tr>
+                  <th>Method &amp; Technique</th>
+                  <th>Category</th>
+                  <th>Accuracy in Traffic</th>
+                  <th>Inference Speed</th>
+                  <th>Compute Footprint</th>
+                  <th>Lighting Resilience</th>
+                  <th>Angle Resilience</th>
+                  <th>Best-Fit Industry Application</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Background Subtraction (MOG2)</strong></td>
+                  <td>Vehicle Detection</td>
+                  <td>Moderate (65–75%)</td>
+                  <td>Very High (150+ FPS)</td>
+                  <td>Low (CPU-only)</td>
+                  <td>Low (Shadows/Glare)</td>
+                  <td>N/A (Stationary)</td>
+                  <td>Highway vehicle counting &amp; triggers</td>
+                </tr>
+                <tr>
+                  <td><strong>HOG + Linear SVM / Haar</strong></td>
+                  <td>Vehicle Detection</td>
+                  <td>Moderate (70–80%)</td>
+                  <td>High (60–90 FPS)</td>
+                  <td>Low (Embedded CPU)</td>
+                  <td>Moderate</td>
+                  <td>Low (&lt; 15&deg;)</td>
+                  <td>Legacy automated parking barriers</td>
+                </tr>
+                <tr>
+                  <td><strong>Faster R-CNN / Cascade R-CNN</strong></td>
+                  <td>Vehicle Detection</td>
+                  <td>Very High (95–98%)</td>
+                  <td>Low (15–25 FPS)</td>
+                  <td>High (Server GPU)</td>
+                  <td>Very High</td>
+                  <td>High</td>
+                  <td>Forensic investigation &amp; traffic census</td>
+                </tr>
+                <tr>
+                  <td><strong>YOLOv8 / YOLOv11 (Anchor-Free)</strong></td>
+                  <td>Vehicle Detection</td>
+                  <td>Very High (94–97%)</td>
+                  <td>Very High (80–140 FPS)</td>
+                  <td>Moderate (Edge NPU/GPU)</td>
+                  <td>Very High</td>
+                  <td>Very High</td>
+                  <td>Smart city cameras &amp; live traffic systems</td>
+                </tr>
+                <tr>
+                  <td><strong>Vertical Edge + Morphology (Ours)</strong></td>
+                  <td>Plate Localization</td>
+                  <td>High (88–94%)</td>
+                  <td>Very High (60 FPS JS)</td>
+                  <td>Minimal (Browser JS)</td>
+                  <td>Moderate</td>
+                  <td>Moderate (&lt; 30&deg;)</td>
+                  <td>In-browser client ALPR &amp; edge IoT cameras</td>
+                </tr>
+                <tr>
+                  <td><strong>HSV Color Space Slicing</strong></td>
+                  <td>Plate Localization</td>
+                  <td>Low–Mod (60–75%)</td>
+                  <td>Instant (&gt; 200 FPS)</td>
+                  <td>Negligible</td>
+                  <td>Very Low</td>
+                  <td>Low</td>
+                  <td>Controlled indoor garage vehicle access</td>
+                </tr>
+                <tr>
+                  <td><strong>Rotated YOLO (OBB)</strong></td>
+                  <td>Plate Localization</td>
+                  <td>Very High (96–98%)</td>
+                  <td>High (60–90 FPS)</td>
+                  <td>Moderate (GPU)</td>
+                  <td>Very High</td>
+                  <td>Exceptional (up to 70&deg;)</td>
+                  <td>Overhead toll gantries &amp; patrol cars</td>
+                </tr>
+                <tr>
+                  <td><strong>4-Corner STN Homography Unwarp</strong></td>
+                  <td>Rectification</td>
+                  <td>Exceptional (&gt; 98%)</td>
+                  <td>High (75 FPS)</td>
+                  <td>Low–Moderate</td>
+                  <td>High</td>
+                  <td>Exceptional (Rectified)</td>
+                  <td>High-speed automated tolling (FASTag)</td>
+                </tr>
+                <tr>
+                  <td><strong>CRNN + CTC Loss</strong></td>
+                  <td>Character OCR</td>
+                  <td>Very High (94–98%)</td>
+                  <td>High (50–80 FPS)</td>
+                  <td>Moderate (NPU/GPU)</td>
+                  <td>Very High</td>
+                  <td>Requires unwarped crop</td>
+                  <td>Industrial ALPR transcription standard</td>
+                </tr>
+                <tr>
+                  <td><strong>Vision Transformer (TrOCR)</strong></td>
+                  <td>Character OCR</td>
+                  <td>Exceptional (97–99%)</td>
+                  <td>Moderate (20–35 FPS)</td>
+                  <td>High (GPU)</td>
+                  <td>Exceptional</td>
+                  <td>High</td>
+                  <td>Multi-font and degraded plate auditing</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- PART 6: RUNNABLE CODE REFERENCE -->
+        <!-- ========================================== -->
+        <div id="methods-code" style="margin-top: 36px;">
+          <h3 style="font-size: 1.3rem; color: #38bdf8; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+            💻 Part 6: Core Algorithm Implementation Code Reference
+          </h3>
+          <p style="color: var(--text-muted); font-size: 0.92rem; margin-bottom: 14px;">
+            Production implementations of key ALPR algorithms in Python OpenCV and PyTorch:
+          </p>
+
+          <h4 style="color: #cbd5e1; font-size: 0.95rem; margin: 16px 0 6px 0;">Algorithm A: Vertical Edge Dominance &amp; Morphological Closing (OpenCV Python)</h4>
+          <pre>
+import cv2
+import numpy as np
+
+def extract_plate_candidate(vehicle_crop):
+    """
+    Vertical Edge Dominance Algorithm: Suppresses horizontal car grilles
+    and isolates dense vertical character strokes.
+    """
+    gray = cv2.cvtColor(vehicle_crop, cv2.COLOR_BGR2GRAY)
+    
+    # 1. Compute Sobel Gradients
+    grad_x = cv2.Sobel(gray, cv2.CV_32F, 1, 0, ksize=3)
+    grad_y = cv2.Sobel(gray, cv2.CV_32F, 0, 1, ksize=3)
+    abs_x = cv2.convertScaleAbs(grad_x)
+    abs_y = cv2.convertScaleAbs(grad_y)
+    
+    # 2. Suppress horizontal edges: V = max(0, G_x - 0.5 * G_y)
+    v_edge = cv2.subtract(abs_x, (0.5 * abs_y).astype(np.uint8))
+    
+    # 3. Morphological Closing (Rectangular kernel tuned to plate aspect ratio ~4:1)
+    h, w = vehicle_crop.shape[:2]
+    kw = max(7, int(w * 0.05))
+    kh = max(3, int(h * 0.015))
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (kw, kh))
+    closed = cv2.morphologyEx(v_edge, cv2.MORPH_CLOSE, kernel)
+    
+    # 4. Otsu Thresholding to generate binary plate mask
+    _, thresh = cv2.threshold(closed, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    return thresh
+          </pre>
+
+          <h4 style="color: #cbd5e1; font-size: 0.95rem; margin: 16px 0 6px 0;">Algorithm B: 4-Corner Homography Perspective Unwarping (OpenCV Python)</h4>
+          <pre>
+def rectify_plate_homography(image, corners_4pts, target_w=240, target_h=60):
+    """
+    Unwarps a perspective-distorted plate into a canonical 240x60 rectangle.
+    corners_4pts: [(x1,y1), (x2,y2), (x3,y3), (x4,y4)] in Top-Left, TR, BR, BL order.
+    """
+    src_pts = np.array(corners_4pts, dtype=np.float32)
+    dst_pts = np.array([
+        [0, 0],
+        [target_w - 1, 0],
+        [target_w - 1, target_h - 1],
+        [0, target_h - 1]
+    ], dtype=np.float32)
+    
+    # Compute 3x3 Homography Matrix
+    H, _ = cv2.findHomography(src_pts, dst_pts)
+    
+    # Warp to pristine frontal view
+    rectified_plate = cv2.warpPerspective(image, H, (target_w, target_h))
+    return rectified_plate
+          </pre>
+        </div>
+      </div>
+    </div><!-- End Tab 2: methods-guide -->
+
+    <!-- TAB 3: TWO-STAGE ARCHITECTURE -->
+    <div id="architecture" class="tab-pane">
+      <div class="doc-section">
+        <h2>🏗️ Dense Traffic Two-Stage Pipeline Architecture</h2>
+        <p>
+          In high-density traffic scenes (such as Indian arterial corridors with multiple overlapping cars, commercial cabs, and trucks), direct single-stage number plate detectors suffer from severe false positives triggered by radiator grilles, bumper decals, and advertising stickers.
+        </p>
+        <p>
+          Our two-stage architecture solves this by enforcing a spatial hierarchy that isolates the vehicle boundary first, and then accurately extracts the high-resolution license plate image crop:
+        </p>
+        <pre>
+[Traffic Frame 960x540] ──▶ STAGE 1: Vehicle Localization (YOLO / COCO-SSD) 
                                  │
                                  ├──▶ Car 1 Crop [424, 279, 742, 534] ──▶ STAGE 2: Extracted Plate Crop [506, 445, 593, 476]
                                  │
                                  └──▶ Car 2 Crop [63, 240, 433, 528]  ──▶ STAGE 2: Extracted Plate Crop [155, 455, 217, 479]
-      </pre>
-    </section>
+        </pre>
 
-    <!-- WHY TWO-STAGE -->
-    <section id="why-two-stage" class="doc-section">
-      <h2>2. Why Two-Stage Vehicle &amp; Plate Localization?</h2>
-      <p>
-        Direct single-stage plate detectors struggle with false positives caused by bumper stickers, brand emblems, and background road signs. By first detecting the vehicle boundary and then localizing the license plate inside the vehicle ROI:
-      </p>
-      <ul style="margin-left: 20px; margin-top: 8px; color: var(--text-muted); line-height: 1.8;">
-        <li><strong>Eliminates Roadside False Positives:</strong> Removes false detections on roadside billboards, building signs, or irrelevant background clutter.</li>
-        <li><strong>Isolates High-Resolution Crops:</strong> Provides clean, dedicated bounding box crops for each vehicle and its corresponding license plate for standalone inspection and archiving.</li>
-        <li><strong>Direct Data Export:</strong> Allows immediate download and YOLO training label generation for computer vision and ALPR datasets.</li>
-      </ul>
-    </section>
+        <h3 style="font-size: 1.15rem; color: #38bdf8; margin: 24px 0 10px 0;">Why Two-Stage Vehicle &amp; Plate Localization?</h3>
+        <ul style="margin-left: 20px; color: var(--text-muted); line-height: 1.9;">
+          <li><strong>Eliminates Roadside False Positives:</strong> Eliminates false detections on roadside billboards, building signs, or irrelevant background clutter.</li>
+          <li><strong>Preserves High Resolution:</strong> Cropping the vehicle before running plate detection preserves fine optical character details that would otherwise be lost if a 4K frame were resized to 640x640 directly.</li>
+          <li><strong>Isolates Dedicated Crops:</strong> Generates standalone, pristine image crops for each vehicle and its corresponding license plate for clean visual inspection and archiving.</li>
+          <li><strong>Automated Annotation Export:</strong> Facilitates immediate YOLO and JSON training label generation for computer vision and ALPR datasets.</li>
+        </ul>
+      </div>
+    </div><!-- End Tab 3: architecture -->
 
-    <!-- MATHEMATICAL FORMULATIONS -->
-    <section id="math-metrics" class="doc-section">
-      <h2>3. Coordinate Mapping &amp; Training Formulas</h2>
-      <p>
-        Let $(X_{v1}, Y_{v1}, X_{v2}, Y_{v2})$ denote the vehicle bounding box coordinates in the original frame.
-        Let $(x_{p1}, y_{p1}, x_{p2}, y_{p2})$ denote the license plate coordinates within the vehicle crop:
-      </p>
-      <pre>
-Global Plate Coordinate:
+    <!-- TAB 4: MATHEMATICAL FORMULATIONS -->
+    <div id="math-metrics" class="tab-pane">
+      <div class="doc-section">
+        <h2>📐 Coordinate Mapping &amp; Training Formulas</h2>
+        <p>
+          Let $(X_{v1}, Y_{v1}, X_{v2}, Y_{v2})$ denote the vehicle bounding box coordinates in the original frame.
+          Let $(x_{p1}, y_{p1}, x_{p2}, y_{p2})$ denote the license plate coordinates within the local vehicle crop:
+        </p>
+        <pre>
+Global Plate Coordinate Mapping:
 X_global = X_v1 + x_p1
 Y_global = Y_v1 + y_p1
 
@@ -870,8 +1943,12 @@ c_x = ((X1 + X2) / 2.0) / Image_Width
 c_y = ((Y1 + Y2) / 2.0) / Image_Height
 w   = (X2 - X1) / Image_Width
 h   = (Y2 - Y1) / Image_Height
-      </pre>
-    </section>
+
+Intersection-over-Union (IoU) Evaluation Metric:
+IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
+        </pre>
+      </div>
+    </div><!-- End Tab 4: math-metrics -->
 
   </main>
 
@@ -2099,6 +3176,66 @@ h   = (Y2 - Y1) / Image_Height
     document.getElementById('btnCopyJson').addEventListener('click', () => {
       navigator.clipboard.writeText(JSON.stringify(state.detections, null, 2));
       alert('Copied Detection Metadata JSON to clipboard!');
+    });
+
+
+    // Tab Switching Controller
+    function switchTab(tabId) {
+      // 1. Update all tab buttons
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
+      });
+
+      // 2. Update navigation links in header
+      document.querySelectorAll('header nav a[data-tab]').forEach(link => {
+        link.classList.toggle('active', link.getAttribute('data-tab') === tabId);
+      });
+
+      // 3. Update active tab pane
+      document.querySelectorAll('.tab-pane').forEach(pane => {
+        pane.classList.toggle('active', pane.id === tabId);
+      });
+
+      // 4. If switching to interactive detector, re-render canvas after layout settles
+      if (tabId === 'interactive-ui' && state.imageLoaded) {
+        setTimeout(() => {
+          renderCanvas();
+        }, 40);
+      }
+
+      // 5. Update browser URL hash without jump
+      if (history.replaceState) {
+        history.replaceState(null, null, '#' + tabId);
+      } else {
+        window.location.hash = tabId;
+      }
+    }
+
+    // Attach click handlers to all tab triggers
+    document.querySelectorAll('.tab-btn, header nav a[data-tab]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const targetTab = btn.getAttribute('data-tab');
+        if (targetTab) {
+          e.preventDefault();
+          switchTab(targetTab);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      });
+    });
+
+    // Handle hash on load and hashchange
+    window.addEventListener('DOMContentLoaded', () => {
+      const hash = window.location.hash.replace('#', '');
+      if (hash && document.getElementById(hash)) {
+        switchTab(hash);
+      }
+    });
+
+    window.addEventListener('hashchange', () => {
+      const hash = window.location.hash.replace('#', '');
+      if (hash && document.getElementById(hash)) {
+        switchTab(hash);
+      }
     });
 
     // Start with default traffic image

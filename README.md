@@ -34,6 +34,7 @@ In the default highway traffic scene (`sample.jpg`), the system successfully res
 
 ## Interactive UI Features (`https://sureshmagix.github.io/vehicle-plate-detection/`)
 
+* **📚 Methods & Algorithms Learning Hub**: Dedicated educational reference tab explaining all classical and deep learning methods for identifying vehicles (GMM, HOG+SVM, Faster R-CNN, YOLO, RT-DETR, Vehicle ReID) and license plates (Vertical Edge Dominance, OBB, 4-corner STN Homography unwarping, CRNN+CTC, Vision Transformers) with a complete comparison matrix.
 * **Browse Any Image**: Drag and drop or browse any traffic or car image from your device.
 * **Separated Car & Number Plate Inspector**: Displays each detected car crop and its corresponding high-resolution number plate crop side-by-side with exact dimensions and coordinates.
 * **🧹 Clear Boxes Option**: Click "Clear Boxes" at any time to inspect the clean, unannotated image.
