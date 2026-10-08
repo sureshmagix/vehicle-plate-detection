@@ -61,78 +61,81 @@ LETTER_TO_DIGIT = {
 }
 
 
-def clean_and_parse_plate(raw_text: str) -> Tuple[str, float]:
-    """
-    Parse, validate and disambiguate license plate characters according to
-    standard license plate syntax rules (Indian HSRP, Bharat series, and International).
-    """
+def _clean_plate_text(raw_text: str) -> str:
+    """Return OCR text in a comparison-friendly form without guessing characters."""
     clean = re.sub(r"[^A-Z0-9]", "", raw_text.upper())
+    # The blue HSRP band occasionally enters the OCR result.  It is metadata,
+    # not part of the registration number.
+    return clean[3:] if clean.startswith("IND") and len(clean) >= 7 else clean
+
+
+def _map_characters(value: str, replacements: Dict[str, str]) -> Tuple[str, int]:
+    """Map OCR look-alikes only when the plate grammar identifies the field."""
+    mapped = "".join(replacements.get(char, char) for char in value)
+    substitutions = sum(left != right for left, right in zip(value, mapped))
+    return mapped, substitutions
+
+
+def clean_and_parse_plate(raw_text: str) -> Tuple[str, float]:
+    """Parse an Indian registration only when the OCR text supports it.
+
+    Character look-alikes are corrected *only* in a known letter or number
+    field.  In particular, this function never changes an unknown state code
+    to the first superficially similar state; that behaviour can turn a weak
+    OCR read into a plausible but incorrect registration number.
+    """
+    clean = _clean_plate_text(raw_text)
     if len(clean) < 3:
         return ("", 0.0)
 
-    # Strip HSRP prefix "IND" if captured by OCR
-    if clean.startswith("IND") and len(clean) >= 7:
-        clean = clean[3:]
-
-    # Strip edge border/screw artifacts (e.g. trailing '1', 'I', 'T')
-    if len(clean) == 10 and clean[-1] in "1IT" and clean[-5:-1].isdigit():
-        clean = clean[:-1]
-    elif len(clean) == 11 and clean[-1] in "1IT":
-        clean = clean[:-1]
-
-    # 1. Bharat Series (e.g., 22 BH 1234 AA)
-    bh_match = re.match(r"^(\d{2})BH(\d{4})([A-Z]{1,2})$", clean)
+    # Bharat Series, e.g. 22 BH 1234 AA.  The fixed "BH" is intentionally
+    # not inferred from a similar-looking OCR sequence.
+    bh_match = re.fullmatch(r"(\d{2})BH(\d{4})([A-Z]{1,2})", clean)
     if bh_match:
-        return (f"{bh_match.group(1)} BH {bh_match.group(2)} {bh_match.group(3)}", 0.98)
+        return (f"{bh_match.group(1)} BH {bh_match.group(2)} {bh_match.group(3)}", 0.99)
 
-    # 2. Standard Indian License Plate Format:
-    # State (2 letters) + RTO (1-2 digits) + Series (0-3 letters) + Number (1-4 digits)
-    if 7 <= len(clean) <= 10:
-        st_cand = clean[:2]
-        st_mapped = "".join(DIGIT_TO_LETTER.get(c, c) for c in st_cand)
-        best_st = None
+    # Standard Indian plate: state (2 letters), RTO (1-2 digits), optional
+    # series (0-3 letters), and a 1-4 digit running number.  Try the possible
+    # field lengths rather than assuming every RTO and running number is two
+    # and four characters respectively.
+    if 6 <= len(clean) <= 11:
+        state, state_changes = _map_characters(clean[:2], DIGIT_TO_LETTER)
+        if state in VALID_INDIAN_STATES:
+            body = clean[2:]
+            parsed_options = []
+            for rto_length in (2, 1):
+                for number_length in range(4, 0, -1):
+                    series_length = len(body) - rto_length - number_length
+                    if not 0 <= series_length <= 3:
+                        continue
 
-        if st_mapped in VALID_INDIAN_STATES:
-            best_st = st_mapped
-        else:
-            # Common OCR letter confusion for state codes
-            if st_cand[0] == "T" and st_cand[1] in "04KHON":
-                best_st = "TN"
-            elif st_cand[0] == "K" and st_cand[1] in "4A0":
-                best_st = "KA"
-            elif st_cand[0] == "D" and st_cand[1] in "1LI":
-                best_st = "DL"
-            elif st_cand[0] == "M" and st_cand[1] in "4HP":
-                best_st = "MH"
-            else:
-                for s in VALID_INDIAN_STATES:
-                    if st_mapped[0] == s[0] or st_mapped[1] == s[1]:
-                        best_st = s
-                        break
+                    rto_raw = body[:rto_length]
+                    series_raw = body[rto_length:rto_length + series_length]
+                    number_raw = body[-number_length:]
+                    rto, rto_changes = _map_characters(rto_raw, LETTER_TO_DIGIT)
+                    series, series_changes = _map_characters(series_raw, DIGIT_TO_LETTER)
+                    number, number_changes = _map_characters(number_raw, LETTER_TO_DIGIT)
+                    if not (rto.isdigit() and (not series or series.isalpha()) and number.isdigit()):
+                        continue
 
-        if best_st:
-            rem = clean[2:]
-            rto_cand = rem[:2]
-            rto_digits = "".join(LETTER_TO_DIGIT.get(c, c) for c in rto_cand)
-            if rto_digits.isdigit():
-                rem2 = rem[2:]
-                if len(rem2) >= 4:
-                    num_cand = rem2[-4:]
-                    num_digits = "".join(LETTER_TO_DIGIT.get(c, c) for c in num_cand)
-                    series_cand = rem2[:-4]
-                    series_letters = "".join(DIGIT_TO_LETTER.get(c, c) for c in series_cand)
-                    if num_digits.isdigit():
-                        formatted = f"{best_st} {rto_digits} {series_letters} {num_digits}".strip()
-                        formatted = re.sub(r"\s+", " ", formatted)
-                        return (formatted, 0.96)
+                    changes = state_changes + rto_changes + series_changes + number_changes
+                    # Prefer normal two-digit RTO / four-digit registration
+                    # fields, but retain valid shorter plate forms.
+                    preference = (rto_length == 2) * 2 + (number_length == 4)
+                    parsed_options.append((preference, -changes, rto, series, number, changes))
 
-    # 3. Generic formatted alphanumeric plate
+            if parsed_options:
+                _, _, rto, series, number, changes = max(parsed_options)
+                formatted = " ".join(part for part in (state, rto, series, number) if part)
+                # Syntax contributes confidence, but substitutions still lower
+                # it so OCR consensus remains the deciding signal.
+                return (formatted, max(0.82, 0.99 - 0.03 * changes))
+
+    # Preserve a non-destructive suggestion for manual review.  This value is
+    # never treated as a verified registration by the OCR pipeline.
     if len(clean) >= 4:
-        # Group into readable chunks (e.g., 2-3 letters, 2-4 digits)
-        formatted = re.sub(r"([A-Z]+)(\d+)", r"\1 \2", clean)
-        return (formatted, 0.60)
-
-    return (clean, 0.30)
+        return (re.sub(r"([A-Z]+)(\d+)", r"\1 \2", clean), 0.25)
+    return (clean, 0.0)
 
 
 class TwoStagePlateDetector:
@@ -192,16 +195,38 @@ class TwoStagePlateDetector:
         orig_w: int,
         orig_h: int,
     ) -> str:
+        """Backward-compatible convenience wrapper for plate text only."""
+        return self.extract_plate_recognition(
+            plate_bgr, global_xyxy, orig_w, orig_h
+        )["plate_text"]
+
+    def extract_plate_recognition(
+        self,
+        plate_bgr: np.ndarray,
+        global_xyxy: List[int],
+        orig_w: int,
+        orig_h: int,
+    ) -> Dict[str, Any]:
         """
-        Extract registration number from plate crop using high-precision multi-pass
-        optical character recognition (EasyOCR / Pytesseract) and syntax disambiguation.
+        Extract a registration number from a plate crop.
+
+        A plate number is returned only if multiple OCR passes agree on a valid
+        Indian plate grammar.  This is deliberately conservative: a wrong
+        number is substantially worse than an empty result that asks for human
+        review.  The raw OCR suggestion is returned separately for that review.
         """
+        empty_result = {
+            "plate_text": "",
+            "plate_text_raw": "",
+            "ocr_confidence": 0.0,
+            "ocr_status": "unreadable",
+        }
         if plate_bgr is None or plate_bgr.size == 0:
-            return ""
+            return empty_result
 
         h, w = plate_bgr.shape[:2]
         if h < 8 or w < 16:
-            return ""
+            return empty_result
 
         # High-resolution rescaling: Target height 90-120px for clear character strokes
         target_h = max(90, min(140, int(h * 2.5)))
@@ -235,7 +260,30 @@ class TwoStagePlateDetector:
             ("otsu", otsu),
         ]
 
-        candidates = []
+        # Valid candidates include the OCR confidence as well as the grammar
+        # score.  `raw_candidates` is retained only as a useful manual-review
+        # hint; it must never become an automatic plate value.
+        candidates: List[Dict[str, Any]] = []
+        raw_candidates: List[Dict[str, Any]] = []
+
+        def record_candidate(raw_text: str, ocr_confidence: float, source: str) -> None:
+            clean_raw = _clean_plate_text(raw_text)
+            if not clean_raw:
+                return
+
+            parsed_text, syntax_score = clean_and_parse_plate(clean_raw)
+            candidate = {
+                "raw": clean_raw,
+                "text": parsed_text,
+                "ocr_confidence": max(0.0, min(1.0, float(ocr_confidence))),
+                "syntax_score": syntax_score,
+                "source": source,
+            }
+            raw_candidates.append(candidate)
+            # Scores under 0.8 are generic formatting suggestions, not a
+            # validated plate grammar.
+            if syntax_score >= 0.8:
+                candidates.append(candidate)
 
         # 1. EasyOCR Primary Multi-Pass
         if self.ocr_reader is not None:
@@ -255,16 +303,14 @@ class TwoStagePlateDetector:
                         key=lambda x: (int(x[0][0][1] // 30), x[0][0][0])
                     )
                     raw_str = " ".join([x[1] for x in sorted_res])
-                    parsed_str, parse_score = clean_and_parse_plate(raw_str)
                     avg_ocr_conf = sum(x[2] for x in res) / len(res)
-                    total_score = parse_score * 0.65 + avg_ocr_conf * 0.35
-
-                    if parsed_str:
-                        candidates.append((total_score, parsed_str, raw_str))
+                    record_candidate(raw_str, avg_ocr_conf, pass_name)
                 except Exception:
                     continue
 
-        # 2. Pytesseract Secondary Fallback if EasyOCR found no text
+        # 2. Pytesseract secondary fallback if EasyOCR did not provide a
+        # structurally valid plate.  It may still rescue an otherwise unreadable
+        # crop, but is held to the same evidence threshold.
         if not candidates:
             try:
                 import pytesseract
@@ -274,21 +320,50 @@ class TwoStagePlateDetector:
                             p_img,
                             config="--psm 7 -c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",
                         ).strip()
-                        parsed_str, score = clean_and_parse_plate(text)
-                        if parsed_str:
-                            candidates.append((score, parsed_str, text))
+                        # pytesseract's string API does not expose a reliable
+                        # aggregate confidence, so use a deliberately modest
+                        # score and require repeatability below.
+                        record_candidate(text, 0.45, f"tesseract:{pass_name}")
                     except Exception:
                         continue
             except ImportError:
                 pass
 
         if candidates:
-            candidates.sort(key=lambda x: x[0], reverse=True)
-            return candidates[0][1]
+            grouped: Dict[str, List[Dict[str, Any]]] = {}
+            for candidate in candidates:
+                grouped.setdefault(candidate["text"], []).append(candidate)
 
-        # If OCR could not confidently read the plate, return empty string
-        # (DO NOT hallucinate or synthesize fake registration numbers)
-        return ""
+            total_valid = len(candidates)
+            ranked = []
+            for text, group in grouped.items():
+                mean_ocr = sum(item["ocr_confidence"] for item in group) / len(group)
+                mean_syntax = sum(item["syntax_score"] for item in group) / len(group)
+                support = len(group) / total_valid
+                # Consensus prevents one preprocessing artifact from winning
+                # merely because the grammar can make it look plausible.
+                combined = mean_ocr * 0.60 + mean_syntax * 0.20 + support * 0.20
+                ranked.append((combined, support, mean_ocr, text))
+
+            combined, support, mean_ocr, text = max(ranked, key=lambda item: item[0])
+            if combined >= 0.58 and (support >= 0.34 or mean_ocr >= 0.82):
+                return {
+                    "plate_text": text,
+                    "plate_text_raw": max(grouped[text], key=lambda item: item["ocr_confidence"])["raw"],
+                    "ocr_confidence": round(combined, 4),
+                    "ocr_status": "recognized",
+                }
+
+        if raw_candidates:
+            best_raw = max(raw_candidates, key=lambda item: item["ocr_confidence"])
+            return {
+                "plate_text": "",
+                "plate_text_raw": best_raw["text"] or best_raw["raw"],
+                "ocr_confidence": round(best_raw["ocr_confidence"], 4),
+                "ocr_status": "manual_review",
+            }
+
+        return empty_result
 
     def detect(
         self, image_input: Union[str, np.ndarray], padding_pct: float = 0.02
@@ -389,7 +464,7 @@ class TwoStagePlateDetector:
                                 if ocr_patch.size == 0:
                                     ocr_patch = plate_crop_patch
 
-                                p_text = self.extract_plate_number(
+                                recognition = self.extract_plate_recognition(
                                     ocr_patch,
                                     [global_px1, global_py1, global_px2, global_py2],
                                     orig_w,
@@ -398,7 +473,10 @@ class TwoStagePlateDetector:
 
                                 plate_item = {
                                     "plate_id": len(plates_for_vehicle) + 1,
-                                    "plate_text": p_text,
+                                    "plate_text": recognition["plate_text"],
+                                    "plate_text_raw": recognition["plate_text_raw"],
+                                    "ocr_confidence": recognition["ocr_confidence"],
+                                    "ocr_status": recognition["ocr_status"],
                                     "confidence": round(p_conf, 4),
                                     "bbox_crop_xyxy": [px1, py1, px2, py2],
                                     "bbox_global_xyxy": [
@@ -614,6 +692,12 @@ def main():
                 print(f"      YOLO Norm (cx,cy,w,h): {p['bbox_yolo_norm']}")
                 print(f"      Crop Relative BBox : {p['bbox_crop_xyxy']}")
                 print(f"      Aspect Ratio (w/h) : {p['aspect_ratio']}")
+                if p["plate_text"]:
+                    print(f"      Registration Text : {p['plate_text']} (OCR {p['ocr_confidence']*100:.1f}%)")
+                elif p["plate_text_raw"]:
+                    print(f"      OCR Review Hint   : {p['plate_text_raw']} (not auto-accepted)")
+                else:
+                    print("      Registration Text : unreadable")
 
     if not args.no_save:
         out_dir = Path(args.output_dir)
