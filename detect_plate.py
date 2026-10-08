@@ -366,14 +366,18 @@ class TwoStagePlateDetector:
         return empty_result
 
     def detect(
-        self, image_input: Union[str, np.ndarray], padding_pct: float = 0.02
+        self,
+        image_input: Union[str, np.ndarray],
+        padding_pct: float = 0.02,
+        extract_text: bool = False,
     ) -> Dict[str, Any]:
         """
         Execute two-stage detection on an image.
 
         :param image_input: File path or cv2 BGR image array.
         :param padding_pct: Percentage of bounding box to pad vehicle crop (ensures plate edges aren't clipped).
-        :return: Comprehensive structured detection results including all coordinates.
+        :param extract_text: If True, optionally run OCR recognition passes on cropped plates.
+        :return: Comprehensive structured detection results including all coordinates and crops.
         """
         if isinstance(image_input, (str, Path)):
             img_path = str(image_input)
@@ -428,8 +432,8 @@ class TwoStagePlateDetector:
                                 # Clamp crop coordinates
                                 px1 = max(0, min(crop_w - 1, px1))
                                 py1 = max(0, min(crop_h - 1, py1))
-                                px2 = max(0, min(crop_w - 1, px2))
                                 py2 = max(0, min(crop_h - 1, py2))
+                                px2 = max(0, min(crop_w - 1, px2))
 
                                 p_w = px2 - px1
                                 p_h = py2 - py1
@@ -453,23 +457,30 @@ class TwoStagePlateDetector:
                                     round(p_w / float(p_h), 2) if p_h > 0 else 0.0
                                 )
 
-                                # Generous padding for OCR extraction to prevent character clipping at edges
-                                pad_ocr_x = int(p_w * 0.08)
-                                pad_ocr_y = int(p_h * 0.12)
-                                ocr_px1 = max(0, px1 - pad_ocr_x)
-                                ocr_py1 = max(0, py1 - pad_ocr_y)
-                                ocr_px2 = min(crop_w, px2 + pad_ocr_x)
-                                ocr_py2 = min(crop_h, py2 + pad_ocr_y)
-                                ocr_patch = vehicle_crop[ocr_py1:ocr_py2, ocr_px1:ocr_px2]
-                                if ocr_patch.size == 0:
-                                    ocr_patch = plate_crop_patch
+                                if extract_text:
+                                    pad_ocr_x = int(p_w * 0.08)
+                                    pad_ocr_y = int(p_h * 0.12)
+                                    ocr_px1 = max(0, px1 - pad_ocr_x)
+                                    ocr_py1 = max(0, py1 - pad_ocr_y)
+                                    ocr_px2 = min(crop_w, px2 + pad_ocr_x)
+                                    ocr_py2 = min(crop_h, py2 + pad_ocr_y)
+                                    ocr_patch = vehicle_crop[ocr_py1:ocr_py2, ocr_px1:ocr_px2]
+                                    if ocr_patch.size == 0:
+                                        ocr_patch = plate_crop_patch
 
-                                recognition = self.extract_plate_recognition(
-                                    ocr_patch,
-                                    [global_px1, global_py1, global_px2, global_py2],
-                                    orig_w,
-                                    orig_h,
-                                )
+                                    recognition = self.extract_plate_recognition(
+                                        ocr_patch,
+                                        [global_px1, global_py1, global_px2, global_py2],
+                                        orig_w,
+                                        orig_h,
+                                    )
+                                else:
+                                    recognition = {
+                                        "plate_text": "",
+                                        "plate_text_raw": "",
+                                        "ocr_confidence": 0.0,
+                                        "ocr_status": "crop_extracted",
+                                    }
 
                                 plate_item = {
                                     "plate_id": len(plates_for_vehicle) + 1,
@@ -584,8 +595,7 @@ class TwoStagePlateDetector:
             if show_plate:
                 for p in v["plates_detected"]:
                     px1, py1, px2, py2 = p["bbox_global_xyxy"]
-                    p_str = p.get("plate_text", "")
-                    p_label = f"{p_str} ({p['confidence']*100:.0f}%)" if p_str else f"PLATE {p['confidence']*100:.1f}%"
+                    p_label = f"PLATE {p['confidence']*100:.1f}%"
 
                     # Plate box in sharp red/orange
                     cv2.rectangle(canvas, (px1, py1), (px2, py2), (0, 69, 255), 2)
@@ -649,6 +659,11 @@ def main():
         help="Output directory for visual results and crops.",
     )
     parser.add_argument(
+        "--extract-text",
+        action="store_true",
+        help="Run OCR text extraction on license plate crops.",
+    )
+    parser.add_argument(
         "--no-save",
         action="store_true",
         help="Do not save output images to disk.",
@@ -663,7 +678,7 @@ def main():
         plate_conf=args.plate_conf,
     )
 
-    results = detector.detect(args.image)
+    results = detector.detect(args.image, extract_text=args.extract_text)
 
     print("\n" + "=" * 65)
     print(" TWO-STAGE VEHICLE & LICENSE PLATE DETECTION REPORT")
@@ -694,10 +709,8 @@ def main():
                 print(f"      Aspect Ratio (w/h) : {p['aspect_ratio']}")
                 if p["plate_text"]:
                     print(f"      Registration Text : {p['plate_text']} (OCR {p['ocr_confidence']*100:.1f}%)")
-                elif p["plate_text_raw"]:
-                    print(f"      OCR Review Hint   : {p['plate_text_raw']} (not auto-accepted)")
                 else:
-                    print("      Registration Text : unreadable")
+                    print("      Extracted Crop    : Ready (Image Crop Saved)")
 
     if not args.no_save:
         out_dir = Path(args.output_dir)
