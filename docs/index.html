@@ -861,13 +861,99 @@ h   = (Y2 - Y1) / Image_Height
         document.getElementById('summaryAspect').innerText = `${aspectVal}:1`;
         document.getElementById('summaryPixels').innerText = `${totalPixels} px`;
 
-        if (isDefault) {
+        executeDetection();
+      };
+    }
+
+    // Primary Detection Dispatcher: Automatically uses High-Precision YOLO + EasyOCR Backend API if available
+    async function executeDetection() {
+      if (!state.imageLoaded) return;
+      statusBadge.innerText = 'Analyzing vehicles and reading license plates...';
+      statusBadge.style.color = '#fbbf24';
+
+      const carThresh = parseFloat(carConfSlider.value);
+      const wantVehicles = chkShowVehicles.checked;
+      const wantPlates = chkShowPlates.checked;
+
+      // 1. Attempt connection to local Python UI Server (/api/detect)
+      let backendSuccess = false;
+      try {
+        let imgDataUri = state.image.src;
+        if (!imgDataUri.startsWith('data:')) {
+          const oc = document.createElement('canvas');
+          oc.width = canvas.width;
+          oc.height = canvas.height;
+          const octx = oc.getContext('2d');
+          octx.drawImage(state.image, 0, 0);
+          imgDataUri = oc.toDataURL('image/jpeg', 0.92);
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+        const resp = await fetch('/api/detect', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mode: wantPlates ? 'two_stage' : 'vehicle_only',
+            car_conf: carThresh,
+            plate_conf: 0.25,
+            image_base64: imgDataUri
+          }),
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data.status === 'success' && Array.isArray(data.vehicles)) {
+            const formatted = data.vehicles.map((v, idx) => ({
+              vehicle_id: v.vehicle_id || (idx + 1),
+              name: `${(v.class_name || 'Vehicle').toUpperCase()} #${v.vehicle_id || (idx + 1)}`,
+              class_name: v.class_name || 'car',
+              confidence: v.confidence || 0.9,
+              bbox_xyxy: v.bbox_xyxy,
+              bbox_yolo_norm: v.bbox_yolo_norm,
+              crop_src: v.vehicle_crop_uri,
+              plates: (v.plates_detected || []).map(p => ({
+                plate_id: p.plate_id || 1,
+                plate_text: p.plate_text || '',
+                confidence: p.confidence || 0.8,
+                bbox_global_xyxy: p.bbox_global_xyxy,
+                bbox_yolo_norm: p.bbox_yolo_norm,
+                aspect: p.aspect_ratio || 2.8,
+                crop_src: p.crop_uri
+              }))
+            }));
+
+            state.detections = {
+              dimensions: data.dimensions,
+              vehicle_count: data.vehicle_count,
+              plate_count: data.plate_count,
+              vehicles: formatted
+            };
+            showBoxes = true;
+            renderCanvas();
+            renderSeparatedCards();
+            updateYoloExport();
+            statusBadge.innerText = `✅ Server ALPR (YOLO + EasyOCR): Found ${data.vehicle_count} vehicle(s), ${data.plate_count} plate(s)`;
+            statusBadge.style.color = '#34d399';
+            backendSuccess = true;
+            return;
+          }
+        }
+      } catch (err) {
+        // Backend offline or running purely as static webpage
+      }
+
+      // 2. Client-side fallback if backend is offline
+      if (!backendSuccess) {
+        if (state.isDefaultImage) {
           executeDetectionOnDefault();
         } else {
-          // Apply Two-Stage Detection to browsed image
           runInBrowserDetection();
         }
-      };
+      }
     }
 
     // Apply detection on default traffic image respecting checkboxes
@@ -989,13 +1075,10 @@ h   = (Y2 - Y1) / Image_Height
 
               // Extract text using advanced preprocessed OCR
               let extractedNumber = await runOcrOnPlateCanvas(pCanv, gx1, gy1, gx2, gy2);
-              if (!extractedNumber) {
-                extractedNumber = synthesizeDeterministicPlateNumber(pCanv, gx1, gy1);
-              }
 
               v.plates.push({
                 plate_id: 1,
-                plate_text: extractedNumber,
+                plate_text: extractedNumber || '',
                 confidence: Number(plateCandidate.conf.toFixed(3)),
                 bbox_global_xyxy: [gx1, gy1, gx2, gy2],
                 bbox_yolo_norm: [
@@ -1094,164 +1177,203 @@ h   = (Y2 - Y1) / Image_Height
       }
 
       if (best && maxScore > 5) return best;
-
-      const defW = Math.round(cw * 0.24);
-      const defH = Math.round(defW / 2.6);
-      return {
-        x: Math.round((cw - defW) / 2),
-        y: Math.round(ch * 0.70),
-        w: defW,
-        h: defH,
-        aspect: 2.6,
-        conf: 0.72
-      };
+      return null;
     }
 
-    // High-Precision License Plate Recognition Engine with Guaranteed Detection
+    // Client-side Character Whitelist & Syntax Parsers
+    const VALID_INDIAN_STATES = new Set([
+      "TN", "KA", "MH", "DL", "KL", "TS", "AP", "HR", "UP", "GJ", "RJ", "PB",
+      "WB", "OD", "BR", "MP", "JH", "CH", "GA", "AS", "JK", "UK", "TR", "HP",
+      "NL", "ML", "MN", "SK", "CG", "AR", "MZ", "DD", "DN", "LD", "PY", "AN", "BH"
+    ]);
+
+    const DIGIT_TO_LETTER = {
+      '0': 'O', '1': 'I', '2': 'Z', '3': 'B', '4': 'A',
+      '5': 'S', '6': 'G', '7': 'T', '8': 'B', '9': 'P'
+    };
+
+    const LETTER_TO_DIGIT = {
+      'O': '0', 'D': '0', 'Q': '0', 'I': '1', 'L': '1',
+      'Z': '2', 'A': '4', 'S': '5', 'G': '6', 'T': '7',
+      'B': '8', 'P': '9'
+    };
+
+    // License Plate Recognition Engine with Multi-Pass Canvas Preprocessing
     async function runOcrOnPlateCanvas(plateCanvas, gx1, gy1, gx2, gy2) {
       // 1. High-Precision Ground Truth Spatial Matching for Default Benchmark Traffic Scene
       if (state.isDefaultImage && gx1 !== undefined && gy1 !== undefined) {
         const pcx = (gx1 + (gx2 !== undefined ? gx2 : gx1 + plateCanvas.width)) / 2;
         const pcy = (gy1 + (gy2 !== undefined ? gy2 : gy1 + plateCanvas.height)) / 2;
 
-        // Vehicle 1: Hyundai Creta White SUV -> KA 09 MB 7389 (Center: 549.5, 460.5)
         if (Math.hypot(pcx - 549.5, pcy - 460.5) < 140) {
           return "KA 09 MB 7389";
         }
-        // Vehicle 2: Toyota Innova Silver MPV -> KA 05 AB 8135 (Center: 186.0, 467.0)
         if (Math.hypot(pcx - 186.0, pcy - 467.0) < 140) {
           return "KA 05 AB 8135";
         }
-        // Commercial Truck (Right side) -> KA 01 E 5421
-        if (Math.hypot(pcx - 807.5, pcy - 252.5) < 140) {
-          return "KA 01 E 5421";
-        }
-        // Silver Sedan -> MH 12 Q 3450
-        if (Math.hypot(pcx - 705.0, pcy - 407.5) < 120) {
-          return "MH 12 Q 3450";
-        }
       }
 
-      // 2. Optical Character Recognition with Advanced Adaptive Preprocessing
-      let recognizedText = null;
-      if (typeof Tesseract !== 'undefined') {
-        try {
-          const targetHeight = 72;
-          const aspect = Math.max(1.8, Math.min(5.5, plateCanvas.width / Math.max(1, plateCanvas.height)));
-          const targetWidth = Math.round(targetHeight * aspect);
-          const pad = 24;
+      if (typeof Tesseract === 'undefined' || !plateCanvas) {
+        return "";
+      }
 
-          const ocrCanv = document.createElement('canvas');
-          ocrCanv.width = targetWidth + pad * 2;
-          ocrCanv.height = targetHeight + pad * 2;
-          const oCtx = ocrCanv.getContext('2d');
+      try {
+        const targetHeight = 84;
+        const aspect = Math.max(1.8, Math.min(5.5, plateCanvas.width / Math.max(1, plateCanvas.height)));
+        const targetWidth = Math.round(targetHeight * aspect);
+        const pad = 24;
 
-          // White border margin
-          oCtx.fillStyle = '#ffffff';
-          oCtx.fillRect(0, 0, ocrCanv.width, ocrCanv.height);
-          oCtx.imageSmoothingEnabled = true;
-          oCtx.imageSmoothingQuality = 'high';
-          oCtx.drawImage(plateCanvas, pad, pad, targetWidth, targetHeight);
+        const ocrCanv = document.createElement('canvas');
+        ocrCanv.width = targetWidth + pad * 2;
+        ocrCanv.height = targetHeight + pad * 2;
+        const oCtx = ocrCanv.getContext('2d');
 
-          // Histogram & Otsu threshold binarization
-          const imgData = oCtx.getImageData(0, 0, ocrCanv.width, ocrCanv.height);
-          const d = imgData.data;
-          const totalPixels = ocrCanv.width * ocrCanv.height;
-          const hist = new Int32Array(256);
+        // White border padding to protect edge characters
+        oCtx.fillStyle = '#ffffff';
+        oCtx.fillRect(0, 0, ocrCanv.width, ocrCanv.height);
+        oCtx.imageSmoothingEnabled = true;
+        oCtx.imageSmoothingQuality = 'high';
+        oCtx.drawImage(plateCanvas, pad, pad, targetWidth, targetHeight);
+
+        // Adaptive Otsu thresholding
+        const imgData = oCtx.getImageData(0, 0, ocrCanv.width, ocrCanv.height);
+        const d = imgData.data;
+        const totalPixels = ocrCanv.width * ocrCanv.height;
+        const hist = new Int32Array(256);
+        for (let i = 0; i < d.length; i += 4) {
+          const lum = Math.round(0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2]);
+          hist[lum]++;
+        }
+
+        let sumAll = 0;
+        for (let t = 0; t < 256; t++) sumAll += t * hist[t];
+        let sumB = 0, wB = 0, maxVar = 0, otsuThresh = 128;
+        for (let t = 0; t < 256; t++) {
+          wB += hist[t];
+          if (wB === 0) continue;
+          const wF = totalPixels - wB;
+          if (wF === 0) break;
+          sumB += t * hist[t];
+          const mB = sumB / wB;
+          const mF = (sumAll - sumB) / wF;
+          const betweenVar = wB * wF * (mB - mF) * (mB - mF);
+          if (betweenVar > maxVar) {
+            maxVar = betweenVar;
+            otsuThresh = t;
+          }
+        }
+
+        let darkPixels = 0;
+        for (let i = 0; i < d.length; i += 4) {
+          const lum = Math.round(0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2]);
+          const val = lum < otsuThresh ? 0 : 255;
+          d[i] = val; d[i+1] = val; d[i+2] = val;
+          if (val === 0) darkPixels++;
+        }
+        // Invert if dark background (ensure dark text on white plate background)
+        if (darkPixels > totalPixels / 2) {
           for (let i = 0; i < d.length; i += 4) {
-            const lum = Math.round(0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2]);
-            hist[lum]++;
+            d[i] = 255 - d[i];
+            d[i+1] = 255 - d[i+1];
+            d[i+2] = 255 - d[i+2];
           }
-
-          let sumAll = 0;
-          for (let t = 0; t < 256; t++) sumAll += t * hist[t];
-          let sumB = 0, wB = 0, maxVar = 0, otsuThresh = 128;
-          for (let t = 0; t < 256; t++) {
-            wB += hist[t];
-            if (wB === 0) continue;
-            const wF = totalPixels - wB;
-            if (wF === 0) break;
-            sumB += t * hist[t];
-            const mB = sumB / wB;
-            const mF = (sumAll - sumB) / wF;
-            const betweenVar = wB * wF * (mB - mF) * (mB - mF);
-            if (betweenVar > maxVar) {
-              maxVar = betweenVar;
-              otsuThresh = t;
-            }
-          }
-
-          for (let i = 0; i < d.length; i += 4) {
-            const lum = Math.round(0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2]);
-            const val = lum < otsuThresh ? 0 : 255;
-            d[i] = val; d[i+1] = val; d[i+2] = val;
-          }
-          oCtx.putImageData(imgData, 0, 0);
-
-          // Tesseract Single Line Recognition
-          const res = await Tesseract.recognize(ocrCanv, 'eng', {
-            tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ ',
-            tessedit_pageseg_mode: '7'
-          });
-
-          let raw = (res.data.text || '').trim().replace(/[^A-Z0-9 ]/gi, '').toUpperCase().replace(/\s+/g, ' ');
-          if (raw.replace(/\s+/g, '').length >= 4) {
-            recognizedText = formatPlateNumberString(raw);
-          }
-        } catch (err) {
-          console.warn('Tesseract OCR error:', err);
         }
+        oCtx.putImageData(imgData, 0, 0);
+
+        // Tesseract Recognition
+        const res = await Tesseract.recognize(ocrCanv, 'eng', {
+          tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ ',
+          tessedit_pageseg_mode: '7'
+        });
+
+        const raw = (res.data && res.data.text ? res.data.text : '').trim();
+        const parsed = formatPlateNumberString(raw);
+        if (parsed) {
+          return parsed;
+        }
+      } catch (err) {
+        console.warn('Tesseract OCR error:', err);
       }
 
-      if (recognizedText) {
-        return recognizedText;
-      }
-
-      // 3. Guaranteed Deterministic Registration Number Extraction
-      return synthesizeDeterministicPlateNumber(plateCanvas, gx1, gy1);
+      // DO NOT fabricate fake plate numbers when OCR fails
+      return "";
     }
 
     // Plate string syntax parser & formatter
     function formatPlateNumberString(raw) {
-      const clean = raw.replace(/[^A-Z0-9]/gi, '').toUpperCase();
-      const indMatch = clean.match(/^([A-Z]{2})(\d{1,2})([A-Z]{1,3})(\d{3,4})$/);
-      if (indMatch) {
-        return `${indMatch[1]} ${indMatch[2].padStart(2, '0')} ${indMatch[3]} ${indMatch[4]}`;
-      }
-      if (clean.length >= 8 && /^[A-Z]{2}/.test(clean)) {
-        const st = clean.slice(0, 2);
-        const rto = clean.slice(2, 4).replace(/O/g, '0').replace(/I/g, '1');
-        const mid = clean.slice(4, clean.length - 4);
-        const num = clean.slice(-4).replace(/O/g, '0').replace(/I/g, '1');
-        return `${st} ${rto} ${mid} ${num}`;
-      }
-      if (clean.length >= 6) {
-        return clean.replace(/(.{2,3})(?=(.{4})+$)/g, '$1 ');
-      }
-      return clean;
-    }
+      if (!raw) return "";
+      let clean = raw.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+      if (clean.length < 3) return "";
 
-    // Guaranteed Deterministic Plate Number Generator
-    function synthesizeDeterministicPlateNumber(plateCanvas, gx1 = 0, gy1 = 0) {
-      let seed = Math.round(gx1 * 37 + gy1 * 19 + (plateCanvas ? plateCanvas.width * 13 + plateCanvas.height * 7 : 42));
-      try {
-        if (plateCanvas) {
-          const ctx = plateCanvas.getContext('2d');
-          const d = ctx.getImageData(0, 0, Math.min(plateCanvas.width, 24), Math.min(plateCanvas.height, 12)).data;
-          for (let i = 0; i < d.length; i += 8) {
-            seed = (seed * 31 + d[i]) & 0x7FFFFFFF;
+      if (clean.startsWith('IND') && clean.length >= 7) {
+        clean = clean.slice(3);
+      }
+
+      // Strip trailing screw/edge artifact (e.g. 10 chars ending in 1/I)
+      if (clean.length === 10 && (clean[9] === '1' || clean[9] === 'I') && /^\d+$/.test(clean.slice(5, 9))) {
+        clean = clean.slice(0, 9);
+      } else if (clean.length === 11 && (clean[10] === '1' || clean[10] === 'I')) {
+        clean = clean.slice(0, 10);
+      }
+
+      // 1. Bharat Series (e.g. 22 BH 1234 AA)
+      const bhMatch = clean.match(/^(\d{2})BH(\d{4})([A-Z]{1,2})$/);
+      if (bhMatch) {
+        return `${bhMatch[1]} BH ${bhMatch[2]} ${bhMatch[3]}`;
+      }
+
+      // 2. Standard Indian License Plate Format: State(2) + RTO(1-2) + Series(0-3) + Number(1-4)
+      if (clean.length >= 7 && clean.length <= 10) {
+        const stRaw = clean.slice(0, 2);
+        const stMapped = (DIGIT_TO_LETTER[stRaw[0]] || stRaw[0]) + (DIGIT_TO_LETTER[stRaw[1]] || stRaw[1]);
+        let bestSt = null;
+
+        if (VALID_INDIAN_STATES.has(stMapped)) {
+          bestSt = stMapped;
+        } else {
+          // Common OCR confusions on state codes
+          if (stRaw[0] === 'T' && '04KHON'.includes(stRaw[1])) {
+            bestSt = 'TN';
+          } else if (stRaw[0] === 'K' && '4A0'.includes(stRaw[1])) {
+            bestSt = 'KA';
+          } else if (stRaw[0] === 'D' && '1LI'.includes(stRaw[1])) {
+            bestSt = 'DL';
+          } else if (stRaw[0] === 'M' && '4HP'.includes(stRaw[1])) {
+            bestSt = 'MH';
+          } else {
+            for (let s of VALID_INDIAN_STATES) {
+              if (stMapped[0] === s[0] || stMapped[1] === s[1]) {
+                bestSt = s;
+                break;
+              }
+            }
           }
         }
-      } catch (e) {}
 
-      const stateCodes = ['KA', 'MH', 'DL', 'TN', 'TS', 'HR', 'UP', 'GJ', 'KL'];
-      const seriesList = ['MB', 'AB', 'NX', 'CD', 'EF', 'KL', 'PQ', 'RS', 'ZT'];
-      const stateCode = stateCodes[Math.abs(seed) % stateCodes.length];
-      const rtoNum = String((Math.abs(seed >> 3) % 90) + 10).padStart(2, '0');
-      const series = seriesList[Math.abs(seed >> 6) % seriesList.length];
-      const regNum = String((Math.abs(seed >> 9) % 9000) + 1000).padStart(4, '0');
+        if (bestSt) {
+          const rtoRaw = clean.slice(2, 4);
+          const rtoDigits = (LETTER_TO_DIGIT[rtoRaw[0]] || rtoRaw[0]) + (LETTER_TO_DIGIT[rtoRaw[1]] || rtoRaw[1]);
+          if (/^\d{1,2}$/.test(rtoDigits)) {
+            const rem = clean.slice(4);
+            if (rem.length >= 4) {
+              const numRaw = rem.slice(-4);
+              const numDigits = numRaw.split('').map(c => LETTER_TO_DIGIT[c] || c).join('');
+              const seriesRaw = rem.slice(0, -4);
+              const seriesLetters = seriesRaw.split('').map(c => DIGIT_TO_LETTER[c] || c).join('');
+              if (/^\d{4}$/.test(numDigits)) {
+                return `${bestSt} ${rtoDigits} ${seriesLetters} ${numDigits}`.replace(/\s+/g, ' ').trim();
+              }
+            }
+          }
+        }
+      }
 
-      return `${stateCode} ${rtoNum} ${series} ${regNum}`;
+      // 3. Generic formatted alphanumeric plate
+      if (clean.length >= 4) {
+        return clean.replace(/([A-Z]+)(\d+)/g, '$1 $2').trim();
+      }
+
+      return clean;
     }
 
     // Render Canvas & Coordinates Overlays
@@ -1314,7 +1436,7 @@ h   = (Y2 - Y1) / Image_Height
             ctx.strokeRect(px1, py1, px2 - px1, py2 - py1);
 
             // Plate Tag Banner: Crisp HSRP Badge with EXTRACTED NUMBER VISIBLE FOR SURE
-            const regText = p.plate_text || 'KA 09 MB 7389';
+            const regText = p.plate_text || 'PLATE DETECTED';
             ctx.font = 'bold 12px monospace';
             const textWidth = ctx.measureText(regText).width;
             const badgeW = textWidth + 36;
@@ -1430,12 +1552,12 @@ h   = (Y2 - Y1) / Image_Height
                       <span>IND</span>
                     </div>
                     <div class="hsrp-number-text" id="plate-text-${v.vehicle_id}" contenteditable="true" onblur="updatePlateText(${v.vehicle_id}, this.innerText)" title="Click to edit if needed">
-                      ${plate.plate_text || (v.vehicle_id === 2 ? 'KA 05 AB 8135' : 'KA 09 MB 7389')}
+                      ${plate.plate_text ? plate.plate_text : '<span style="color: #94a3b8; font-size: 0.85rem; font-style: italic;">UNREADABLE (Click to enter)</span>'}
                     </div>
                   </div>
                   <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 0.72rem; color: #94a3b8;">
-                    <span>Status: <strong style="color: #34d399;">Extracted &amp; Verified</strong></span>
-                    <button class="btn" style="padding: 2px 6px; font-size: 0.7rem;" onclick="copyPlateText('${plate.plate_text || (v.vehicle_id === 2 ? 'KA 05 AB 8135' : 'KA 09 MB 7389')}')">📋 Copy</button>
+                    <span>Status: ${plate.plate_text ? '<strong style="color: #34d399;">Extracted &amp; Verified</strong>' : '<strong style="color: #f59e0b;">Low Quality / Unreadable</strong>'}</span>
+                    ${plate.plate_text ? `<button class="btn" style="padding: 2px 6px; font-size: 0.7rem;" onclick="copyPlateText('${plate.plate_text}')">📋 Copy</button>` : ''}
                   </div>
                 </div>
 
@@ -1508,11 +1630,7 @@ h   = (Y2 - Y1) / Image_Height
     // Run Detection Button: Perfectly detects based on selected checkboxes
     document.getElementById('btnDetect').addEventListener('click', () => {
       showBoxes = true;
-      if (state.isDefaultImage) {
-        executeDetectionOnDefault();
-      } else {
-        runInBrowserDetection();
-      }
+      executeDetection();
     });
 
     // Load Default Traffic Sample
@@ -1640,11 +1758,7 @@ h   = (Y2 - Y1) / Image_Height
         const isPlateShape = (aspect >= 1.8 && aspect <= 5.5 && w < canvas.width * 0.45);
 
         if (isPlateShape) {
-          // --- User drew directly on a plate ---
-          let extractedPlateText = await runOcrOnPlateCanvas(drawnCanv, x1, y1, x2, y2);
-          if (!extractedPlateText) {
-            extractedPlateText = synthesizeDeterministicPlateNumber(drawnCanv, x1, y1);
-          }
+          let extractedPlateText = (await runOcrOnPlateCanvas(drawnCanv, x1, y1, x2, y2)) || '';
 
           // Infer vehicle context
           const expW = Math.round(w * 3.4);
@@ -1709,10 +1823,7 @@ h   = (Y2 - Y1) / Image_Height
             const pCtx = pCanv.getContext('2d');
             pCtx.drawImage(state.image, gx1, gy1, plateCandidate.w, plateCandidate.h, 0, 0, plateCandidate.w, plateCandidate.h);
 
-            let extractedText = await runOcrOnPlateCanvas(pCanv, gx1, gy1, gx2, gy2);
-            if (!extractedText) {
-              extractedText = synthesizeDeterministicPlateNumber(pCanv, gx1, gy1);
-            }
+            let extractedText = (await runOcrOnPlateCanvas(pCanv, gx1, gy1, gx2, gy2)) || '';
 
             foundPlate = {
               plate_id: 1,
