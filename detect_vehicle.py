@@ -43,6 +43,25 @@ except ImportError:
 VEHICLE_CLASSES = {"car", "truck", "bus", "motorcycle"}
 
 
+def deblur_vehicle_stage(image: np.ndarray, strength: float = 1.0) -> np.ndarray:
+    """
+    Stage 1 Anti-Blur: Distinct sharpening and high-boost unsharp masking on full image.
+    Enhances vehicle silhouettes, contours, and grille lines with clear visual pop.
+    Applied manually only when requested.
+    """
+    if image is None or image.size == 0:
+        return image
+    blurred = cv2.GaussianBlur(image, (0, 0), sigmaX=3.0)
+    alpha = 1.0 + 1.2 * strength
+    beta = -1.2 * strength
+    sharpened = cv2.addWeighted(image, alpha, blurred, beta, 0)
+    lab = cv2.cvtColor(sharpened, cv2.COLOR_BGR2LAB)
+    l, a, b = cv2.split(lab)
+    clahe = cv2.createCLAHE(clipLimit=2.0 * strength, tileGridSize=(8, 8))
+    l = clahe.apply(l)
+    return cv2.cvtColor(cv2.merge([l, a, b]), cv2.COLOR_LAB2BGR)
+
+
 class VehicleDetector:
     """
     Modular Vehicle Detector utilizing YOLO architecture.
@@ -75,12 +94,15 @@ class VehicleDetector:
         self.model = YOLO(str(self.model_path))
 
     def detect(
-        self, image_input: Union[str, np.ndarray]
+        self,
+        image_input: Union[str, np.ndarray],
+        antiblur: bool = False,
     ) -> Dict[str, Any]:
         """
         Detect vehicles in an image.
 
         :param image_input: File path (str) or loaded BGR image (np.ndarray)
+        :param antiblur: Optional Stage 1 sharpening/deblurring before inference
         :return: Dictionary containing image metadata, vehicle detections, and coordinates.
         """
         if isinstance(image_input, (str, Path)):
@@ -96,8 +118,10 @@ class VehicleDetector:
 
         orig_h, orig_w = image.shape[:2]
 
+        inference_image = deblur_vehicle_stage(image) if antiblur else image
+
         # Run YOLO inference
-        results = self.model(image, conf=self.conf_threshold, verbose=False)
+        results = self.model(inference_image, conf=self.conf_threshold, verbose=False)
         detections: List[Dict[str, Any]] = []
 
         for r in results:
@@ -232,11 +256,16 @@ def main():
         action="store_true",
         help="Do not save visual outputs to disk.",
     )
+    parser.add_argument(
+        "--antiblur-vehicle",
+        action="store_true",
+        help="Apply Stage 1 sharpening/unsharp mask before vehicle detection.",
+    )
 
     args = parser.parse_args()
 
     detector = VehicleDetector(model_path=args.model, conf_threshold=args.conf)
-    results = detector.detect(args.image)
+    results = detector.detect(args.image, antiblur=args.antiblur_vehicle)
 
     print("\n" + "=" * 60)
     print(" VEHICLE DETECTION SUMMARY")

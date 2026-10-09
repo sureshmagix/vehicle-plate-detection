@@ -21,7 +21,8 @@ import os
 import sys
 import json
 import base64
-import cgi
+import io
+import zipfile
 import urllib.parse
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
@@ -90,6 +91,8 @@ class DetectionRequestHandler(BaseHTTPRequestHandler):
                     self.wfile.write(f.read())
             else:
                 self.send_error(404, "Sample image not found")
+        elif url_path == "/api/download-characters-zip":
+            self.handle_characters_zip_download()
         elif url_path.startswith("/docs/"):
             # Serve files from docs directory
             rel_file = url_path.replace("/docs/", "")
@@ -106,8 +109,31 @@ class DetectionRequestHandler(BaseHTTPRequestHandler):
 
         if url_path == "/api/detect":
             self.handle_detect_api()
+        elif url_path == "/api/download-characters-zip":
+            self.handle_characters_zip_download()
         else:
             self.send_error(404, "Endpoint not found")
+
+    def handle_characters_zip_download(self):
+        """Bundle all segmented character crops into a downloadable ZIP archive."""
+        char_dir = BASE_DIR / "crops" / "characters"
+        if not char_dir.exists():
+            char_dir = BASE_DIR / "docs" / "crops" / "characters"
+
+        png_files = sorted(list(char_dir.glob("*.png"))) if char_dir.exists() else []
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+            for p_file in png_files:
+                zip_file.write(p_file, arcname=p_file.name)
+
+        zip_bytes = zip_buffer.getvalue()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/zip")
+        self.send_header("Content-Disposition", 'attachment; filename="alpr_characters.zip"')
+        self.send_header("Content-Length", str(len(zip_bytes)))
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.end_headers()
+        self.wfile.write(zip_bytes)
 
     def serve_file(self, file_path: Path):
         ext = file_path.suffix.lower()
@@ -167,9 +193,13 @@ class DetectionRequestHandler(BaseHTTPRequestHandler):
 
             h, w = img.shape[:2]
 
+            antiblur_vehicle = bool(req_data.get("antiblur_vehicle", False))
+            antiblur_plate = bool(req_data.get("antiblur_plate", False))
+            antiblur_char = bool(req_data.get("antiblur_char", False))
+
             if mode == "vehicle_only":
                 vehicle_detector.conf_threshold = car_conf
-                results = vehicle_detector.detect(img)
+                results = vehicle_detector.detect(img, antiblur=antiblur_vehicle)
                 annotated = vehicle_detector.draw_detections(
                     results["raw_image"], results["vehicles"]
                 )
@@ -182,12 +212,24 @@ class DetectionRequestHandler(BaseHTTPRequestHandler):
                     "plate_count": 0,
                     "vehicles": results["vehicles"],
                     "annotated_image_uri": bgr_to_base64_data_uri(annotated),
+                    "antiblur": {
+                        "vehicle": antiblur_vehicle,
+                        "plate": antiblur_plate,
+                        "char": antiblur_char,
+                    },
                 }
             else:
                 # Two-Stage
                 two_stage_detector.car_conf = car_conf
                 two_stage_detector.plate_conf = plate_conf
-                results = two_stage_detector.detect(img)
+                results = two_stage_detector.detect(
+                    img,
+                    extract_text=True,
+                    extract_characters=True,
+                    antiblur_vehicle=antiblur_vehicle,
+                    antiblur_plate=antiblur_plate,
+                    antiblur_char=antiblur_char,
+                )
                 annotated = two_stage_detector.draw_annotations(
                     results["raw_image"], results["vehicles"]
                 )
@@ -200,8 +242,35 @@ class DetectionRequestHandler(BaseHTTPRequestHandler):
                     for idx, p in enumerate(v["plates_detected"]):
                         patch = v["_plate_patches"][idx]
                         p_crop_uri = bgr_to_base64_data_uri(patch)
+
+                        # Plate with character bounding boxes overlay
+                        ann_patch = None
+                        if idx < len(v.get("_plate_annotated_patches", [])):
+                            ann_patch = v["_plate_annotated_patches"][idx]
+                        ann_uri = bgr_to_base64_data_uri(ann_patch) if ann_patch is not None and ann_patch.size > 0 else p_crop_uri
+
+                        # Encode individual character crops
+                        char_patches = []
+                        if idx < len(v.get("_char_patches_per_plate", [])):
+                            char_patches = v["_char_patches_per_plate"][idx]
+
+                        formatted_chars = []
+                        for c_idx, ch in enumerate(p.get("characters", [])):
+                            ch_item = dict(ch)
+                            if c_idx < len(char_patches) and char_patches[c_idx] is not None:
+                                ch_item["crop_uri"] = bgr_to_base64_data_uri(char_patches[c_idx], ext=".png")
+                            else:
+                                ch_item["crop_uri"] = ""
+                            formatted_chars.append(ch_item)
+
+                        raw_patch = p.get("plate_raw_bgr", patch)
+                        deblur_patch = p.get("plate_deblurred_bgr", patch)
                         p_item = dict(p)
                         p_item["crop_uri"] = p_crop_uri
+                        p_item["plate_raw_crop_uri"] = bgr_to_base64_data_uri(raw_patch)
+                        p_item["plate_deblurred_crop_uri"] = bgr_to_base64_data_uri(deblur_patch)
+                        p_item["plate_annotated_crop_uri"] = ann_uri
+                        p_item["characters"] = formatted_chars
                         formatted_plates.append(p_item)
 
                     v_data = {
@@ -224,6 +293,11 @@ class DetectionRequestHandler(BaseHTTPRequestHandler):
                     "plate_count": results["plate_count"],
                     "vehicles": formatted_vehicles,
                     "annotated_image_uri": bgr_to_base64_data_uri(annotated),
+                    "antiblur": {
+                        "vehicle": antiblur_vehicle,
+                        "plate": antiblur_plate,
+                        "char": antiblur_char,
+                    },
                 }
 
             self.send_json_response(response_payload)
