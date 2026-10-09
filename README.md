@@ -13,18 +13,25 @@ A high-performance ALPR (Automated License Plate Recognition) pipeline, characte
 
 ## 🌟 Key Features
 
-### 1. Character-Level Bounding Boxes & Cropping
-* **Contour & Connected Component Analysis**: Normalizes license plates, applies CLAHE contrast equalization, adaptive/Otsu multi-thresholding, and extracts individual character contours filtered by aspect ratio ($0.10 \le w/h \le 1.25$), relative height, and area.
-* **OCR Character-Level Coordinates Fusion**: Correlates contour positions with EasyOCR token boundaries and PyTesseract character boxes, matching characters to their semantic labels (`K`, `A`, `0`, `9`, etc.).
-* **Visual Overlay**: Renders color-coded bounding boxes and index tags (`#1:K`, `#2:A`...) directly on the plate preview.
-* **Individual Character Crops**: Automatically isolates, upscales ($\ge 48\text{ px}$), and saves each character glyph to disk (`crops/characters/char_01.png`, etc.) and returns base64 PNG previews in the Web UI.
+### 1. Dedicated Zoomed License Plate Studio & Professional Number Bounding Boxes
+* **Separately Magnified Plate Inspection**: Dedicated studio canvas rendering license plates at selectable zoom levels (2.5x, 4.0x, 6.0x, or fit width) with crisp nearest-neighbor / pixelated rendering.
+* **Professional HUD Bounding Boxes**: Precision bounding boxes drawn against each individual number with corner bracket reticles (`┌ ┐ └ ┘`), semi-transparent character zone highlights, and floating monospace index pills (`[#1: K]`, `[#2: A]`, `[#3: 0]`...).
+* **Interactive HUD Controls**: Instant toggles for number bounding boxes, index labels, and live raw vs. deblurred visual comparison.
 
-### 2. Per-Stage Anti-Blur Checkbox Controls
-* **Stage 1 (Vehicle Detection)**: Optional sharpening / unsharp masking on the full image prior to vehicle localization (`--antiblur-vehicle`).
-* **Stage 2 (Plate Detection)**: Optional edge-boost unsharp filtering on the vehicle crop prior to license plate localization (`--antiblur-plate`).
-* **Stage 3 (Character OCR & Segmentation)**: Optional frequency-domain **Wiener Deconvolution** ($G(u,v) = \frac{H^*}{|H|^2 + K} F(u,v)$ via 2D FFT) + unsharp mask + CLAHE contrast enhancement on the plate crop before character segmentation (`--antiblur-char`).
+### 2. Character Cutting & 1-Click Batch Exporter (Separate Studio)
+* **Isolated Glyph Card Gallery**: Clean, high-density studio grid displaying each segmented character separately on velvet black background with dimensions ($w \times h$), aspect ratio, and OCR confidence.
+* **1-Click ZIP Batch Download**: Prominent single-click button (`📦 Download All Characters in 1 Click (.ZIP)`) that packages all segmented character crops (`char_01_K.png`, `char_02_A.png`, etc.) along with JSON metadata into a zip archive and initiates immediate download.
+* **One-Click Quick Actions**: Single-character `.png` download buttons on every glyph tile, plus single-click clipboard copying for formatted registration numbers and JSON bounding boxes.
 
-### 3. Strict Two-Stage Hierarchy
+### 3. Distinct Anti-Blur Preprocessing (Manual-Only · Default OFF)
+* **Default-Off Safety**: All anti-blur preprocessing options are **disabled by default**, preventing unwanted distortion and executing only when manually enabled by the user.
+* **Distinct Visual Sharpening**:
+  * **Stage 1 (Full Frame / Vehicles)**: High-boost unsharp masking ($\alpha=2.2, \beta=-1.2$) + LAB lightness contrast expansion for vehicle silhouette clarity.
+  * **Stage 2 (Vehicle Crop / Plates)**: Edge-boost sharpening + bilateral edge smoothing for plate boundary enhancement.
+  * **Stage 3 (Plate Crop / Characters)**: Frequency-domain **Wiener Deconvolution** ($G(u,v) = \frac{H^*}{|H|^2 + K} F(u,v)$ via 2D FFT) + Laplacian high-boost filter + high-contrast CLAHE ($3.8$ clip limit) to make character strokes razor-sharp.
+* **Multi-Intensity Control**: 1.0x (Standard), 1.8x (High), and 2.5x (Ultra) selectable intensities with active status indicator banners.
+
+### 4. Strict Two-Stage Localization Hierarchy
 Prevents false positives from background billboards, road signs, and roadside text by enforcing strict spatial localization:
 1. **Stage 1**: Detects vehicle boundary (`car`, `truck`, `bus`, `motorcycle`).
 2. **Stage 2**: Searches for license plate strictly within localized vehicle patches.

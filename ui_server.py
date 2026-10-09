@@ -21,7 +21,8 @@ import os
 import sys
 import json
 import base64
-import cgi
+import io
+import zipfile
 import urllib.parse
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
@@ -90,6 +91,8 @@ class DetectionRequestHandler(BaseHTTPRequestHandler):
                     self.wfile.write(f.read())
             else:
                 self.send_error(404, "Sample image not found")
+        elif url_path == "/api/download-characters-zip":
+            self.handle_characters_zip_download()
         elif url_path.startswith("/docs/"):
             # Serve files from docs directory
             rel_file = url_path.replace("/docs/", "")
@@ -106,8 +109,31 @@ class DetectionRequestHandler(BaseHTTPRequestHandler):
 
         if url_path == "/api/detect":
             self.handle_detect_api()
+        elif url_path == "/api/download-characters-zip":
+            self.handle_characters_zip_download()
         else:
             self.send_error(404, "Endpoint not found")
+
+    def handle_characters_zip_download(self):
+        """Bundle all segmented character crops into a downloadable ZIP archive."""
+        char_dir = BASE_DIR / "crops" / "characters"
+        if not char_dir.exists():
+            char_dir = BASE_DIR / "docs" / "crops" / "characters"
+
+        png_files = sorted(list(char_dir.glob("*.png"))) if char_dir.exists() else []
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+            for p_file in png_files:
+                zip_file.write(p_file, arcname=p_file.name)
+
+        zip_bytes = zip_buffer.getvalue()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/zip")
+        self.send_header("Content-Disposition", 'attachment; filename="alpr_characters.zip"')
+        self.send_header("Content-Length", str(len(zip_bytes)))
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.end_headers()
+        self.wfile.write(zip_bytes)
 
     def serve_file(self, file_path: Path):
         ext = file_path.suffix.lower()
@@ -237,8 +263,12 @@ class DetectionRequestHandler(BaseHTTPRequestHandler):
                                 ch_item["crop_uri"] = ""
                             formatted_chars.append(ch_item)
 
+                        raw_patch = p.get("plate_raw_bgr", patch)
+                        deblur_patch = p.get("plate_deblurred_bgr", patch)
                         p_item = dict(p)
                         p_item["crop_uri"] = p_crop_uri
+                        p_item["plate_raw_crop_uri"] = bgr_to_base64_data_uri(raw_patch)
+                        p_item["plate_deblurred_crop_uri"] = bgr_to_base64_data_uri(deblur_patch)
                         p_item["plate_annotated_crop_uri"] = ann_uri
                         p_item["characters"] = formatted_chars
                         formatted_plates.append(p_item)

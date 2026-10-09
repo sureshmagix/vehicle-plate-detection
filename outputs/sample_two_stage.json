@@ -4,379 +4,30 @@
     "width": 960,
     "height": 540
   },
-  "vehicle_count": 12,
+  "vehicle_count": 10,
   "plate_count": 2,
   "vehicles": [
     {
       "vehicle_id": 1,
       "class_name": "car",
-      "confidence": 0.8993,
+      "confidence": 0.8965,
       "bbox_xyxy": [
-        424,
-        278,
-        742,
+        423,
+        277,
+        741,
         534
       ],
       "bbox_xywh": [
-        424,
-        278,
+        423,
+        277,
         318,
-        256
+        257
       ],
       "bbox_yolo_norm": [
-        0.607292,
-        0.751852,
+        0.60625,
+        0.750926,
         0.33125,
-        0.474074
-      ],
-      "plates_detected": [
-        {
-          "plate_id": 1,
-          "plate_text": "",
-          "plate_text_raw": "I 409KB 7J 09",
-          "ocr_confidence": 0.3955,
-          "ocr_status": "manual_review",
-          "confidence": 0.7428,
-          "bbox_crop_xyxy": [
-            88,
-            172,
-            176,
-            203
-          ],
-          "bbox_global_xyxy": [
-            506,
-            445,
-            594,
-            476
-          ],
-          "bbox_global_xywh": [
-            506,
-            445,
-            88,
-            31
-          ],
-          "bbox_yolo_norm": [
-            0.572917,
-            0.852778,
-            0.091667,
-            0.057407
-          ],
-          "aspect_ratio": 2.84,
-          "character_count": 10,
-          "characters": [
-            {
-              "char_id": 1,
-              "char_text": "I",
-              "confidence": 0.3955,
-              "bbox_plate_xyxy": [
-                1,
-                20,
-                5,
-                27
-              ],
-              "bbox_plate_xywh": [
-                1,
-                20,
-                4,
-                7
-              ],
-              "bbox_scaled_xyxy": [
-                2,
-                57,
-                15,
-                78
-              ],
-              "aspect_ratio": 0.57
-            },
-            {
-              "char_id": 2,
-              "char_text": "4",
-              "confidence": 0.3955,
-              "bbox_plate_xyxy": [
-                12,
-                10,
-                27,
-                24
-              ],
-              "bbox_plate_xywh": [
-                12,
-                10,
-                15,
-                14
-              ],
-              "bbox_scaled_xyxy": [
-                34,
-                30,
-                77,
-                70
-              ],
-              "aspect_ratio": 1.07
-            },
-            {
-              "char_id": 3,
-              "char_text": "0",
-              "confidence": 0.3955,
-              "bbox_plate_xyxy": [
-                25,
-                13,
-                30,
-                22
-              ],
-              "bbox_plate_xywh": [
-                25,
-                13,
-                5,
-                9
-              ],
-              "bbox_scaled_xyxy": [
-                73,
-                37,
-                88,
-                64
-              ],
-              "aspect_ratio": 0.56
-            },
-            {
-              "char_id": 4,
-              "char_text": "9",
-              "confidence": 0.3955,
-              "bbox_plate_xyxy": [
-                32,
-                13,
-                37,
-                22
-              ],
-              "bbox_plate_xywh": [
-                32,
-                13,
-                5,
-                9
-              ],
-              "bbox_scaled_xyxy": [
-                92,
-                38,
-                107,
-                64
-              ],
-              "aspect_ratio": 0.56
-            },
-            {
-              "char_id": 5,
-              "char_text": "K",
-              "confidence": 0.3955,
-              "bbox_plate_xyxy": [
-                39,
-                13,
-                45,
-                22
-              ],
-              "bbox_plate_xywh": [
-                39,
-                13,
-                6,
-                9
-              ],
-              "bbox_scaled_xyxy": [
-                113,
-                37,
-                130,
-                65
-              ],
-              "aspect_ratio": 0.67
-            },
-            {
-              "char_id": 6,
-              "char_text": "B",
-              "confidence": 0.3955,
-              "bbox_plate_xyxy": [
-                49,
-                13,
-                58,
-                24
-              ],
-              "bbox_plate_xywh": [
-                49,
-                13,
-                9,
-                11
-              ],
-              "bbox_scaled_xyxy": [
-                141,
-                37,
-                169,
-                71
-              ],
-              "aspect_ratio": 0.82
-            },
-            {
-              "char_id": 7,
-              "char_text": "7",
-              "confidence": 0.3955,
-              "bbox_plate_xyxy": [
-                59,
-                13,
-                65,
-                23
-              ],
-              "bbox_plate_xywh": [
-                59,
-                13,
-                6,
-                10
-              ],
-              "bbox_scaled_xyxy": [
-                172,
-                37,
-                188,
-                66
-              ],
-              "aspect_ratio": 0.6
-            },
-            {
-              "char_id": 8,
-              "char_text": "J",
-              "confidence": 0.3955,
-              "bbox_plate_xyxy": [
-                67,
-                13,
-                72,
-                23
-              ],
-              "bbox_plate_xywh": [
-                67,
-                13,
-                5,
-                10
-              ],
-              "bbox_scaled_xyxy": [
-                194,
-                38,
-                208,
-                67
-              ],
-              "aspect_ratio": 0.5
-            },
-            {
-              "char_id": 9,
-              "char_text": "0",
-              "confidence": 0.3955,
-              "bbox_plate_xyxy": [
-                73,
-                13,
-                78,
-                23
-              ],
-              "bbox_plate_xywh": [
-                73,
-                13,
-                5,
-                10
-              ],
-              "bbox_scaled_xyxy": [
-                212,
-                39,
-                226,
-                67
-              ],
-              "aspect_ratio": 0.5
-            },
-            {
-              "char_id": 10,
-              "char_text": "9",
-              "confidence": 0.3955,
-              "bbox_plate_xyxy": [
-                78,
-                12,
-                81,
-                22
-              ],
-              "bbox_plate_xywh": [
-                78,
-                12,
-                3,
-                10
-              ],
-              "bbox_scaled_xyxy": [
-                227,
-                34,
-                236,
-                64
-              ],
-              "aspect_ratio": 0.3
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "vehicle_id": 2,
-      "class_name": "truck",
-      "confidence": 0.8011,
-      "bbox_xyxy": [
-        725,
-        109,
-        909,
-        272
-      ],
-      "bbox_xywh": [
-        725,
-        109,
-        184,
-        163
-      ],
-      "bbox_yolo_norm": [
-        0.851042,
-        0.352778,
-        0.191667,
-        0.301852
-      ],
-      "plates_detected": []
-    },
-    {
-      "vehicle_id": 3,
-      "class_name": "car",
-      "confidence": 0.7329,
-      "bbox_xyxy": [
-        620,
-        260,
-        779,
-        432
-      ],
-      "bbox_xywh": [
-        620,
-        260,
-        159,
-        172
-      ],
-      "bbox_yolo_norm": [
-        0.728646,
-        0.640741,
-        0.165625,
-        0.318519
-      ],
-      "plates_detected": []
-    },
-    {
-      "vehicle_id": 4,
-      "class_name": "car",
-      "confidence": 0.7104,
-      "bbox_xyxy": [
-        63,
-        239,
-        434,
-        529
-      ],
-      "bbox_xywh": [
-        63,
-        239,
-        371,
-        290
-      ],
-      "bbox_yolo_norm": [
-        0.258854,
-        0.711111,
-        0.386458,
-        0.537037
+        0.475926
       ],
       "plates_detected": [
         {
@@ -385,12 +36,289 @@
           "plate_text_raw": "",
           "ocr_confidence": 0.0,
           "ocr_status": "unreadable",
-          "confidence": 0.9045,
+          "confidence": 0.6409,
+          "bbox_crop_xyxy": [
+            88,
+            174,
+            176,
+            204
+          ],
+          "bbox_global_xyxy": [
+            505,
+            446,
+            593,
+            476
+          ],
+          "bbox_global_xywh": [
+            505,
+            446,
+            88,
+            30
+          ],
+          "bbox_yolo_norm": [
+            0.571875,
+            0.853704,
+            0.091667,
+            0.055556
+          ],
+          "aspect_ratio": 2.93,
+          "character_count": 9,
+          "characters": [
+            {
+              "char_id": 1,
+              "char_text": "",
+              "confidence": 0.85,
+              "bbox_plate_xyxy": [
+                10,
+                11,
+                18,
+                21
+              ],
+              "bbox_plate_xywh": [
+                10,
+                11,
+                8,
+                10
+              ],
+              "bbox_scaled_xyxy": [
+                31,
+                34,
+                54,
+                63
+              ],
+              "aspect_ratio": 0.8
+            },
+            {
+              "char_id": 2,
+              "char_text": "",
+              "confidence": 0.85,
+              "bbox_plate_xyxy": [
+                19,
+                12,
+                24,
+                21
+              ],
+              "bbox_plate_xywh": [
+                19,
+                12,
+                5,
+                9
+              ],
+              "bbox_scaled_xyxy": [
+                57,
+                35,
+                73,
+                63
+              ],
+              "aspect_ratio": 0.56
+            },
+            {
+              "char_id": 3,
+              "char_text": "",
+              "confidence": 0.85,
+              "bbox_plate_xyxy": [
+                27,
+                12,
+                31,
+                21
+              ],
+              "bbox_plate_xywh": [
+                27,
+                12,
+                4,
+                9
+              ],
+              "bbox_scaled_xyxy": [
+                80,
+                35,
+                94,
+                63
+              ],
+              "aspect_ratio": 0.44
+            },
+            {
+              "char_id": 4,
+              "char_text": "",
+              "confidence": 0.85,
+              "bbox_plate_xyxy": [
+                33,
+                12,
+                37,
+                21
+              ],
+              "bbox_plate_xywh": [
+                33,
+                12,
+                4,
+                9
+              ],
+              "bbox_scaled_xyxy": [
+                98,
+                35,
+                111,
+                63
+              ],
+              "aspect_ratio": 0.44
+            },
+            {
+              "char_id": 5,
+              "char_text": "",
+              "confidence": 0.85,
+              "bbox_plate_xyxy": [
+                39,
+                12,
+                47,
+                21
+              ],
+              "bbox_plate_xywh": [
+                39,
+                12,
+                8,
+                9
+              ],
+              "bbox_scaled_xyxy": [
+                116,
+                35,
+                142,
+                63
+              ],
+              "aspect_ratio": 0.89
+            },
+            {
+              "char_id": 6,
+              "char_text": "",
+              "confidence": 0.85,
+              "bbox_plate_xyxy": [
+                48,
+                12,
+                52,
+                21
+              ],
+              "bbox_plate_xywh": [
+                48,
+                12,
+                4,
+                9
+              ],
+              "bbox_scaled_xyxy": [
+                143,
+                35,
+                157,
+                64
+              ],
+              "aspect_ratio": 0.44
+            },
+            {
+              "char_id": 7,
+              "char_text": "",
+              "confidence": 0.85,
+              "bbox_plate_xyxy": [
+                61,
+                12,
+                66,
+                21
+              ],
+              "bbox_plate_xywh": [
+                61,
+                12,
+                5,
+                9
+              ],
+              "bbox_scaled_xyxy": [
+                182,
+                35,
+                199,
+                64
+              ],
+              "aspect_ratio": 0.56
+            },
+            {
+              "char_id": 8,
+              "char_text": "",
+              "confidence": 0.85,
+              "bbox_plate_xyxy": [
+                68,
+                12,
+                73,
+                22
+              ],
+              "bbox_plate_xywh": [
+                68,
+                12,
+                5,
+                10
+              ],
+              "bbox_scaled_xyxy": [
+                203,
+                36,
+                218,
+                67
+              ],
+              "aspect_ratio": 0.5
+            },
+            {
+              "char_id": 9,
+              "char_text": "",
+              "confidence": 0.85,
+              "bbox_plate_xyxy": [
+                74,
+                13,
+                81,
+                22
+              ],
+              "bbox_plate_xywh": [
+                74,
+                13,
+                7,
+                9
+              ],
+              "bbox_scaled_xyxy": [
+                221,
+                38,
+                244,
+                67
+              ],
+              "aspect_ratio": 0.78
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "vehicle_id": 2,
+      "class_name": "car",
+      "confidence": 0.742,
+      "bbox_xyxy": [
+        63,
+        237,
+        434,
+        529
+      ],
+      "bbox_xywh": [
+        63,
+        237,
+        371,
+        292
+      ],
+      "bbox_yolo_norm": [
+        0.258854,
+        0.709259,
+        0.386458,
+        0.540741
+      ],
+      "plates_detected": [
+        {
+          "plate_id": 1,
+          "plate_text": "",
+          "plate_text_raw": "",
+          "ocr_confidence": 0.0,
+          "ocr_status": "unreadable",
+          "confidence": 0.8506,
           "bbox_crop_xyxy": [
             99,
-            222,
+            224,
             161,
-            244
+            246
           ],
           "bbox_global_xyxy": [
             155,
@@ -411,29 +339,29 @@
             0.040741
           ],
           "aspect_ratio": 2.82,
-          "character_count": 5,
+          "character_count": 3,
           "characters": [
             {
               "char_id": 1,
               "char_text": "",
               "confidence": 0.85,
               "bbox_plate_xyxy": [
-                9,
-                9,
-                14,
-                16
+                13,
+                10,
+                18,
+                17
               ],
               "bbox_plate_xywh": [
-                9,
-                9,
+                13,
+                10,
                 5,
                 7
               ],
               "bbox_scaled_xyxy": [
-                35,
-                36,
-                57,
-                67
+                52,
+                40,
+                72,
+                71
               ],
               "aspect_ratio": 0.71
             },
@@ -442,290 +370,242 @@
               "char_text": "",
               "confidence": 0.85,
               "bbox_plate_xyxy": [
-                13,
+                41,
                 11,
-                17,
-                16
+                42,
+                17
               ],
               "bbox_plate_xywh": [
-                13,
+                41,
                 11,
-                4,
-                5
+                1,
+                6
               ],
               "bbox_scaled_xyxy": [
-                52,
-                44,
-                69,
-                67
+                166,
+                47,
+                173,
+                68
               ],
-              "aspect_ratio": 0.8
+              "aspect_ratio": 0.17
             },
             {
               "char_id": 3,
               "char_text": "",
               "confidence": 0.85,
               "bbox_plate_xyxy": [
-                18,
-                9,
-                26,
-                17
+                50,
+                11,
+                54,
+                18
               ],
               "bbox_plate_xywh": [
-                18,
-                9,
-                8,
-                8
+                50,
+                11,
+                4,
+                7
               ],
               "bbox_scaled_xyxy": [
-                73,
-                37,
-                106,
-                69
+                204,
+                44,
+                221,
+                74
               ],
-              "aspect_ratio": 1.0
-            },
-            {
-              "char_id": 4,
-              "char_text": "",
-              "confidence": 0.85,
-              "bbox_plate_xyxy": [
-                25,
-                9,
-                32,
-                17
-              ],
-              "bbox_plate_xywh": [
-                25,
-                9,
-                7,
-                8
-              ],
-              "bbox_scaled_xyxy": [
-                104,
-                37,
-                131,
-                69
-              ],
-              "aspect_ratio": 0.88
-            },
-            {
-              "char_id": 5,
-              "char_text": "",
-              "confidence": 0.85,
-              "bbox_plate_xyxy": [
-                48,
-                10,
-                55,
-                19
-              ],
-              "bbox_plate_xywh": [
-                48,
-                10,
-                7,
-                9
-              ],
-              "bbox_scaled_xyxy": [
-                195,
-                39,
-                226,
-                79
-              ],
-              "aspect_ratio": 0.78
+              "aspect_ratio": 0.57
             }
           ]
         }
       ]
     },
     {
-      "vehicle_id": 5,
+      "vehicle_id": 3,
       "class_name": "truck",
-      "confidence": 0.6132,
+      "confidence": 0.7108,
       "bbox_xyxy": [
-        295,
-        188,
-        479,
-        346
+        724,
+        109,
+        909,
+        272
       ],
       "bbox_xywh": [
-        295,
-        188,
-        184,
-        158
+        724,
+        109,
+        185,
+        163
       ],
       "bbox_yolo_norm": [
-        0.403125,
-        0.494444,
-        0.191667,
-        0.292593
+        0.850521,
+        0.352778,
+        0.192708,
+        0.301852
+      ],
+      "plates_detected": []
+    },
+    {
+      "vehicle_id": 4,
+      "class_name": "car",
+      "confidence": 0.6423,
+      "bbox_xyxy": [
+        0,
+        292,
+        114,
+        509
+      ],
+      "bbox_xywh": [
+        0,
+        292,
+        114,
+        217
+      ],
+      "bbox_yolo_norm": [
+        0.059375,
+        0.741667,
+        0.11875,
+        0.401852
+      ],
+      "plates_detected": []
+    },
+    {
+      "vehicle_id": 5,
+      "class_name": "car",
+      "confidence": 0.5768,
+      "bbox_xyxy": [
+        622,
+        264,
+        780,
+        431
+      ],
+      "bbox_xywh": [
+        622,
+        264,
+        158,
+        167
+      ],
+      "bbox_yolo_norm": [
+        0.730208,
+        0.643519,
+        0.164583,
+        0.309259
       ],
       "plates_detected": []
     },
     {
       "vehicle_id": 6,
-      "class_name": "car",
-      "confidence": 0.5837,
+      "class_name": "truck",
+      "confidence": 0.5019,
       "bbox_xyxy": [
-        0,
-        293,
-        117,
-        509
+        296,
+        188,
+        481,
+        345
       ],
       "bbox_xywh": [
-        0,
-        293,
-        117,
-        216
+        296,
+        188,
+        185,
+        157
       ],
       "bbox_yolo_norm": [
-        0.060937,
-        0.742593,
-        0.121875,
-        0.4
+        0.404687,
+        0.493519,
+        0.192708,
+        0.290741
       ],
       "plates_detected": []
     },
     {
       "vehicle_id": 7,
       "class_name": "car",
-      "confidence": 0.5147,
+      "confidence": 0.4358,
       "bbox_xyxy": [
-        479,
-        229,
-        559,
-        292
+        500,
+        244,
+        617,
+        299
       ],
       "bbox_xywh": [
-        479,
-        229,
-        80,
-        63
+        500,
+        244,
+        117,
+        55
       ],
       "bbox_yolo_norm": [
-        0.540625,
-        0.482407,
-        0.083333,
-        0.116667
+        0.581771,
+        0.502778,
+        0.121875,
+        0.101852
       ],
       "plates_detected": []
     },
     {
       "vehicle_id": 8,
-      "class_name": "car",
-      "confidence": 0.478,
-      "bbox_xyxy": [
-        499,
-        244,
-        619,
-        302
-      ],
-      "bbox_xywh": [
-        499,
-        244,
-        120,
-        58
-      ],
-      "bbox_yolo_norm": [
-        0.582292,
-        0.505556,
-        0.125,
-        0.107407
-      ],
-      "plates_detected": []
-    },
-    {
-      "vehicle_id": 9,
       "class_name": "truck",
-      "confidence": 0.4577,
+      "confidence": 0.3953,
       "bbox_xyxy": [
         538,
-        164,
-        638,
-        236
+        165,
+        633,
+        237
       ],
       "bbox_xywh": [
         538,
-        164,
-        100,
+        165,
+        95,
         72
       ],
       "bbox_yolo_norm": [
-        0.6125,
-        0.37037,
-        0.104167,
+        0.609896,
+        0.372222,
+        0.098958,
         0.133333
       ],
       "plates_detected": []
     },
     {
-      "vehicle_id": 10,
-      "class_name": "truck",
-      "confidence": 0.4497,
-      "bbox_xyxy": [
-        0,
-        292,
-        118,
-        514
-      ],
-      "bbox_xywh": [
-        0,
-        292,
-        118,
-        222
-      ],
-      "bbox_yolo_norm": [
-        0.061458,
-        0.746296,
-        0.122917,
-        0.411111
-      ],
-      "plates_detected": []
-    },
-    {
-      "vehicle_id": 11,
-      "class_name": "motorcycle",
-      "confidence": 0.3827,
-      "bbox_xyxy": [
-        784,
-        274,
-        842,
-        368
-      ],
-      "bbox_xywh": [
-        784,
-        274,
-        58,
-        94
-      ],
-      "bbox_yolo_norm": [
-        0.846875,
-        0.594444,
-        0.060417,
-        0.174074
-      ],
-      "plates_detected": []
-    },
-    {
-      "vehicle_id": 12,
+      "vehicle_id": 9,
       "class_name": "car",
-      "confidence": 0.3608,
+      "confidence": 0.3872,
       "bbox_xyxy": [
-        610,
-        186,
-        708,
-        255
+        608,
+        184,
+        717,
+        254
       ],
       "bbox_xywh": [
-        610,
-        186,
-        98,
-        69
+        608,
+        184,
+        109,
+        70
       ],
       "bbox_yolo_norm": [
-        0.686458,
-        0.408333,
-        0.102083,
-        0.127778
+        0.690104,
+        0.405556,
+        0.113542,
+        0.12963
+      ],
+      "plates_detected": []
+    },
+    {
+      "vehicle_id": 10,
+      "class_name": "car",
+      "confidence": 0.357,
+      "bbox_xyxy": [
+        479,
+        229,
+        560,
+        290
+      ],
+      "bbox_xywh": [
+        479,
+        229,
+        81,
+        61
+      ],
+      "bbox_yolo_norm": [
+        0.541146,
+        0.480556,
+        0.084375,
+        0.112963
       ],
       "plates_detected": []
     }

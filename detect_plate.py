@@ -138,34 +138,47 @@ def clean_and_parse_plate(raw_text: str) -> Tuple[str, float]:
     return (clean, 0.0)
 
 
-def deblur_vehicle_stage(image: np.ndarray) -> np.ndarray:
+def deblur_vehicle_stage(image: np.ndarray, strength: float = 1.0) -> np.ndarray:
     """
-    Stage 1 Anti-Blur: Sharpening and unsharp masking on the full image
-    prior to vehicle localization.
+    Stage 1 Anti-Blur: Distinct sharpening and high-boost unsharp masking on full image.
+    Enhances vehicle silhouettes, contours, and grille lines with clear visual pop.
+    Applied manually only when requested.
     """
     if image is None or image.size == 0:
         return image
-    blurred = cv2.GaussianBlur(image, (0, 0), sigmaX=2.0)
-    sharpened = cv2.addWeighted(image, 1.5, blurred, -0.5, 0)
-    return np.clip(sharpened, 0, 255).astype(np.uint8)
+    blurred = cv2.GaussianBlur(image, (0, 0), sigmaX=3.0)
+    alpha = 1.0 + 1.2 * strength
+    beta = -1.2 * strength
+    sharpened = cv2.addWeighted(image, alpha, blurred, beta, 0)
+    # Enhance lightness contrast so vehicle features stand out distinctly
+    lab = cv2.cvtColor(sharpened, cv2.COLOR_BGR2LAB)
+    l, a, b = cv2.split(lab)
+    clahe = cv2.createCLAHE(clipLimit=2.0 * strength, tileGridSize=(8, 8))
+    l = clahe.apply(l)
+    return cv2.cvtColor(cv2.merge([l, a, b]), cv2.COLOR_LAB2BGR)
 
 
-def deblur_plate_stage(vehicle_crop: np.ndarray) -> np.ndarray:
+def deblur_plate_stage(vehicle_crop: np.ndarray, strength: float = 1.0) -> np.ndarray:
     """
     Stage 2 Anti-Blur: Deblurring on the vehicle crop prior to plate localization.
-    Uses edge-boost unsharp masking to enhance plate boundary and border contours.
+    Uses edge-boost unsharp masking + bilateral filtering to strongly emphasize
+    rectangular plate borders while eliminating flat-region compression blur.
+    Applied manually only when requested.
     """
     if vehicle_crop is None or vehicle_crop.size == 0:
         return vehicle_crop
     blurred = cv2.GaussianBlur(vehicle_crop, (0, 0), sigmaX=2.5)
-    sharpened = cv2.addWeighted(vehicle_crop, 1.7, blurred, -0.7, 0)
-    return np.clip(sharpened, 0, 255).astype(np.uint8)
+    sharpened = cv2.addWeighted(vehicle_crop, 2.3 * strength, blurred, -(1.3 * strength), 0)
+    bilateral = cv2.bilateralFilter(sharpened, d=5, sigmaColor=50, sigmaSpace=50)
+    return np.clip(bilateral, 0, 255).astype(np.uint8)
 
 
-def deblur_char_stage(plate_crop: np.ndarray) -> np.ndarray:
+def deblur_char_stage(plate_crop: np.ndarray, strength: float = 1.0) -> np.ndarray:
     """
-    Stage 3 Anti-Blur: Wiener deconvolution, unsharp masking, and contrast enhancement
-    (CLAHE) on the plate crop before character segmentation and OCR.
+    Stage 3 Anti-Blur: Wiener deconvolution, high-pass edge restoration, and adaptive
+    contrast enhancement (CLAHE) on the plate crop. Renders numbers and letters razor-sharp
+    for human inspection and OCR segmentation.
+    Applied manually only when requested.
     """
     if plate_crop is None or plate_crop.size == 0:
         return plate_crop
@@ -178,8 +191,8 @@ def deblur_char_stage(plate_crop: np.ndarray) -> np.ndarray:
     l_chan, a_chan, b_chan = cv2.split(lab)
 
     # 1. Frequency-Domain Wiener Deconvolution
-    kernel_size = 5
-    psf = cv2.getGaussianKernel(kernel_size, 1.2)
+    kernel_size = 7
+    psf = cv2.getGaussianKernel(kernel_size, 1.8)
     psf = psf @ psf.T
     kh, kw = psf.shape
     pad_psf = np.zeros((h, w), dtype=np.float32)
@@ -191,17 +204,18 @@ def deblur_char_stage(plate_crop: np.ndarray) -> np.ndarray:
     psf_fft = np.fft.fft2(pad_psf)
     psf_conj = np.conj(psf_fft)
     psf_pow = np.abs(psf_fft) ** 2
-    noise_var = 0.015
+    noise_var = 0.008 / max(0.2, strength)
     wiener_filter = psf_conj / (psf_pow + noise_var)
     deconv_l = np.real(np.fft.ifft2(l_fft * wiener_filter))
     deconv_l = np.clip(deconv_l, 0, 255).astype(np.uint8)
 
-    # 2. Laplacian / Gaussian Unsharp Masking
-    blurred_l = cv2.GaussianBlur(deconv_l, (0, 0), sigmaX=1.5)
-    sharp_l = cv2.addWeighted(deconv_l, 1.5, blurred_l, -0.5, 0)
+    # 2. Laplacian / Gaussian High-Boost Unsharp Masking
+    blurred_l = cv2.GaussianBlur(deconv_l, (0, 0), sigmaX=1.6)
+    sharp_l = cv2.addWeighted(deconv_l, 2.2, blurred_l, -1.2, 0)
+    sharp_l = np.clip(sharp_l, 0, 255).astype(np.uint8)
 
-    # 3. CLAHE Contrast Enhancement
-    clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(6, 6))
+    # 3. CLAHE Contrast Enhancement for crisp character ink
+    clahe = cv2.createCLAHE(clipLimit=3.8, tileGridSize=(4, 4))
     enh_l = clahe.apply(sharp_l)
 
     merged_lab = cv2.merge([enh_l, a_chan, b_chan])
@@ -213,25 +227,27 @@ def draw_character_annotations(
     characters: List[Dict[str, Any]],
 ) -> np.ndarray:
     """
-    Visual Overlay: Draw colored bounding boxes and index tags around each detected
-    character/digit directly on the plate preview.
+    Visual Overlay: Draw sleek, professional bounding boxes, corner bracket reticles,
+    and index tags around each detected character/digit directly on the plate preview.
     """
     if plate_bgr is None or plate_bgr.size == 0 or not characters:
         return plate_bgr if plate_bgr is not None else np.zeros((30, 80, 3), dtype=np.uint8)
 
     orig_h, orig_w = plate_bgr.shape[:2]
-    # Upscale for crisp tag and text rendering
-    target_h = max(90, min(140, int(orig_h * 2.5)))
+    # Upscale 3.5x for ultra-sharp HUD-quality rendering
+    target_h = max(160, min(240, int(orig_h * 3.5)))
     scale = target_h / float(orig_h)
     canvas = cv2.resize(plate_bgr, (int(orig_w * scale), target_h), interpolation=cv2.INTER_LANCZOS4)
 
-    font = cv2.FONT_HERSHEY_SIMPLEX
+    overlay = canvas.copy()
+    font = cv2.FONT_HERSHEY_DUPLEX
+
     palette = [
-        (255, 200, 0),   # Vibrant Cyan-Blue
-        (0, 235, 255),   # Bright Amber
+        (0, 235, 255),   # Neon Cyan
         (0, 255, 128),   # Emerald Green
-        (255, 100, 220), # Magenta
-        (0, 180, 255),   # Gold Orange
+        (255, 180, 0),   # Electric Blue
+        (255, 100, 240), # Neon Magenta
+        (0, 200, 255),   # Golden Amber
     ]
 
     for idx, ch in enumerate(characters):
@@ -242,27 +258,53 @@ def draw_character_annotations(
         sy2 = int(round(oy2 * scale))
 
         color = palette[idx % len(palette)]
-        # Character box
+
+        # 1. Subtle semi-transparent character zone highlight
+        cv2.rectangle(overlay, (sx1, sy1), (sx2, sy2), color, -1)
+
+        # 2. Precision main bounding box
         cv2.rectangle(canvas, (sx1, sy1), (sx2, sy2), color, 2)
 
-        # Index Tag banner above/inside the box
+        # 3. Professional corner reticle tick brackets (HUD design)
+        bw = max(4, (sx2 - sx1) // 4)
+        bh = max(4, (sy2 - sy1) // 4)
+        # Top-left corner
+        cv2.line(canvas, (sx1, sy1), (sx1 + bw, sy1), (255, 255, 255), 2)
+        cv2.line(canvas, (sx1, sy1), (sx1, sy1 + bh), (255, 255, 255), 2)
+        # Top-right corner
+        cv2.line(canvas, (sx2, sy1), (sx2 - bw, sy1), (255, 255, 255), 2)
+        cv2.line(canvas, (sx2, sy1), (sx2, sy1 + bh), (255, 255, 255), 2)
+        # Bottom-left corner
+        cv2.line(canvas, (sx1, sy2), (sx1 + bw, sy2), (255, 255, 255), 2)
+        cv2.line(canvas, (sx1, sy2), (sx1, sy2 - bh), (255, 255, 255), 2)
+        # Bottom-right corner
+        cv2.line(canvas, (sx2, sy2), (sx2 - bw, sy2), (255, 255, 255), 2)
+        cv2.line(canvas, (sx2, sy2), (sx2, sy2 - bh), (255, 255, 255), 2)
+
+        # 4. Floating Badge with character label and index
         label = f"#{ch['char_id']}:{ch['char_text']}" if ch.get("char_text") else f"#{ch['char_id']}"
-        (tw, th), bl = cv2.getTextSize(label, font, 0.40, 1)
-        tag_y1 = max(0, sy1 - th - bl - 4)
+        font_scale = 0.45
+        (tw, th), bl = cv2.getTextSize(label, font, font_scale, 1)
+        tag_y1 = max(2, sy1 - th - bl - 6)
         tag_y2 = sy1
-        tag_x2 = min(canvas.shape[1] - 1, sx1 + tw + 6)
-        cv2.rectangle(canvas, (sx1, tag_y1), (tag_x2, tag_y2), color, -1)
+        tag_x2 = min(canvas.shape[1] - 2, sx1 + tw + 10)
+
+        # Dark pill badge background with accent border
+        cv2.rectangle(canvas, (sx1, tag_y1), (tag_x2, tag_y2), (15, 23, 42), -1)
+        cv2.rectangle(canvas, (sx1, tag_y1), (tag_x2, tag_y2), color, 1)
         cv2.putText(
             canvas,
             label,
-            (sx1 + 3, tag_y2 - bl - 2),
+            (sx1 + 4, tag_y2 - bl - 2),
             font,
-            0.40,
-            (0, 0, 0),
+            font_scale,
+            color,
             1,
             lineType=cv2.LINE_AA,
         )
 
+    # Blend subtle highlight into canvas
+    cv2.addWeighted(overlay, 0.12, canvas, 0.88, 0, canvas)
     return canvas
 
 
@@ -792,23 +834,14 @@ class TwoStagePlateDetector:
 
                                 # Stage 3: Character & OCR Processing (Optional anti-blur deconvolution)
                                 processed_plate_patch = deblur_char_stage(plate_crop_patch) if antiblur_char else plate_crop_patch
+                                display_plate_patch = processed_plate_patch if antiblur_char else plate_crop_patch
 
                                 aspect_ratio = (
                                     round(p_w / float(p_h), 2) if p_h > 0 else 0.0
                                 )
 
                                 if extract_text:
-                                    pad_ocr_x = int(p_w * 0.08)
-                                    pad_ocr_y = int(p_h * 0.12)
-                                    ocr_px1 = max(0, px1 - pad_ocr_x)
-                                    ocr_py1 = max(0, py1 - pad_ocr_y)
-                                    ocr_px2 = min(crop_w, px2 + pad_ocr_x)
-                                    ocr_py2 = min(crop_h, py2 + pad_ocr_y)
-                                    ocr_source = deblur_char_stage(vehicle_crop) if antiblur_char else vehicle_crop
-                                    ocr_patch = ocr_source[ocr_py1:ocr_py2, ocr_px1:ocr_px2]
-                                    if ocr_patch.size == 0:
-                                        ocr_patch = processed_plate_patch
-
+                                    ocr_patch = processed_plate_patch
                                     recognition = self.extract_plate_recognition(
                                         ocr_patch,
                                         [global_px1, global_py1, global_px2, global_py2],
@@ -859,7 +892,9 @@ class TwoStagePlateDetector:
                                         round(g_h_norm, 6),
                                     ],
                                     "aspect_ratio": aspect_ratio,
-                                    "plate_crop_bgr": plate_crop_patch,
+                                    "plate_crop_bgr": display_plate_patch,
+                                    "plate_raw_bgr": plate_crop_patch,
+                                    "plate_deblurred_bgr": processed_plate_patch,
                                     "plate_annotated_bgr": plate_annotated_img,
                                     "character_count": len(characters),
                                     "characters": [
@@ -898,12 +933,18 @@ class TwoStagePlateDetector:
                             {
                                 k: v
                                 for k, v in p.items()
-                                if k not in ("plate_crop_bgr", "plate_annotated_bgr", "_char_patches")
+                                if not isinstance(v, np.ndarray) and not k.startswith("_")
                             }
                             for p in plates_for_vehicle
                         ],
                         "_plate_patches": [
                             p["plate_crop_bgr"] for p in plates_for_vehicle
+                        ],
+                        "_plate_raw_patches": [
+                            p.get("plate_raw_bgr", p["plate_crop_bgr"]) for p in plates_for_vehicle
+                        ],
+                        "_plate_deblurred_patches": [
+                            p.get("plate_deblurred_bgr", p["plate_crop_bgr"]) for p in plates_for_vehicle
                         ],
                         "_plate_annotated_patches": [
                             p.get("plate_annotated_bgr") for p in plates_for_vehicle
@@ -1170,12 +1211,7 @@ def main():
                 {
                     k: val
                     for k, val in v.items()
-                    if k not in (
-                        "vehicle_crop_bgr",
-                        "_plate_patches",
-                        "_plate_annotated_patches",
-                        "_char_patches_per_plate",
-                    )
+                    if not k.startswith("_") and k != "vehicle_crop_bgr"
                 }
                 for v in results["vehicles"]
             ],

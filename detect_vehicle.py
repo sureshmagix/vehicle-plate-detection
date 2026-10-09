@@ -43,16 +43,23 @@ except ImportError:
 VEHICLE_CLASSES = {"car", "truck", "bus", "motorcycle"}
 
 
-def deblur_vehicle_stage(image: np.ndarray) -> np.ndarray:
+def deblur_vehicle_stage(image: np.ndarray, strength: float = 1.0) -> np.ndarray:
     """
-    Stage 1 Anti-Blur: Sharpening and unsharp masking before vehicle localization.
-    Helps improve edge contrast and feature clarity for YOLO vehicle detection.
+    Stage 1 Anti-Blur: Distinct sharpening and high-boost unsharp masking on full image.
+    Enhances vehicle silhouettes, contours, and grille lines with clear visual pop.
+    Applied manually only when requested.
     """
     if image is None or image.size == 0:
         return image
-    blurred = cv2.GaussianBlur(image, (0, 0), sigmaX=2.0)
-    sharpened = cv2.addWeighted(image, 1.5, blurred, -0.5, 0)
-    return np.clip(sharpened, 0, 255).astype(np.uint8)
+    blurred = cv2.GaussianBlur(image, (0, 0), sigmaX=3.0)
+    alpha = 1.0 + 1.2 * strength
+    beta = -1.2 * strength
+    sharpened = cv2.addWeighted(image, alpha, blurred, beta, 0)
+    lab = cv2.cvtColor(sharpened, cv2.COLOR_BGR2LAB)
+    l, a, b = cv2.split(lab)
+    clahe = cv2.createCLAHE(clipLimit=2.0 * strength, tileGridSize=(8, 8))
+    l = clahe.apply(l)
+    return cv2.cvtColor(cv2.merge([l, a, b]), cv2.COLOR_LAB2BGR)
 
 
 class VehicleDetector:

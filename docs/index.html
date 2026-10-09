@@ -7,6 +7,8 @@
   <!-- Client-side Deep Learning Engine (TensorFlow.js) -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+  <!-- Client-side ZIP archiver for 1-click character crop downloads -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
     :root {
       --bg-primary: #0b1120;
@@ -637,88 +639,277 @@
       color: var(--text-muted);
     }
 
-    /* Individual Character Crops Section */
-    .characters-section {
-      margin-top: 10px;
-      background: rgba(11, 17, 32, 0.85);
-      border: 1px solid #334155;
-      border-radius: 8px;
-      padding: 10px;
+    .antiblur-intensity-row {
       display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .characters-header {
-      display: flex;
-      justify-content: space-between;
       align-items: center;
-      font-size: 0.74rem;
-      font-weight: 700;
-      color: #c084fc;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
+      justify-content: space-between;
+      gap: 8px;
+      padding-top: 4px;
+      border-top: 1px dashed rgba(51, 65, 85, 0.7);
     }
 
-    .characters-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+    .intensity-btn-group {
+      display: flex;
+      gap: 4px;
+    }
+
+    .btn-intensity {
+      background: #1e293b;
+      color: #94a3b8;
+      border: 1px solid #334155;
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 0.70rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.15s ease;
+    }
+
+    .btn-intensity:hover {
+      background: #24324d;
+      color: #fff;
+    }
+
+    .btn-intensity.active {
+      background: #0284c7;
+      color: #fff;
+      border-color: #38bdf8;
+      box-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
+    }
+
+    .antiblur-status-banner {
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid #38bdf8;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 0.74rem;
+      color: #7dd3fc;
+      display: flex;
+      align-items: center;
       gap: 6px;
     }
 
-    .character-tile {
-      background: #1e293b;
+    /* ========================================================
+       ZOOMED LICENSE PLATE STUDIO & NUMBER BOUNDING BOXES
+       ======================================================== */
+    .zoomed-plate-studio {
+      background: #0f172a;
       border: 1.5px solid #38bdf8;
+      border-radius: 10px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65), 0 0 16px rgba(56, 189, 248, 0.15);
+      position: relative;
+    }
+
+    .zoomed-plate-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      border-bottom: 1px solid #334155;
+      padding-bottom: 8px;
+    }
+
+    .zoomed-plate-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #f8fafc;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .zoomed-plate-viewport {
+      position: relative;
+      background: #000000;
+      border-radius: 8px;
+      border: 1px solid #1e293b;
+      overflow: auto;
+      max-height: 380px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .zoomed-plate-canvas {
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: crisp-edges;
+      image-rendering: pixelated;
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.8);
+      cursor: crosshair;
+    }
+
+    .zoomed-plate-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .zoomed-plate-hud {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 6px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid #334155;
       border-radius: 6px;
-      padding: 4px;
+      padding: 8px 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.72rem;
+    }
+
+    .zoomed-hud-item {
+      display: flex;
+      justify-content: space-between;
+      color: #94a3b8;
+    }
+
+    .zoomed-hud-val {
+      color: #38bdf8;
+      font-weight: 700;
+    }
+
+    /* ========================================================
+       CHARACTER CUTTING & 1-CLICK BATCH EXPORTER
+       ======================================================== */
+    .characters-exporter-card {
+      background: linear-gradient(180deg, #162032 0%, #0d1524 100%);
+      border: 1.5px solid #a855f7;
+      border-radius: 10px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65), 0 0 16px rgba(168, 85, 247, 0.15);
+    }
+
+    .characters-exporter-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      border-bottom: 1px solid rgba(168, 85, 247, 0.3);
+      padding-bottom: 8px;
+    }
+
+    .characters-exporter-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn-zip-download {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #000;
+      font-weight: 700;
+      border: 1px solid #34d399;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.84rem;
+      transition: all 0.2s ease;
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.35);
+    }
+
+    .btn-zip-download:hover {
+      background: #059669;
+      color: #fff;
+      transform: translateY(-1px);
+      box-shadow: 0 0 18px rgba(16, 185, 129, 0.6);
+    }
+
+    .glyph-card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+      gap: 8px;
+    }
+
+    .glyph-card {
+      background: #1e293b;
+      border: 1.5px solid #334155;
+      border-radius: 8px;
+      padding: 6px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 3px;
-      cursor: pointer;
-      transition: transform 0.15s ease, border-color 0.15s ease;
+      gap: 4px;
+      transition: all 0.15s ease;
+      position: relative;
     }
 
-    .character-tile:hover {
+    .glyph-card:hover {
+      border-color: #38bdf8;
       transform: translateY(-2px);
-      border-color: #f59e0b;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
     }
 
-    .character-img {
+    .glyph-card.highlighted {
+      border-color: #f59e0b !important;
+      background: #283548;
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.45);
+    }
+
+    .glyph-card-preview {
       width: 100%;
-      height: 48px;
+      height: 60px;
       object-fit: contain;
-      background: #090d16;
+      background: #000000;
+      border-radius: 5px;
+      border: 1px solid #334155;
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: pixelated;
+    }
+
+    .glyph-char-badge {
+      font-size: 0.88rem;
+      font-weight: 800;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: #f8fafc;
+      background: #0f172a;
+      border: 1px solid #38bdf8;
+      padding: 1px 6px;
       border-radius: 4px;
     }
 
-    .character-caption {
+    .glyph-meta-row {
       display: flex;
-      flex-direction: column;
-      align-items: center;
+      justify-content: space-between;
       width: 100%;
-      gap: 2px;
-    }
-
-    .char-badge {
-      font-size: 0.70rem;
-      font-weight: 700;
-      color: #38bdf8;
-      background: rgba(56, 189, 248, 0.15);
-      padding: 1px 4px;
-      border-radius: 3px;
-      white-space: nowrap;
-    }
-
-    .char-coord {
-      font-size: 0.58rem;
+      font-size: 0.64rem;
       color: #94a3b8;
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 100%;
+    }
+
+    .btn-glyph-save {
+      width: 100%;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      color: #38bdf8;
+      padding: 2px 4px;
+      font-size: 0.65rem;
+      font-weight: 600;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-glyph-save:hover {
+      background: #0284c7;
+      color: #fff;
     }
 
     /* Training Format Box */
@@ -1279,22 +1470,22 @@
             <input type="range" id="carConf" min="0.10" max="0.95" step="0.05" value="0.35" class="slider">
           </div>
 
-          <!-- Per-Stage Anti-Blur Checkbox Controls -->
+          <!-- Per-Stage Anti-Blur Checkbox Controls (MANUAL ONLY - ALL OFF BY DEFAULT) -->
           <div class="antiblur-panel-card">
             <div class="antiblur-header">
               <span>⚡ Anti-Blur Preprocessing</span>
-              <span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-size: 0.70rem;">Per-Stage</span>
+              <span class="badge" id="antiblurModeBadge" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; font-size: 0.70rem;">Manual Only (Default OFF)</span>
             </div>
             <div class="antiblur-controls-grid">
-              <label class="antiblur-checkbox-item" title="Stage 1: Sharpening and unsharp masking on the full image before vehicle localization">
+              <label class="antiblur-checkbox-item" title="Stage 1: High-boost sharpening and unsharp masking on full frame (Manual toggle)">
                 <input type="checkbox" id="chkAntiblurVehicle" style="accent-color: #38bdf8;">
                 <div class="antiblur-label-content">
                   <span style="color: var(--text-main); font-weight: 600;">Anti-blur Vehicle Stage</span>
-                  <span class="antiblur-subtext">Stage 1: Sharpening &bull; Full Frame</span>
+                  <span class="antiblur-subtext">Stage 1: High-Boost Unsharp &bull; Full Frame</span>
                 </div>
               </label>
 
-              <label class="antiblur-checkbox-item" title="Stage 2: Deblurring on the vehicle crop before license plate detection">
+              <label class="antiblur-checkbox-item" title="Stage 2: Edge-boost sharpening on vehicle crop before plate localization (Manual toggle)">
                 <input type="checkbox" id="chkAntiblurPlate" style="accent-color: #f59e0b;">
                 <div class="antiblur-label-content">
                   <span style="color: var(--text-main); font-weight: 600;">Anti-blur Plate Stage</span>
@@ -1302,13 +1493,27 @@
                 </div>
               </label>
 
-              <label class="antiblur-checkbox-item" title="Stage 3: Wiener/Laplacian deconvolution, unsharp mask, and contrast enhancement before character OCR & segmentation">
-                <input type="checkbox" id="chkAntiblurChar" checked style="accent-color: #a855f7;">
+              <label class="antiblur-checkbox-item" title="Stage 3: Wiener/Laplacian deconvolution, unsharp mask, and contrast enhancement before character OCR & segmentation (Manual toggle)">
+                <input type="checkbox" id="chkAntiblurChar" style="accent-color: #a855f7;">
                 <div class="antiblur-label-content">
                   <span style="color: var(--text-main); font-weight: 600;">Anti-blur Character Stage</span>
                   <span class="antiblur-subtext">Stage 3: Wiener Deconv &bull; Plate/Chars</span>
                 </div>
               </label>
+            </div>
+
+            <!-- Anti-blur Strength Selector -->
+            <div class="antiblur-intensity-row">
+              <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">Sharpening Intensity:</span>
+              <div class="intensity-btn-group">
+                <button type="button" class="btn-intensity active" data-strength="1.0" onclick="setAntiblurStrength(1.0, this)">1.0x (Standard)</button>
+                <button type="button" class="btn-intensity" data-strength="1.8" onclick="setAntiblurStrength(1.8, this)">1.8x (High)</button>
+                <button type="button" class="btn-intensity" data-strength="2.5" onclick="setAntiblurStrength(2.5, this)">2.5x (Ultra)</button>
+              </div>
+            </div>
+
+            <div id="antiblurActiveBanner" class="antiblur-status-banner" style="display: none;">
+              <span>✨ <strong>Active Deblur:</strong> <span id="antiblurActiveStagesText">None</span></span>
             </div>
           </div>
 
@@ -1320,6 +1525,82 @@
             </div>
             <div class="plates-gallery-grid" id="platesGalleryGrid">
               <!-- Populated dynamically with extracted plate crops -->
+            </div>
+          </div>
+
+          <!-- ========================================================
+               1. DEDICATED ZOOMED LICENSE PLATE STUDIO
+               ======================================================== -->
+          <div id="zoomedPlateStudioContainer" class="zoomed-plate-studio" style="display: none;">
+            <div class="zoomed-plate-header">
+              <div class="zoomed-plate-title">
+                <span style="color: #38bdf8;">🔍 Zoomed License Plate Studio</span>
+                <span id="zoomedPlateVehicleBadge" class="badge badge-vehicle">Car #1</span>
+              </div>
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <button class="btn" style="padding: 2px 7px; font-size: 0.70rem;" id="btnZoom2x" onclick="setPlateStudioZoom(2.5)">2.5x</button>
+                <button class="btn btn-primary" style="padding: 2px 7px; font-size: 0.70rem;" id="btnZoom4x" onclick="setPlateStudioZoom(4.0)">4x</button>
+                <button class="btn" style="padding: 2px 7px; font-size: 0.70rem;" id="btnZoom6x" onclick="setPlateStudioZoom(6.0)">6x</button>
+              </div>
+            </div>
+
+            <div class="zoomed-plate-viewport" id="zoomedPlateViewport">
+              <canvas id="zoomedPlateCanvas" class="zoomed-plate-canvas"></canvas>
+            </div>
+
+            <div class="zoomed-plate-toolbar">
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <button class="btn btn-primary" id="btnTogglePlateBoxes" style="font-size: 0.74rem;" onclick="togglePlateStudioBoxes()">
+                  🔲 Toggle Number Boxes
+                </button>
+                <button class="btn" id="btnTogglePlateBadges" style="font-size: 0.74rem;" onclick="togglePlateStudioBadges()">
+                  🏷️ Toggle Number Labels
+                </button>
+                <button class="btn" id="btnTogglePlateDeblur" style="font-size: 0.74rem;" onclick="togglePlateStudioDeblur()">
+                  ⚡ Raw vs Deblurred
+                </button>
+              </div>
+              <button class="btn btn-detect" style="font-size: 0.74rem;" onclick="downloadZoomedPlateStudio()">
+                💾 Save Zoomed Plate
+              </button>
+            </div>
+
+            <div class="zoomed-plate-hud" id="zoomedPlateHud">
+              <div class="zoomed-hud-item"><span>Plate Text:</span><span class="zoomed-hud-val" id="hudPlateText">--</span></div>
+              <div class="zoomed-hud-item"><span>Resolution:</span><span class="zoomed-hud-val" id="hudPlateSize">--</span></div>
+              <div class="zoomed-hud-item"><span>Aspect:</span><span class="zoomed-hud-val" id="hudPlateAspect">--</span></div>
+              <div class="zoomed-hud-item"><span>Characters:</span><span class="zoomed-hud-val" id="hudPlateCharCount" style="color: #34d399;">--</span></div>
+            </div>
+          </div>
+
+          <!-- ========================================================
+               2. DEDICATED CHARACTER CUTTING & 1-CLICK BATCH EXPORTER
+               ======================================================== -->
+          <div id="charactersExporterContainer" class="characters-exporter-card" style="display: none;">
+            <div class="characters-exporter-header">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-weight: 700; color: #c084fc; font-size: 0.95rem;">✂️ Character Cutting &amp; 1-Click Exporter</span>
+                <span id="exporterPlateTextBadge" class="badge" style="background: rgba(192, 132, 252, 0.2); color: #e9d5ff; border: 1px solid #c084fc; font-family: monospace;">--</span>
+              </div>
+              <span id="exporterCharCountBadge" class="badge" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8;">0 Characters</span>
+            </div>
+
+            <div class="characters-exporter-actions">
+              <!-- Single-Click Download All Characters Action -->
+              <button id="btnDownloadAllCharsZip" class="btn-zip-download" onclick="downloadAllCharactersZip()">
+                📦 Download All Characters in 1 Click (.ZIP)
+              </button>
+              <button class="btn" style="font-size: 0.75rem;" onclick="copyPlateRegistrationText()">
+                📋 Copy Plate Number
+              </button>
+              <button class="btn" style="font-size: 0.75rem;" onclick="copyCharacterBoxesJson()">
+                📊 Copy BBoxes JSON
+              </button>
+            </div>
+
+            <!-- Gallery of individual cropped characters -->
+            <div class="glyph-card-grid" id="glyphCardsGrid">
+              <!-- Populated dynamically with individual character crops -->
             </div>
           </div>
 
@@ -2160,7 +2441,15 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
     let drawBox = null;
     let isMouseDown = false;
     let drawStartX = 0, drawStartY = 0;
-    let activeHighlightVehicleId = null;
+    // Anti-blur and Studio State (ALL ANTIBLURS OFF BY DEFAULT)
+    let currentAntiblurStrength = 1.0;
+    let activeStudioPlate = null;
+    let activeStudioVeh = null;
+    let studioZoom = 4.0;
+    let studioShowBoxes = true;
+    let studioShowBadges = true;
+    let studioMode = 'ann'; // 'ann', 'deblur', 'raw'
+    window.activeHoverCharId = null;
 
     const state = {
       image: new Image(),
@@ -2245,6 +2534,126 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
           ]
         }
       ]
+    };
+
+    // ========================================================
+    // CLIENT-SIDE IMAGE CONVOLUTION & ANTI-BLUR PROCESSORS
+    // ========================================================
+    function applySharpenConvolution(cCtx, width, height, strength = 1.0) {
+      if (width <= 2 || height <= 2) return;
+      try {
+        const imgData = cCtx.getImageData(0, 0, width, height);
+        const data = imgData.data;
+        const copy = new Uint8ClampedArray(data);
+
+        // High-boost unsharp kernel: distinct edge pop
+        const k = 0.85 * strength;
+        const center = 1.0 + 4.0 * k;
+
+        for (let y = 1; y < height - 1; y++) {
+          const rowOffset = y * width * 4;
+          const rowPrev = (y - 1) * width * 4;
+          const rowNext = (y + 1) * width * 4;
+
+          for (let x = 1; x < width - 1; x++) {
+            const idx = rowOffset + x * 4;
+            const left = rowOffset + (x - 1) * 4;
+            const right = rowOffset + (x + 1) * 4;
+            const top = rowPrev + x * 4;
+            const bottom = rowNext + x * 4;
+
+            for (let c = 0; c < 3; c++) {
+              const val = center * copy[idx + c]
+                        - k * (copy[left + c] + copy[right + c] + copy[top + c] + copy[bottom + c]);
+              data[idx + c] = Math.min(255, Math.max(0, val));
+            }
+          }
+        }
+        cCtx.putImageData(imgData, 0, 0);
+      } catch (e) {
+        console.warn('Canvas convolution bypassed:', e);
+      }
+    }
+
+    function applyPlateCharDeblur(cCtx, width, height, strength = 1.2) {
+      if (width <= 2 || height <= 2) return;
+      try {
+        const imgData = cCtx.getImageData(0, 0, width, height);
+        const data = imgData.data;
+        const copy = new Uint8ClampedArray(data);
+
+        // Strong Laplacian deconvolution + contrast boost for crisp numbers
+        const k = 1.25 * strength;
+        const center = 1.0 + 4.0 * k;
+
+        for (let y = 1; y < height - 1; y++) {
+          const rowOffset = y * width * 4;
+          const rowPrev = (y - 1) * width * 4;
+          const rowNext = (y + 1) * width * 4;
+
+          for (let x = 1; x < width - 1; x++) {
+            const idx = rowOffset + x * 4;
+            const left = rowOffset + (x - 1) * 4;
+            const right = rowOffset + (x + 1) * 4;
+            const top = rowPrev + x * 4;
+            const bottom = rowNext + x * 4;
+
+            for (let c = 0; c < 3; c++) {
+              let val = center * copy[idx + c]
+                      - k * (copy[left + c] + copy[right + c] + copy[top + c] + copy[bottom + c]);
+              // Local contrast stretch around character ink strokes
+              val = (val - 128) * 1.35 + 128;
+              data[idx + c] = Math.min(255, Math.max(0, val));
+            }
+          }
+        }
+        cCtx.putImageData(imgData, 0, 0);
+      } catch (e) {
+        console.warn('Plate deblur bypassed:', e);
+      }
+    }
+
+    function updateAntiblurUI() {
+      const vOn = document.getElementById('chkAntiblurVehicle')?.checked || false;
+      const pOn = document.getElementById('chkAntiblurPlate')?.checked || false;
+      const cOn = document.getElementById('chkAntiblurChar')?.checked || false;
+
+      const banner = document.getElementById('antiblurActiveBanner');
+      const stagesText = document.getElementById('antiblurActiveStagesText');
+      const modeBadge = document.getElementById('antiblurModeBadge');
+
+      const activeList = [];
+      if (vOn) activeList.push('Stage 1 (Vehicle)');
+      if (pOn) activeList.push('Stage 2 (Plate)');
+      if (cOn) activeList.push('Stage 3 (Character)');
+
+      if (activeList.length > 0) {
+        if (banner) banner.style.display = 'flex';
+        if (stagesText) stagesText.innerText = activeList.join(' + ') + ` [${currentAntiblurStrength}x Intensity]`;
+        if (modeBadge) {
+          modeBadge.innerText = `Active (${activeList.length} Stages)`;
+          modeBadge.style.background = 'rgba(56, 189, 248, 0.2)';
+          modeBadge.style.color = '#38bdf8';
+        }
+      } else {
+        if (banner) banner.style.display = 'none';
+        if (modeBadge) {
+          modeBadge.innerText = 'Manual Only (Default OFF)';
+          modeBadge.style.background = 'rgba(148, 163, 184, 0.15)';
+          modeBadge.style.color = '#94a3b8';
+        }
+      }
+    }
+
+    window.setAntiblurStrength = function(strength, btn) {
+      currentAntiblurStrength = strength;
+      document.querySelectorAll('.btn-intensity').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      updateAntiblurUI();
+      renderCanvas();
+      if (activeStudioPlate) {
+        renderZoomedPlateStudio(activeStudioPlate, activeStudioVeh);
+      }
     };
 
     // Initialize TensorFlow.js
@@ -2829,6 +3238,21 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(state.image, 0, 0, canvas.width, canvas.height);
 
+      // Distinct Stage 1 Anti-Blur on full image canvas if manually enabled
+      if (document.getElementById('chkAntiblurVehicle')?.checked) {
+        applySharpenConvolution(ctx, canvas.width, canvas.height, currentAntiblurStrength);
+
+        // Visual watermark tag on canvas confirming active anti-blur
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+        ctx.fillRect(canvas.width - 260, 10, 250, 26);
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(canvas.width - 260, 10, 250, 26);
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.fillText('⚡ Anti-Blur Active: Vehicle Stage', canvas.width - 250, 27);
+      }
+
       if (!showBoxes) return; // Clean inspection mode
 
       const carThresh = parseFloat(carConfSlider.value);
@@ -3048,11 +3472,11 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
                 </div>
                 
                 <div class="plate-actions-bar" style="margin-top: 6px;">
-                  <button class="btn btn-primary" style="padding: 4px 8px; font-size: 0.72rem; flex: 1;" onclick="downloadCropImage('${pCropUri}', 'vehicle_${v.vehicle_id}_plate.jpg')">
-                    💾 Download Plate
+                  <button class="btn btn-primary" style="padding: 4px 8px; font-size: 0.72rem; flex: 1;" onclick="focusAndInspectPlate(${v.vehicle_id}, '${pCropUri}', ${pW}, ${pH}, ${plate.confidence}, ${plate.aspect || '2.8'})">
+                    🔍 Inspect in Studio
                   </button>
-                  <button class="btn" style="padding: 4px 8px; font-size: 0.72rem;" onclick="openImageModal(document.getElementById('plate-img-${v.vehicle_id}') ? document.getElementById('plate-img-${v.vehicle_id}').src : '${pCropUri}', 'Extracted Plate · Vehicle #${v.vehicle_id}', 'Confidence: ${(plate.confidence*100).toFixed(1)}% | Size: ${pW}×${pH}px | Aspect: ${plate.aspect || '2.8'}:1 | BBox: [${plate.bbox_global_xyxy.join(', ')}]', 'vehicle_${v.vehicle_id}_plate.jpg')">
-                    🔍 Enlarge
+                  <button class="btn" style="padding: 4px 8px; font-size: 0.72rem;" onclick="downloadCropImage('${pCropUri}', 'vehicle_${v.vehicle_id}_plate.jpg')">
+                    💾 Save Plate
                   </button>
                 </div>
 
@@ -3060,29 +3484,8 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
                   <div class="plate-meta-item"><span>Confidence:</span><span class="plate-meta-val" style="color: #34d399;">${(plate.confidence * 100).toFixed(1)}%</span></div>
                   <div class="plate-meta-item"><span>Crop Size:</span><span class="plate-meta-val">${pW}×${pH}px</span></div>
                   <div class="plate-meta-item"><span>Global BBox:</span><span class="plate-meta-val">[${plate.bbox_global_xyxy.join(', ')}]</span></div>
-                  <div class="plate-meta-item"><span>Characters:</span><span class="plate-meta-val" style="color: #38bdf8;">${(plate.characters && plate.characters.length) || 0} segmented</span></div>
+                  <div class="plate-meta-item"><span>Characters:</span><span class="plate-meta-val" style="color: #38bdf8;">${(plate.characters && plate.characters.length) || 0} numbers</span></div>
                 </div>
-
-                <!-- Individual Character Crops Gallery -->
-                ${plate.characters && plate.characters.length > 0 ? `
-                  <div class="characters-section">
-                    <div class="characters-header">
-                      <span>🔤 Character Crops &amp; BBoxes (${plate.characters.length})</span>
-                      <span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-size: 0.65rem;">Segmented</span>
-                    </div>
-                    <div class="characters-grid">
-                      ${plate.characters.map(ch => `
-                        <div class="character-tile" onclick="openImageModal('${ch.crop_uri || pCropUri}', 'Character #${ch.char_id} ${ch.char_text || ''}', 'Confidence: ${(ch.confidence*100).toFixed(1)}% | Plate BBox: [${ch.bbox_plate_xyxy ? ch.bbox_plate_xyxy.join(', ') : ''}]', 'char_${ch.char_id}.png')" title="Click to enlarge Character #${ch.char_id}">
-                          <img class="character-img" src="${ch.crop_uri || pCropUri}" alt="Char ${ch.char_id}">
-                          <div class="character-caption">
-                            <span class="char-badge">#${ch.char_id}${ch.char_text ? ': ' + ch.char_text : ''}</span>
-                            <span class="char-coord">[${ch.bbox_plate_xyxy ? ch.bbox_plate_xyxy.join(',') : ''}]</span>
-                          </div>
-                        </div>
-                      `).join('')}
-                    </div>
-                  </div>
-                ` : ''}
               ` : `
                 <div style="flex: 1; min-height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 12px; background: rgba(15, 23, 42, 0.6); border-radius: 6px; text-align: center;">
                   <span style="font-size: 1.4rem;">⚠️</span>
@@ -3095,7 +3498,366 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
         `;
         vehiclesListContainer.appendChild(card);
       });
+
+      // Automatically populate Zoomed Studio & Character Exporter for the primary plate
+      let primaryPlate = null;
+      let primaryVeh = null;
+      for (const v of state.detections.vehicles) {
+        if (v.plates && v.plates.length > 0) {
+          primaryPlate = v.plates[0];
+          primaryVeh = v;
+          break;
+        }
+      }
+
+      if (primaryPlate && chkShowPlates.checked) {
+        renderZoomedPlateStudio(primaryPlate, primaryVeh);
+        renderCharactersExporter(primaryPlate, primaryVeh);
+      } else {
+        const studioEl = document.getElementById('zoomedPlateStudioContainer');
+        const expEl = document.getElementById('charactersExporterContainer');
+        if (studioEl) studioEl.style.display = 'none';
+        if (expEl) expEl.style.display = 'none';
+      }
     }
+
+    // ========================================================
+    // ZOOMED LICENSE PLATE STUDIO RENDERER & NUMBER BOUNDING BOXES
+    // ========================================================
+    window.renderZoomedPlateStudio = function(plate, veh) {
+      if (!plate) return;
+      activeStudioPlate = plate;
+      activeStudioVeh = veh;
+
+      const studioContainer = document.getElementById('zoomedPlateStudioContainer');
+      const studioCanvas = document.getElementById('zoomedPlateCanvas');
+      if (!studioContainer || !studioCanvas) return;
+
+      studioContainer.style.display = 'flex';
+
+      // Update Header & HUD
+      const vehBadge = document.getElementById('zoomedPlateVehicleBadge');
+      if (vehBadge) vehBadge.innerText = `${veh?.name || 'Vehicle'} · Plate #${plate.plate_id || 1}`;
+
+      const textDisplay = (plate.characters && plate.characters.length > 0)
+        ? plate.characters.map(c => c.char_text).filter(Boolean).join(' ')
+        : (plate.plate_text || 'Indian Registration');
+
+      const hudPlateText = document.getElementById('hudPlateText');
+      const hudPlateSize = document.getElementById('hudPlateSize');
+      const hudPlateAspect = document.getElementById('hudPlateAspect');
+      const hudPlateCharCount = document.getElementById('hudPlateCharCount');
+
+      const pW = plate.bbox_global_xyxy ? (plate.bbox_global_xyxy[2] - plate.bbox_global_xyxy[0]) : 88;
+      const pH = plate.bbox_global_xyxy ? (plate.bbox_global_xyxy[3] - plate.bbox_global_xyxy[1]) : 31;
+
+      if (hudPlateText) hudPlateText.innerText = textDisplay || 'Extracted Plate';
+      if (hudPlateSize) hudPlateSize.innerText = `${pW}×${pH}px (x${studioZoom} Zoom)`;
+      if (hudPlateAspect) hudPlateAspect.innerText = `${plate.aspect || '2.8'}:1`;
+      if (hudPlateCharCount) hudPlateCharCount.innerText = `${(plate.characters && plate.characters.length) || 0} numbers segmented`;
+
+      // Select image source
+      let srcUri = plate.crop_src || plate.plate_raw_crop_uri || './crops/sample_veh_1_plate_1.jpg';
+      if (studioMode === 'deblur' && plate.plate_deblurred_crop_uri) {
+        srcUri = plate.plate_deblurred_crop_uri;
+      }
+
+      const plateImg = new Image();
+      plateImg.crossOrigin = 'anonymous';
+      plateImg.src = srcUri;
+      plateImg.onload = () => {
+        const origW = plateImg.naturalWidth || pW || 88;
+        const origH = plateImg.naturalHeight || pH || 31;
+        const targetW = Math.round(origW * studioZoom);
+        const targetH = Math.round(origH * studioZoom);
+
+        studioCanvas.width = targetW;
+        studioCanvas.height = targetH;
+        const zctx = studioCanvas.getContext('2d');
+        zctx.imageSmoothingEnabled = false;
+
+        zctx.drawImage(plateImg, 0, 0, targetW, targetH);
+
+        // Apply distinct character anti-blur if toggled or in deblur mode
+        const wantCharDeblur = document.getElementById('chkAntiblurChar')?.checked || studioMode === 'deblur';
+        if (wantCharDeblur) {
+          applyPlateCharDeblur(zctx, targetW, targetH, currentAntiblurStrength);
+        }
+
+        // Draw professional bounding boxes against each number
+        if (studioShowBoxes && plate.characters && plate.characters.length > 0) {
+          const scaleX = targetW / origW;
+          const scaleY = targetH / origH;
+
+          plate.characters.forEach((ch) => {
+            const [ox1, oy1, ox2, oy2] = ch.bbox_plate_xyxy;
+            const sx1 = Math.round(ox1 * scaleX);
+            const sy1 = Math.round(oy1 * scaleY);
+            const sx2 = Math.round(ox2 * scaleX);
+            const sy2 = Math.round(oy2 * scaleY);
+            const boxW = sx2 - sx1;
+            const boxH = sy2 - sy1;
+
+            const isHovered = (window.activeHoverCharId === ch.char_id);
+
+            // 1. Semi-transparent character zone highlight
+            zctx.fillStyle = isHovered ? 'rgba(245, 158, 11, 0.28)' : 'rgba(0, 229, 255, 0.12)';
+            zctx.fillRect(sx1, sy1, boxW, boxH);
+
+            // 2. Sleek precision bounding box border
+            zctx.strokeStyle = isHovered ? '#fbbf24' : '#00e5ff';
+            zctx.lineWidth = isHovered ? 2.5 : 1.8;
+            zctx.strokeRect(sx1, sy1, boxW, boxH);
+
+            // 3. Professional corner HUD reticle brackets
+            const tickW = Math.max(3, Math.min(8, Math.floor(boxW * 0.25)));
+            const tickH = Math.max(3, Math.min(8, Math.floor(boxH * 0.25)));
+            zctx.strokeStyle = isHovered ? '#ffffff' : '#e0f2fe';
+            zctx.lineWidth = 2.0;
+
+            // Top-left
+            zctx.beginPath(); zctx.moveTo(sx1, sy1 + tickH); zctx.lineTo(sx1, sy1); zctx.lineTo(sx1 + tickW, sy1); zctx.stroke();
+            // Top-right
+            zctx.beginPath(); zctx.moveTo(sx2 - tickW, sy1); zctx.lineTo(sx2, sy1); zctx.lineTo(sx2, sy1 + tickH); zctx.stroke();
+            // Bottom-left
+            zctx.beginPath(); zctx.moveTo(sx1, sy2 - tickH); zctx.lineTo(sx1, sy2); zctx.lineTo(sx1 + tickW, sy2); zctx.stroke();
+            // Bottom-right
+            zctx.beginPath(); zctx.moveTo(sx2 - tickW, sy2); zctx.lineTo(sx2, sy2); zctx.lineTo(sx2, sy2 - tickH); zctx.stroke();
+
+            // 4. Floating Monospace Badge on top of each number
+            if (studioShowBadges) {
+              const label = `#${ch.char_id}${ch.char_text ? ': ' + ch.char_text : ''}`;
+              zctx.font = 'bold 10px monospace';
+              const textWidth = zctx.measureText(label).width;
+              const badgeW = textWidth + 6;
+              const badgeH = 15;
+              const badgeY = Math.max(1, sy1 - badgeH - 2);
+
+              zctx.fillStyle = 'rgba(15, 23, 42, 0.94)';
+              zctx.fillRect(sx1, badgeY, badgeW, badgeH);
+              zctx.strokeStyle = isHovered ? '#fbbf24' : '#00e5ff';
+              zctx.lineWidth = 1;
+              zctx.strokeRect(sx1, badgeY, badgeW, badgeH);
+
+              zctx.fillStyle = isHovered ? '#fef08a' : '#38bdf8';
+              zctx.fillText(label, sx1 + 3, badgeY + 11);
+            }
+          });
+        }
+      };
+    };
+
+    // ========================================================
+    // CHARACTER CUTTING & 1-CLICK BATCH EXPORTER
+    // ========================================================
+    window.renderCharactersExporter = function(plate, veh) {
+      if (!plate) return;
+      const exporterContainer = document.getElementById('charactersExporterContainer');
+      const grid = document.getElementById('glyphCardsGrid');
+      const textBadge = document.getElementById('exporterPlateTextBadge');
+      const countBadge = document.getElementById('exporterCharCountBadge');
+
+      if (!exporterContainer || !grid) return;
+
+      const characters = plate.characters || [];
+      if (characters.length === 0) {
+        exporterContainer.style.display = 'none';
+        return;
+      }
+
+      exporterContainer.style.display = 'flex';
+
+      const fullPlateText = characters.map(c => c.char_text).filter(Boolean).join(' ') || (plate.plate_text || 'Indian Registration');
+      if (textBadge) textBadge.innerText = fullPlateText;
+      if (countBadge) countBadge.innerText = `${characters.length} Numbers Cut`;
+
+      grid.innerHTML = '';
+      characters.forEach((ch, idx) => {
+        const [cx1, cy1, cx2, cy2] = ch.bbox_plate_xyxy || [0, 0, 10, 10];
+        const cw = cx2 - cx1;
+        const ch_h = cy2 - cy1;
+        const cropSrc = ch.crop_uri || plate.crop_src || `./crops/characters/char_${String(idx+1).padStart(2,'0')}.png`;
+        const glyphChar = ch.char_text || (idx + 1);
+
+        const card = document.createElement('div');
+        card.className = 'glyph-card';
+        card.id = `glyph-card-${ch.char_id}`;
+        card.title = `Character #${ch.char_id} [${glyphChar}] - Click to enlarge`;
+
+        card.innerHTML = `
+          <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+            <span style="font-size: 0.65rem; color: #94a3b8; font-family: monospace;">#${ch.char_id}</span>
+            <span class="glyph-char-badge">${ch.char_text || ''}</span>
+          </div>
+          <img class="glyph-card-preview" src="${cropSrc}" alt="Char ${ch.char_id}">
+          <div class="glyph-meta-row">
+            <span>Dim:</span><span>${cw}×${ch_h}px</span>
+          </div>
+          <div class="glyph-meta-row">
+            <span>Conf:</span><span style="color: #34d399;">${((ch.confidence || 0.88)*100).toFixed(0)}%</span>
+          </div>
+          <button class="btn-glyph-save" onclick="event.stopPropagation(); downloadCropImage('${cropSrc}', 'char_${String(ch.char_id).padStart(2,'0')}_${glyphChar}.png')">
+            💾 Save PNG
+          </button>
+        `;
+
+        card.onmouseenter = () => {
+          window.activeHoverCharId = ch.char_id;
+          renderZoomedPlateStudio(plate, veh);
+        };
+        card.onmouseleave = () => {
+          window.activeHoverCharId = null;
+          renderZoomedPlateStudio(plate, veh);
+        };
+        card.onclick = () => {
+          openImageModal(cropSrc, `Segmented Character #${ch.char_id} [${glyphChar}]`, `Coordinates: [${ch.bbox_plate_xyxy ? ch.bbox_plate_xyxy.join(', ') : ''}] | Crop: ${cw}×${ch_h}px`, `char_${String(ch.char_id).padStart(2,'0')}_${glyphChar}.png`);
+        };
+
+        grid.appendChild(card);
+      });
+    };
+
+    // ========================================================
+    // 1-CLICK BATCH DOWNLOAD OF ALL CHARACTERS (.ZIP)
+    // ========================================================
+    window.downloadAllCharactersZip = async function() {
+      if (!activeStudioPlate || !activeStudioPlate.characters || activeStudioPlate.characters.length === 0) {
+        alert('No segmented characters available to download.');
+        return;
+      }
+
+      const chars = activeStudioPlate.characters;
+      const plateText = chars.map(c => c.char_text).filter(Boolean).join('') || 'PLATE';
+      const zipFilename = `license_plate_chars_${plateText}.zip`;
+
+      const dlBtn = document.getElementById('btnDownloadAllCharsZip');
+      const originalText = dlBtn ? dlBtn.innerHTML : '';
+      if (dlBtn) {
+        dlBtn.innerHTML = `⏳ Bundling ${chars.length} Characters...`;
+        dlBtn.disabled = true;
+      }
+
+      try {
+        if (typeof JSZip !== 'undefined') {
+          const zip = new JSZip();
+          const folder = zip.folder(`characters_${plateText}`);
+
+          // Metadata JSON
+          const metadata = {
+            plate_text: plateText,
+            character_count: chars.length,
+            extracted_at: new Date().toISOString(),
+            characters: chars.map(c => ({
+              id: c.char_id,
+              text: c.char_text,
+              bbox_xyxy: c.bbox_plate_xyxy,
+              confidence: c.confidence
+            }))
+          };
+          folder.file('plate_metadata.json', JSON.stringify(metadata, null, 2));
+
+          // Add each character image
+          for (let i = 0; i < chars.length; i++) {
+            const ch = chars[i];
+            const uri = ch.crop_uri || activeStudioPlate.crop_src;
+            const fname = `char_${String(ch.char_id).padStart(2, '0')}_${ch.char_text || 'glyph'}.png`;
+
+            if (uri.startsWith('data:image/')) {
+              const base64Data = uri.split(',')[1];
+              folder.file(fname, base64Data, { base64: true });
+            } else {
+              try {
+                const resp = await fetch(uri);
+                const blob = await resp.blob();
+                folder.file(fname, blob);
+              } catch (e) {
+                console.warn('Could not fetch character crop for zip:', uri, e);
+              }
+            }
+          }
+
+          const content = await zip.generateAsync({ type: 'blob' });
+          const url = URL.createObjectURL(content);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = zipFilename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          alert(`✅ Successfully bundled and downloaded all ${chars.length} characters in 1 click!`);
+        } else {
+          // Fallback sequential download
+          chars.forEach((ch, idx) => {
+            setTimeout(() => {
+              downloadCropImage(ch.crop_uri || activeStudioPlate.crop_src, `char_${String(ch.char_id).padStart(2,'0')}_${ch.char_text || 'glyph'}.png`);
+            }, idx * 120);
+          });
+          alert(`✅ Downloaded all ${chars.length} characters individually.`);
+        }
+      } catch (err) {
+        console.error('Error bundling characters zip:', err);
+        alert('Could not generate ZIP automatically. Downloading individually.');
+        chars.forEach(ch => {
+          downloadCropImage(ch.crop_uri || activeStudioPlate.crop_src, `char_${String(ch.char_id).padStart(2,'0')}.png`);
+        });
+      } finally {
+        if (dlBtn) {
+          dlBtn.innerHTML = originalText;
+          dlBtn.disabled = false;
+        }
+      }
+    };
+
+    window.copyPlateRegistrationText = function() {
+      if (!activeStudioPlate) return;
+      const text = activeStudioPlate.characters?.map(c => c.char_text).filter(Boolean).join(' ') || activeStudioPlate.plate_text || '';
+      navigator.clipboard.writeText(text);
+      alert(`Copied Registration Number to clipboard: "${text}"`);
+    };
+
+    window.copyCharacterBoxesJson = function() {
+      if (!activeStudioPlate) return;
+      navigator.clipboard.writeText(JSON.stringify(activeStudioPlate.characters || [], null, 2));
+      alert(`Copied character bounding boxes JSON to clipboard!`);
+    };
+
+    window.setPlateStudioZoom = function(z) {
+      studioZoom = z;
+      document.querySelectorAll('#zoomedPlateStudioContainer button[id^="btnZoom"]').forEach(b => {
+        b.classList.toggle('btn-primary', b.innerText.includes(`${z}x`));
+      });
+      if (activeStudioPlate) renderZoomedPlateStudio(activeStudioPlate, activeStudioVeh);
+    };
+
+    window.togglePlateStudioBoxes = function() {
+      studioShowBoxes = !studioShowBoxes;
+      const btn = document.getElementById('btnTogglePlateBoxes');
+      if (btn) btn.classList.toggle('btn-primary', studioShowBoxes);
+      if (activeStudioPlate) renderZoomedPlateStudio(activeStudioPlate, activeStudioVeh);
+    };
+
+    window.togglePlateStudioBadges = function() {
+      studioShowBadges = !studioShowBadges;
+      const btn = document.getElementById('btnTogglePlateBadges');
+      if (btn) btn.classList.toggle('btn-primary', studioShowBadges);
+      if (activeStudioPlate) renderZoomedPlateStudio(activeStudioPlate, activeStudioVeh);
+    };
+
+    window.togglePlateStudioDeblur = function() {
+      studioMode = (studioMode === 'deblur') ? 'ann' : 'deblur';
+      const btn = document.getElementById('btnTogglePlateDeblur');
+      if (btn) btn.classList.toggle('btn-primary', studioMode === 'deblur');
+      if (activeStudioPlate) renderZoomedPlateStudio(activeStudioPlate, activeStudioVeh);
+    };
+
+    window.downloadZoomedPlateStudio = function() {
+      const canv = document.getElementById('zoomedPlateCanvas');
+      if (canv) {
+        const uri = canv.toDataURL('image/png');
+        downloadCropImage(uri, 'zoomed_plate_studio.png');
+      }
+    };
 
     // Toggle between character annotated overlay and clean plate crop
     window.togglePlateOverlay = function(vehId, annotatedSrc, cleanSrc) {
@@ -3114,14 +3876,14 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
     // Helper to Focus a vehicle and open its plate in enlarged modal
     window.focusAndInspectPlate = function(vehId, plateSrc, pW, pH, conf, aspect) {
       highlightVehicle(vehId);
-      const cardEl = document.getElementById(`veh-card-${vehId}`);
-      if (cardEl) cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      openImageModal(
-        plateSrc,
-        `Extracted License Plate · Vehicle #${vehId}`,
-        `Confidence: ${(conf*100).toFixed(1)}% | Size: ${pW}×${pH}px | Aspect: ${aspect || '2.8'}:1`,
-        `vehicle_${vehId}_plate.jpg`
-      );
+      const v = state.detections.vehicles.find(item => item.vehicle_id === vehId);
+      const p = v?.plates?.[0];
+      if (p) {
+        renderZoomedPlateStudio(p, v);
+        renderCharactersExporter(p, v);
+      }
+      const studioEl = document.getElementById('zoomedPlateStudioContainer');
+      if (studioEl) studioEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     };
 
     // Download any base64 / blob / image URI
@@ -3221,6 +3983,20 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
       renderCanvas();
       renderSeparatedCards();
       updateYoloExport();
+    });
+
+    // Anti-blur checkbox listeners for manual toggling & live re-render
+    ['chkAntiblurVehicle', 'chkAntiblurPlate', 'chkAntiblurChar'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('change', () => {
+          updateAntiblurUI();
+          renderCanvas();
+          if (activeStudioPlate) {
+            renderZoomedPlateStudio(activeStudioPlate, activeStudioVeh);
+          }
+        });
+      }
     });
 
     carConfSlider.addEventListener('input', (e) => {
