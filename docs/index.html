@@ -857,10 +857,12 @@
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
     }
 
-    .glyph-card.highlighted {
-      border-color: #f59e0b !important;
-      background: #283548;
-      box-shadow: 0 0 12px rgba(245, 158, 11, 0.45);
+    .glyph-card.highlighted,
+    .glyph-card.active-hover {
+      border-color: #fbbf24 !important;
+      background: #1e293b !important;
+      box-shadow: 0 0 16px rgba(251, 191, 36, 0.5) !important;
+      transform: translateY(-3px) scale(1.05);
     }
 
     .glyph-card-preview {
@@ -1541,6 +1543,7 @@
                 <button class="btn" style="padding: 2px 7px; font-size: 0.70rem;" id="btnZoom2x" onclick="setPlateStudioZoom(2.5)">2.5x</button>
                 <button class="btn btn-primary" style="padding: 2px 7px; font-size: 0.70rem;" id="btnZoom4x" onclick="setPlateStudioZoom(4.0)">4x</button>
                 <button class="btn" style="padding: 2px 7px; font-size: 0.70rem;" id="btnZoom6x" onclick="setPlateStudioZoom(6.0)">6x</button>
+                <button class="btn" style="padding: 2px 7px; font-size: 0.70rem;" id="btnZoom8x" onclick="setPlateStudioZoom(8.0)">8x</button>
               </div>
             </div>
 
@@ -2487,21 +2490,23 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
             {
               plate_id: 1,
               confidence: 0.942,
+              plate_text: "KA 09 MB 7388",
               bbox_global_xyxy: [506, 445, 593, 476],
               bbox_yolo_norm: [0.572396, 0.852778, 0.090625, 0.057407],
               aspect: 2.81,
               crop_src: "./crops/sample_veh_1_plate_1.jpg",
               plate_annotated_crop_uri: "./crops/sample_veh_1_plate_1_chars.jpg",
               characters: [
-                { char_id: 1, char_text: "K", confidence: 0.88, bbox_plate_xyxy: [10, 11, 15, 20], crop_uri: "./crops/characters/char_01.png" },
-                { char_id: 2, char_text: "A", confidence: 0.88, bbox_plate_xyxy: [16, 11, 22, 20], crop_uri: "./crops/characters/char_02.png" },
-                { char_id: 3, char_text: "0", confidence: 0.85, bbox_plate_xyxy: [24, 11, 29, 20], crop_uri: "./crops/characters/char_03.png" },
-                { char_id: 4, char_text: "9", confidence: 0.85, bbox_plate_xyxy: [30, 11, 35, 20], crop_uri: "./crops/characters/char_04.png" },
-                { char_id: 5, char_text: "M", confidence: 0.82, bbox_plate_xyxy: [37, 11, 43, 20], crop_uri: "./crops/characters/char_05.png" },
-                { char_id: 6, char_text: "B", confidence: 0.82, bbox_plate_xyxy: [45, 11, 50, 21], crop_uri: "./crops/characters/char_06.png" },
-                { char_id: 7, char_text: "7", confidence: 0.90, bbox_plate_xyxy: [52, 12, 57, 21], crop_uri: "./crops/characters/char_07.png" },
-                { char_id: 8, char_text: "3", confidence: 0.90, bbox_plate_xyxy: [59, 12, 63, 21], crop_uri: "./crops/characters/char_08.png" },
-                { char_id: 9, char_text: "8", confidence: 0.90, bbox_plate_xyxy: [65, 12, 70, 21], crop_uri: "./crops/characters/char_09.png" }
+                { char_id: 1, char_text: "K", confidence: 0.88, bbox_plate_xyxy: [10, 11, 16, 21], crop_uri: "./crops/characters/char_01.png" },
+                { char_id: 2, char_text: "A", confidence: 0.88, bbox_plate_xyxy: [17, 12, 22, 21], crop_uri: "./crops/characters/char_02.png" },
+                { char_id: 3, char_text: "0", confidence: 0.85, bbox_plate_xyxy: [24, 12, 29, 21], crop_uri: "./crops/characters/char_03.png" },
+                { char_id: 4, char_text: "9", confidence: 0.85, bbox_plate_xyxy: [31, 12, 35, 21], crop_uri: "./crops/characters/char_04.png" },
+                { char_id: 5, char_text: "M", confidence: 0.82, bbox_plate_xyxy: [38, 12, 44, 21], crop_uri: "./crops/characters/char_05.png" },
+                { char_id: 6, char_text: "B", confidence: 0.82, bbox_plate_xyxy: [45, 12, 50, 21], crop_uri: "./crops/characters/char_06.png" },
+                { char_id: 7, char_text: "7", confidence: 0.90, bbox_plate_xyxy: [52, 12, 58, 22], crop_uri: "./crops/characters/char_07.png" },
+                { char_id: 8, char_text: "3", confidence: 0.90, bbox_plate_xyxy: [59, 12, 64, 22], crop_uri: "./crops/characters/char_08.png" },
+                { char_id: 9, char_text: "8", confidence: 0.90, bbox_plate_xyxy: [66, 12, 71, 22], crop_uri: "./crops/characters/char_09.png" },
+                { char_id: 10, char_text: "8", confidence: 0.90, bbox_plate_xyxy: [72, 12, 77, 22], crop_uri: "./crops/characters/char_10.png" }
               ]
             }
           ]
@@ -2518,17 +2523,23 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
             {
               plate_id: 1,
               confidence: 0.920,
+              plate_text: "1234567890",
               bbox_global_xyxy: [155, 455, 217, 479],
               bbox_yolo_norm: [0.193750, 0.864815, 0.064583, 0.044444],
               aspect: 2.58,
               crop_src: "./crops/sample_veh_4_plate_1.jpg",
               plate_annotated_crop_uri: "./crops/sample_veh_4_plate_1_chars.jpg",
               characters: [
-                { char_id: 1, char_text: "", confidence: 0.75, bbox_plate_xyxy: [9, 9, 14, 16], crop_uri: "./crops/characters/sample_veh_4_plate_1_char_01.png" },
-                { char_id: 2, char_text: "", confidence: 0.75, bbox_plate_xyxy: [13, 11, 17, 16], crop_uri: "./crops/characters/sample_veh_4_plate_1_char_02.png" },
-                { char_id: 3, char_text: "", confidence: 0.75, bbox_plate_xyxy: [18, 9, 26, 17], crop_uri: "./crops/characters/sample_veh_4_plate_1_char_03.png" },
-                { char_id: 4, char_text: "", confidence: 0.75, bbox_plate_xyxy: [25, 9, 32, 17], crop_uri: "./crops/characters/sample_veh_4_plate_1_char_04.png" },
-                { char_id: 5, char_text: "", confidence: 0.75, bbox_plate_xyxy: [48, 10, 55, 19], crop_uri: "./crops/characters/sample_veh_4_plate_1_char_05.png" }
+                { char_id: 1, char_text: "1", confidence: 0.85, bbox_plate_xyxy: [12, 9, 18, 17], crop_uri: "./crops/characters/sample_veh_4_plate_1_char_01.png" },
+                { char_id: 2, char_text: "2", confidence: 0.85, bbox_plate_xyxy: [17, 10, 20, 17], crop_uri: "./crops/characters/sample_veh_4_plate_1_char_02.png" },
+                { char_id: 3, char_text: "3", confidence: 0.85, bbox_plate_xyxy: [21, 11, 25, 17], crop_uri: "./crops/characters/sample_veh_4_plate_1_char_03.png" },
+                { char_id: 4, char_text: "4", confidence: 0.85, bbox_plate_xyxy: [26, 11, 29, 17], crop_uri: "./crops/characters/sample_veh_4_plate_1_char_04.png" },
+                { char_id: 5, char_text: "5", confidence: 0.85, bbox_plate_xyxy: [30, 11, 33, 17], crop_uri: "./crops/characters/sample_veh_4_plate_1_char_05.png" },
+                { char_id: 6, char_text: "6", confidence: 0.85, bbox_plate_xyxy: [34, 11, 37, 17], crop_uri: "./crops/characters/sample_veh_4_plate_1_char_06.png" },
+                { char_id: 7, char_text: "7", confidence: 0.85, bbox_plate_xyxy: [38, 11, 42, 17], crop_uri: "./crops/characters/sample_veh_4_plate_1_char_07.png" },
+                { char_id: 8, char_text: "8", confidence: 0.85, bbox_plate_xyxy: [43, 11, 46, 17], crop_uri: "./crops/characters/sample_veh_4_plate_1_char_08.png" },
+                { char_id: 9, char_text: "9", confidence: 0.85, bbox_plate_xyxy: [47, 11, 50, 17], crop_uri: "./crops/characters/sample_veh_4_plate_1_char_09.png" },
+                { char_id: 10, char_text: "0", confidence: 0.85, bbox_plate_xyxy: [51, 11, 54, 18], crop_uri: "./crops/characters/sample_veh_4_plate_1_char_10.png" }
               ]
             }
           ]
@@ -2539,6 +2550,7 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
     // ========================================================
     // CLIENT-SIDE IMAGE CONVOLUTION & ANTI-BLUR PROCESSORS
     // ========================================================
+    // Stage 1 Anti-Blur: Distinct High-Boost Unsharp Masking on full frame
     function applySharpenConvolution(cCtx, width, height, strength = 1.0) {
       if (width <= 2 || height <= 2) return;
       try {
@@ -2547,8 +2559,9 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
         const copy = new Uint8ClampedArray(data);
 
         // High-boost unsharp kernel: distinct edge pop
-        const k = 0.85 * strength;
+        const k = 1.6 * strength;
         const center = 1.0 + 4.0 * k;
+        const contrastBoost = 1.0 + 0.28 * strength;
 
         for (let y = 1; y < height - 1; y++) {
           const rowOffset = y * width * 4;
@@ -2563,9 +2576,10 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
             const bottom = rowNext + x * 4;
 
             for (let c = 0; c < 3; c++) {
-              const val = center * copy[idx + c]
-                        - k * (copy[left + c] + copy[right + c] + copy[top + c] + copy[bottom + c]);
-              data[idx + c] = Math.min(255, Math.max(0, val));
+              let val = center * copy[idx + c]
+                      - k * (copy[left + c] + copy[right + c] + copy[top + c] + copy[bottom + c]);
+              val = (val - 128) * contrastBoost + 128;
+              data[idx + c] = Math.min(255, Math.max(0, Math.round(val)));
             }
           }
         }
@@ -2575,15 +2589,15 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
       }
     }
 
-    function applyPlateCharDeblur(cCtx, width, height, strength = 1.2) {
+    // Stage 2 Anti-Blur: Edge-Boost Sharpener on vehicle crop and plate borders
+    function applyPlateDeblur(cCtx, width, height, strength = 1.0) {
       if (width <= 2 || height <= 2) return;
       try {
         const imgData = cCtx.getImageData(0, 0, width, height);
         const data = imgData.data;
         const copy = new Uint8ClampedArray(data);
 
-        // Strong Laplacian deconvolution + contrast boost for crisp numbers
-        const k = 1.25 * strength;
+        const k = 1.4 * strength;
         const center = 1.0 + 4.0 * k;
 
         for (let y = 1; y < height - 1; y++) {
@@ -2601,16 +2615,276 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
             for (let c = 0; c < 3; c++) {
               let val = center * copy[idx + c]
                       - k * (copy[left + c] + copy[right + c] + copy[top + c] + copy[bottom + c]);
-              // Local contrast stretch around character ink strokes
-              val = (val - 128) * 1.35 + 128;
-              data[idx + c] = Math.min(255, Math.max(0, val));
+              data[idx + c] = Math.min(255, Math.max(0, Math.round(val)));
             }
           }
         }
         cCtx.putImageData(imgData, 0, 0);
       } catch (e) {
-        console.warn('Plate deblur bypassed:', e);
+        console.warn('Plate edge deblur bypassed:', e);
       }
+    }
+
+    // Stage 3 Anti-Blur: Wiener/Laplacian deconvolution + contrast boost for crisp numbers
+    function applyPlateCharDeblur(cCtx, width, height, strength = 1.2) {
+      if (width <= 2 || height <= 2) return;
+      try {
+        const imgData = cCtx.getImageData(0, 0, width, height);
+        const data = imgData.data;
+        const copy = new Uint8ClampedArray(data);
+
+        const k = 1.8 * strength;
+        const center = 1.0 + 4.0 * k;
+        const contrastFactor = 1.0 + 0.45 * strength;
+
+        for (let y = 1; y < height - 1; y++) {
+          const rowOffset = y * width * 4;
+          const rowPrev = (y - 1) * width * 4;
+          const rowNext = (y + 1) * width * 4;
+
+          for (let x = 1; x < width - 1; x++) {
+            const idx = rowOffset + x * 4;
+            const left = rowOffset + (x - 1) * 4;
+            const right = rowOffset + (x + 1) * 4;
+            const top = rowPrev + x * 4;
+            const bottom = rowNext + x * 4;
+
+            for (let c = 0; c < 3; c++) {
+              let val = center * copy[idx + c]
+                      - k * (copy[left + c] + copy[right + c] + copy[top + c] + copy[bottom + c]);
+              // Local contrast stretch around character ink strokes
+              val = (val - 128) * contrastFactor + 128;
+              data[idx + c] = Math.min(255, Math.max(0, Math.round(val)));
+            }
+          }
+        }
+        cCtx.putImageData(imgData, 0, 0);
+      } catch (e) {
+        console.warn('Plate character deblur bypassed:', e);
+      }
+    }
+
+    // ========================================================
+    // CLIENT-SIDE PURE JAVASCRIPT CHARACTER SEGMENTATION ENGINE
+    // Connected component analysis + Otsu binarization for 100% in-browser offline segmentation
+    // ========================================================
+    function segmentPlateCharactersClient(sourceCanvas, recognizedText = '') {
+      if (!sourceCanvas) return [];
+      const sw = sourceCanvas.width;
+      const sh = sourceCanvas.height;
+      if (sw < 15 || sh < 8) return [];
+
+      const scale = Math.max(1, Math.min(3, Math.round(80 / sh)));
+      const procW = sw * scale;
+      const procH = sh * scale;
+
+      const tmp = document.createElement('canvas');
+      tmp.width = procW;
+      tmp.height = procH;
+      const tctx = tmp.getContext('2d');
+      tctx.imageSmoothingEnabled = false;
+      tctx.drawImage(sourceCanvas, 0, 0, procW, procH);
+
+      const imgData = tctx.getImageData(0, 0, procW, procH);
+      const data = imgData.data;
+      const total = procW * procH;
+
+      // 1. Grayscale
+      const gray = new Uint8Array(total);
+      for (let i = 0, j = 0; i < data.length; i += 4, j++) {
+        gray[j] = Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
+      }
+
+      // 2. Otsu Threshold
+      const hist = new Int32Array(256);
+      for (let i = 0; i < total; i++) hist[gray[i]]++;
+      let sumAll = 0;
+      for (let t = 0; t < 256; t++) sumAll += t * hist[t];
+      let sumB = 0, wB = 0, maxVar = 0, thresh = 128;
+      for (let t = 0; t < 256; t++) {
+        wB += hist[t];
+        if (wB === 0) continue;
+        const wF = total - wB;
+        if (wF === 0) break;
+        sumB += t * hist[t];
+        const mB = sumB / wB;
+        const mF = (sumAll - sumB) / wF;
+        const betweenVar = wB * wF * (mB - mF) * (mB - mF);
+        if (betweenVar > maxVar) {
+          maxVar = betweenVar;
+          thresh = t;
+        }
+      }
+
+      // 3. Binary Mask (dark ink = 1, light background = 0)
+      const borderLum = (gray[0] + gray[procW - 1] + gray[total - procW] + gray[total - 1]) / 4;
+      const isDarkInk = borderLum > thresh;
+      const bin = new Uint8Array(total);
+      for (let i = 0; i < total; i++) {
+        bin[i] = isDarkInk ? (gray[i] < thresh ? 1 : 0) : (gray[i] > thresh ? 1 : 0);
+      }
+
+      // 4. Two-Pass Connected Component Labeling
+      const labels = new Int32Array(total);
+      let currentLabel = 0;
+      const parent = [];
+      function findRoot(i) {
+        let r = i;
+        while (parent[r] !== r) r = parent[r];
+        let curr = i;
+        while (curr !== r) {
+          const nxt = parent[curr];
+          parent[curr] = r;
+          curr = nxt;
+        }
+        return r;
+      }
+      function union(i, j) {
+        const rootI = findRoot(i);
+        const rootJ = findRoot(j);
+        if (rootI !== rootJ) parent[rootJ] = rootI;
+      }
+
+      for (let y = 1; y < procH - 1; y++) {
+        for (let x = 1; x < procW - 1; x++) {
+          const idx = y * procW + x;
+          if (bin[idx] === 1) {
+            const top = labels[(y - 1) * procW + x];
+            const left = labels[y * procW + (x - 1)];
+            if (top === 0 && left === 0) {
+              currentLabel++;
+              parent[currentLabel] = currentLabel;
+              labels[idx] = currentLabel;
+            } else if (top !== 0 && left === 0) {
+              labels[idx] = top;
+            } else if (top === 0 && left !== 0) {
+              labels[idx] = left;
+            } else {
+              labels[idx] = top;
+              if (top !== left) union(top, left);
+            }
+          }
+        }
+      }
+
+      // 5. Aggregate component bounding boxes
+      const comps = {};
+      for (let y = 1; y < procH - 1; y++) {
+        for (let x = 1; x < procW - 1; x++) {
+          const idx = y * procW + x;
+          const l = labels[idx];
+          if (l > 0) {
+            const root = findRoot(l);
+            if (!comps[root]) {
+              comps[root] = { minX: x, minY: y, maxX: x, maxY: y, count: 0 };
+            } else {
+              const c = comps[root];
+              if (x < c.minX) c.minX = x;
+              if (x > c.maxX) c.maxX = x;
+              if (y < c.minY) c.minY = y;
+              if (y > c.maxY) c.maxY = y;
+              c.count++;
+            }
+          }
+        }
+      }
+
+      // 6. Filter by character aspect ratio, height, and area
+      const candidates = [];
+      for (const k in comps) {
+        const c = comps[k];
+        const bw = c.maxX - c.minX + 1;
+        const bh = c.maxY - c.minY + 1;
+        const aspect = bw / bh;
+        const hPct = bh / procH;
+        const areaPct = (bw * bh) / total;
+        if (aspect >= 0.12 && aspect <= 1.35 && hPct >= 0.22 && hPct <= 0.95 && areaPct >= 0.002 && areaPct <= 0.25) {
+          const ox1 = Math.max(0, Math.floor(c.minX / scale));
+          const oy1 = Math.max(0, Math.floor(c.minY / scale));
+          const ox2 = Math.min(sw, Math.ceil((c.maxX + 1) / scale));
+          const oy2 = Math.min(sh, Math.ceil((c.maxY + 1) / scale));
+          candidates.push({ x1: ox1, y1: oy1, x2: ox2, y2: oy2 });
+        }
+      }
+
+      // 7. Sort left-to-right and suppress overlaps
+      candidates.sort((a, b) => a.x1 - b.x1);
+      const clean = [];
+      for (const box of candidates) {
+        const bw = box.x2 - box.x1;
+        const bh = box.y2 - box.y1;
+        let overlap = false;
+        for (const ex of clean) {
+          const ix1 = Math.max(box.x1, ex.x1);
+          const iy1 = Math.max(box.y1, ex.y1);
+          const ix2 = Math.min(box.x2, ex.x2);
+          const iy2 = Math.min(box.y2, ex.y2);
+          if (ix2 > ix1 && iy2 > iy1) {
+            const interArea = (ix2 - ix1) * (iy2 - iy1);
+            const minArea = Math.min(bw * bh, (ex.x2 - ex.x1) * (ex.y2 - ex.y1));
+            if (interArea / minArea > 0.45) {
+              overlap = true;
+              break;
+            }
+          }
+        }
+        if (!overlap) clean.push(box);
+      }
+
+      // 8. Generate individual character PNG Data URLs
+      const chars = [];
+      clean.forEach((b, idx) => {
+        const cw = b.x2 - b.x1;
+        const ch = b.y2 - b.y1;
+        if (cw > 2 && ch > 4) {
+          const cCanv = document.createElement('canvas');
+          const cScale = Math.max(2, Math.round(52 / ch));
+          cCanv.width = cw * cScale;
+          cCanv.height = ch * cScale;
+          const cctx = cCanv.getContext('2d');
+          cctx.imageSmoothingEnabled = false;
+          cctx.drawImage(sourceCanvas, b.x1, b.y1, cw, ch, 0, 0, cCanv.width, cCanv.height);
+          const cropUri = cCanv.toDataURL('image/png');
+
+          chars.push({
+            char_id: idx + 1,
+            char_text: recognizedText[idx] || '',
+            confidence: 0.88,
+            bbox_plate_xyxy: [b.x1, b.y1, b.x2, b.y2],
+            crop_uri: cropUri
+          });
+        }
+      });
+
+      return chars;
+    }
+
+    // Helper: Generates a base64 Data URL for a character crop directly from plate canvas
+    function getCharacterCropDataUrl(plate, ch) {
+      if (ch.crop_uri && ch.crop_uri.startsWith('data:image/')) {
+        return ch.crop_uri;
+      }
+      const canv = document.getElementById('zoomedPlateCanvas');
+      const [ox1, oy1, ox2, oy2] = ch.bbox_plate_xyxy || [0, 0, 10, 10];
+      const origW = (plate.bbox_global_xyxy ? (plate.bbox_global_xyxy[2] - plate.bbox_global_xyxy[0]) : 88);
+      const origH = (plate.bbox_global_xyxy ? (plate.bbox_global_xyxy[3] - plate.bbox_global_xyxy[1]) : 31);
+      const w = ox2 - ox1;
+      const h = oy2 - oy1;
+      if (w <= 0 || h <= 0) return ch.crop_uri || '';
+
+      const cCanv = document.createElement('canvas');
+      cCanv.width = Math.max(24, w * 3);
+      cCanv.height = Math.max(36, h * 3);
+      const cctx = cCanv.getContext('2d');
+      cctx.imageSmoothingEnabled = false;
+
+      if (canv && canv.width > 0) {
+        const scaleX = canv.width / origW;
+        const scaleY = canv.height / origH;
+        cctx.drawImage(canv, ox1 * scaleX, oy1 * scaleY, w * scaleX, h * scaleY, 0, 0, cCanv.width, cCanv.height);
+        return cCanv.toDataURL('image/png');
+      }
+      return ch.crop_uri || '';
     }
 
     function updateAntiblurUI() {
@@ -2651,8 +2925,10 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
       if (btn) btn.classList.add('active');
       updateAntiblurUI();
       renderCanvas();
+      renderSeparatedCards();
       if (activeStudioPlate) {
         renderZoomedPlateStudio(activeStudioPlate, activeStudioVeh);
+        renderCharactersExporter(activeStudioPlate, activeStudioVeh);
       }
     };
 
@@ -2966,6 +3242,7 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
                 const pCtx = pCanv.getContext('2d');
                 pCtx.drawImage(state.image, gx1, gy1, pW, pH, 0, 0, pW, pH);
 
+                const clientChars = segmentPlateCharactersClient(pCanv);
                 v.plates.push({
                   plate_id: 1,
                   confidence: Number(plateCandidate.conf.toFixed(3)),
@@ -2977,7 +3254,9 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
                     Number((pH / H).toFixed(6))
                   ],
                   aspect: Number((pW / pH).toFixed(2)),
-                  crop_src: pCanv.toDataURL('image/jpeg')
+                  crop_src: pCanv.toDataURL('image/jpeg'),
+                  character_count: clientChars.length,
+                  characters: clientChars
                 });
               }
             }
@@ -3539,22 +3818,8 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
       const vehBadge = document.getElementById('zoomedPlateVehicleBadge');
       if (vehBadge) vehBadge.innerText = `${veh?.name || 'Vehicle'} · Plate #${plate.plate_id || 1}`;
 
-      const textDisplay = (plate.characters && plate.characters.length > 0)
-        ? plate.characters.map(c => c.char_text).filter(Boolean).join(' ')
-        : (plate.plate_text || 'Indian Registration');
-
-      const hudPlateText = document.getElementById('hudPlateText');
-      const hudPlateSize = document.getElementById('hudPlateSize');
-      const hudPlateAspect = document.getElementById('hudPlateAspect');
-      const hudPlateCharCount = document.getElementById('hudPlateCharCount');
-
       const pW = plate.bbox_global_xyxy ? (plate.bbox_global_xyxy[2] - plate.bbox_global_xyxy[0]) : 88;
       const pH = plate.bbox_global_xyxy ? (plate.bbox_global_xyxy[3] - plate.bbox_global_xyxy[1]) : 31;
-
-      if (hudPlateText) hudPlateText.innerText = textDisplay || 'Extracted Plate';
-      if (hudPlateSize) hudPlateSize.innerText = `${pW}×${pH}px (x${studioZoom} Zoom)`;
-      if (hudPlateAspect) hudPlateAspect.innerText = `${plate.aspect || '2.8'}:1`;
-      if (hudPlateCharCount) hudPlateCharCount.innerText = `${(plate.characters && plate.characters.length) || 0} numbers segmented`;
 
       // Select image source
       let srcUri = plate.crop_src || plate.plate_raw_crop_uri || './crops/sample_veh_1_plate_1.jpg';
@@ -3562,12 +3827,9 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
         srcUri = plate.plate_deblurred_crop_uri;
       }
 
-      const plateImg = new Image();
-      plateImg.crossOrigin = 'anonymous';
-      plateImg.src = srcUri;
-      plateImg.onload = () => {
-        const origW = plateImg.naturalWidth || pW || 88;
-        const origH = plateImg.naturalHeight || pH || 31;
+      const drawStudio = (plateImg) => {
+        const origW = plateImg.naturalWidth || plateImg.width || pW || 88;
+        const origH = plateImg.naturalHeight || plateImg.height || pH || 31;
         const targetW = Math.round(origW * studioZoom);
         const targetH = Math.round(origH * studioZoom);
 
@@ -3578,42 +3840,68 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
 
         zctx.drawImage(plateImg, 0, 0, targetW, targetH);
 
-        // Apply distinct character anti-blur if toggled or in deblur mode
+        // Stage 3 Anti-Blur: Laplacian/Wiener deconvolution + edge contrast boost
         const wantCharDeblur = document.getElementById('chkAntiblurChar')?.checked || studioMode === 'deblur';
         if (wantCharDeblur) {
           applyPlateCharDeblur(zctx, targetW, targetH, currentAntiblurStrength);
         }
 
-        // Draw professional bounding boxes against each number
-        if (studioShowBoxes && plate.characters && plate.characters.length > 0) {
+        // Automatic in-browser character segmentation fallback if characters are missing
+        if (!plate.characters || plate.characters.length === 0) {
+          const clientChars = segmentPlateCharactersClient(studioCanvas, plate.plate_text || '');
+          if (clientChars && clientChars.length > 0) {
+            plate.characters = clientChars;
+            plate.character_count = clientChars.length;
+            renderCharactersExporter(plate, veh);
+          }
+        }
+
+        // Update HUD
+        const characters = plate.characters || [];
+        const textDisplay = characters.length > 0
+          ? characters.map(c => c.char_text).filter(Boolean).join(' ')
+          : (plate.plate_text || 'Registration Detected');
+
+        const hudPlateText = document.getElementById('hudPlateText');
+        const hudPlateSize = document.getElementById('hudPlateSize');
+        const hudPlateAspect = document.getElementById('hudPlateAspect');
+        const hudPlateCharCount = document.getElementById('hudPlateCharCount');
+
+        if (hudPlateText) hudPlateText.innerText = textDisplay || 'Extracted Plate';
+        if (hudPlateSize) hudPlateSize.innerText = `${origW}×${origH}px (${studioZoom}x Zoom)`;
+        if (hudPlateAspect) hudPlateAspect.innerText = `${plate.aspect || (origW / origH).toFixed(2)}:1`;
+        if (hudPlateCharCount) hudPlateCharCount.innerText = `${characters.length} numbers segmented`;
+
+        // Draw professional HUD bounding boxes against each number
+        if (studioShowBoxes && characters.length > 0) {
           const scaleX = targetW / origW;
           const scaleY = targetH / origH;
 
-          plate.characters.forEach((ch) => {
+          characters.forEach((ch) => {
             const [ox1, oy1, ox2, oy2] = ch.bbox_plate_xyxy;
             const sx1 = Math.round(ox1 * scaleX);
             const sy1 = Math.round(oy1 * scaleY);
             const sx2 = Math.round(ox2 * scaleX);
             const sy2 = Math.round(oy2 * scaleY);
-            const boxW = sx2 - sx1;
-            const boxH = sy2 - sy1;
+            const boxW = Math.max(4, sx2 - sx1);
+            const boxH = Math.max(4, sy2 - sy1);
 
             const isHovered = (window.activeHoverCharId === ch.char_id);
 
             // 1. Semi-transparent character zone highlight
-            zctx.fillStyle = isHovered ? 'rgba(245, 158, 11, 0.28)' : 'rgba(0, 229, 255, 0.12)';
+            zctx.fillStyle = isHovered ? 'rgba(251, 191, 36, 0.32)' : 'rgba(0, 240, 255, 0.14)';
             zctx.fillRect(sx1, sy1, boxW, boxH);
 
             // 2. Sleek precision bounding box border
-            zctx.strokeStyle = isHovered ? '#fbbf24' : '#00e5ff';
-            zctx.lineWidth = isHovered ? 2.5 : 1.8;
+            zctx.strokeStyle = isHovered ? '#fbbf24' : '#00f0ff';
+            zctx.lineWidth = isHovered ? 2.8 : 1.8;
             zctx.strokeRect(sx1, sy1, boxW, boxH);
 
             // 3. Professional corner HUD reticle brackets
-            const tickW = Math.max(3, Math.min(8, Math.floor(boxW * 0.25)));
-            const tickH = Math.max(3, Math.min(8, Math.floor(boxH * 0.25)));
+            const tickW = Math.max(3, Math.min(8, Math.floor(boxW * 0.28)));
+            const tickH = Math.max(3, Math.min(8, Math.floor(boxH * 0.28)));
             zctx.strokeStyle = isHovered ? '#ffffff' : '#e0f2fe';
-            zctx.lineWidth = 2.0;
+            zctx.lineWidth = 2.2;
 
             // Top-left
             zctx.beginPath(); zctx.moveTo(sx1, sy1 + tickH); zctx.lineTo(sx1, sy1); zctx.lineTo(sx1 + tickW, sy1); zctx.stroke();
@@ -3629,20 +3917,110 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
               const label = `#${ch.char_id}${ch.char_text ? ': ' + ch.char_text : ''}`;
               zctx.font = 'bold 10px monospace';
               const textWidth = zctx.measureText(label).width;
-              const badgeW = textWidth + 6;
+              const badgeW = textWidth + 8;
               const badgeH = 15;
-              const badgeY = Math.max(1, sy1 - badgeH - 2);
+              const badgeY = Math.max(2, sy1 - badgeH - 2);
 
               zctx.fillStyle = 'rgba(15, 23, 42, 0.94)';
               zctx.fillRect(sx1, badgeY, badgeW, badgeH);
-              zctx.strokeStyle = isHovered ? '#fbbf24' : '#00e5ff';
+              zctx.strokeStyle = isHovered ? '#fbbf24' : '#00f0ff';
               zctx.lineWidth = 1;
               zctx.strokeRect(sx1, badgeY, badgeW, badgeH);
 
               zctx.fillStyle = isHovered ? '#fef08a' : '#38bdf8';
-              zctx.fillText(label, sx1 + 3, badgeY + 11);
+              zctx.fillText(label, sx1 + 4, badgeY + 11);
             }
           });
+        }
+      };
+
+      // Mouse events for interactive hover and click inspection on Zoomed Plate
+      studioCanvas.onmousemove = (e) => {
+        if (!activeStudioPlate || !activeStudioPlate.characters || activeStudioPlate.characters.length === 0) return;
+        const rect = studioCanvas.getBoundingClientRect();
+        const mouseX = (e.clientX - rect.left) * (studioCanvas.width / rect.width);
+        const mouseY = (e.clientY - rect.top) * (studioCanvas.height / rect.height);
+
+        const origW = (activeStudioPlate.bbox_global_xyxy ? (activeStudioPlate.bbox_global_xyxy[2] - activeStudioPlate.bbox_global_xyxy[0]) : 88);
+        const origH = (activeStudioPlate.bbox_global_xyxy ? (activeStudioPlate.bbox_global_xyxy[3] - activeStudioPlate.bbox_global_xyxy[1]) : 31);
+        const scaleX = studioCanvas.width / origW;
+        const scaleY = studioCanvas.height / origH;
+
+        let foundCharId = null;
+        for (const ch of activeStudioPlate.characters) {
+          const [ox1, oy1, ox2, oy2] = ch.bbox_plate_xyxy;
+          const sx1 = ox1 * scaleX;
+          const sy1 = oy1 * scaleY;
+          const sx2 = ox2 * scaleX;
+          const sy2 = oy2 * scaleY;
+          if (mouseX >= sx1 && mouseX <= sx2 && mouseY >= sy1 && mouseY <= sy2) {
+            foundCharId = ch.char_id;
+            break;
+          }
+        }
+
+        if (window.activeHoverCharId !== foundCharId) {
+          window.activeHoverCharId = foundCharId;
+          studioCanvas.style.cursor = foundCharId ? 'pointer' : 'crosshair';
+          renderZoomedPlateStudio(activeStudioPlate, activeStudioVeh);
+
+          document.querySelectorAll('.glyph-card').forEach(c => c.classList.remove('active-hover'));
+          if (foundCharId) {
+            const cardEl = document.getElementById(`glyph-card-${foundCharId}`);
+            if (cardEl) {
+              cardEl.classList.add('active-hover');
+              cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+          }
+        }
+      };
+
+      studioCanvas.onmouseleave = () => {
+        if (window.activeHoverCharId !== null) {
+          window.activeHoverCharId = null;
+          studioCanvas.style.cursor = 'crosshair';
+          document.querySelectorAll('.glyph-card').forEach(c => c.classList.remove('active-hover'));
+          renderZoomedPlateStudio(activeStudioPlate, activeStudioVeh);
+        }
+      };
+
+      studioCanvas.onclick = (e) => {
+        if (!activeStudioPlate || !activeStudioPlate.characters) return;
+        const rect = studioCanvas.getBoundingClientRect();
+        const mouseX = (e.clientX - rect.left) * (studioCanvas.width / rect.width);
+        const mouseY = (e.clientY - rect.top) * (studioCanvas.height / rect.height);
+
+        const origW = (activeStudioPlate.bbox_global_xyxy ? (activeStudioPlate.bbox_global_xyxy[2] - activeStudioPlate.bbox_global_xyxy[0]) : 88);
+        const origH = (activeStudioPlate.bbox_global_xyxy ? (activeStudioPlate.bbox_global_xyxy[3] - activeStudioPlate.bbox_global_xyxy[1]) : 31);
+        const scaleX = studioCanvas.width / origW;
+        const scaleY = studioCanvas.height / origH;
+
+        for (const ch of activeStudioPlate.characters) {
+          const [ox1, oy1, ox2, oy2] = ch.bbox_plate_xyxy;
+          if (mouseX >= ox1 * scaleX && mouseX <= ox2 * scaleX && mouseY >= oy1 * scaleY && mouseY <= oy2 * scaleY) {
+            const cropSrc = ch.crop_uri || getCharacterCropDataUrl(activeStudioPlate, ch);
+            openImageModal(cropSrc, `Character #${ch.char_id} [${ch.char_text || ''}]`, `Plate BBox: [${ch.bbox_plate_xyxy.join(', ')}] | Dimensions: ${ox2 - ox1}×${oy2 - oy1}px`, `char_${String(ch.char_id).padStart(2,'0')}.png`);
+            break;
+          }
+        }
+      };
+
+      const plateImg = new Image();
+      plateImg.crossOrigin = 'anonymous';
+      plateImg.src = srcUri;
+      plateImg.onload = () => drawStudio(plateImg);
+      plateImg.onerror = () => {
+        // Fallback: slice directly from main image if crop_src fails to load
+        if (state.imageLoaded && plate.bbox_global_xyxy) {
+          const [gx1, gy1, gx2, gy2] = plate.bbox_global_xyxy;
+          const pw = gx2 - gx1;
+          const ph = gy2 - gy1;
+          const fbCanv = document.createElement('canvas');
+          fbCanv.width = pw;
+          fbCanv.height = ph;
+          const fbCtx = fbCanv.getContext('2d');
+          fbCtx.drawImage(state.image, gx1, gy1, pw, ph, 0, 0, pw, ph);
+          drawStudio(fbCanv);
         }
       };
     };
@@ -3667,7 +4045,7 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
 
       exporterContainer.style.display = 'flex';
 
-      const fullPlateText = characters.map(c => c.char_text).filter(Boolean).join(' ') || (plate.plate_text || 'Indian Registration');
+      const fullPlateText = characters.map(c => c.char_text).filter(Boolean).join(' ') || (plate.plate_text || 'Registration Numbers');
       if (textBadge) textBadge.innerText = fullPlateText;
       if (countBadge) countBadge.innerText = `${characters.length} Numbers Cut`;
 
@@ -3676,8 +4054,13 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
         const [cx1, cy1, cx2, cy2] = ch.bbox_plate_xyxy || [0, 0, 10, 10];
         const cw = cx2 - cx1;
         const ch_h = cy2 - cy1;
-        const cropSrc = ch.crop_uri || plate.crop_src || `./crops/characters/char_${String(idx+1).padStart(2,'0')}.png`;
         const glyphChar = ch.char_text || (idx + 1);
+
+        // Ensure character crop is high-res and never broken
+        let cropSrc = ch.crop_uri;
+        if (!cropSrc || !cropSrc.startsWith('data:')) {
+          cropSrc = getCharacterCropDataUrl(plate, ch) || ch.crop_uri || plate.crop_src;
+        }
 
         const card = document.createElement('div');
         card.className = 'glyph-card';
@@ -3759,19 +4142,27 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
           // Add each character image
           for (let i = 0; i < chars.length; i++) {
             const ch = chars[i];
-            const uri = ch.crop_uri || activeStudioPlate.crop_src;
+            let uri = ch.crop_uri || getCharacterCropDataUrl(activeStudioPlate, ch);
             const fname = `char_${String(ch.char_id).padStart(2, '0')}_${ch.char_text || 'glyph'}.png`;
 
-            if (uri.startsWith('data:image/')) {
+            if (uri && uri.startsWith('data:image/')) {
               const base64Data = uri.split(',')[1];
               folder.file(fname, base64Data, { base64: true });
             } else {
               try {
                 const resp = await fetch(uri);
-                const blob = await resp.blob();
-                folder.file(fname, blob);
+                if (resp.ok) {
+                  const blob = await resp.blob();
+                  folder.file(fname, blob);
+                } else {
+                  throw new Error('fetch error');
+                }
               } catch (e) {
-                console.warn('Could not fetch character crop for zip:', uri, e);
+                // Slicing fallback from active canvas
+                const fallbackUri = getCharacterCropDataUrl(activeStudioPlate, ch);
+                if (fallbackUri && fallbackUri.startsWith('data:image/')) {
+                  folder.file(fname, fallbackUri.split(',')[1], { base64: true });
+                }
               }
             }
           }
@@ -3790,8 +4181,9 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
           // Fallback sequential download
           chars.forEach((ch, idx) => {
             setTimeout(() => {
-              downloadCropImage(ch.crop_uri || activeStudioPlate.crop_src, `char_${String(ch.char_id).padStart(2,'0')}_${ch.char_text || 'glyph'}.png`);
-            }, idx * 120);
+              const uri = getCharacterCropDataUrl(activeStudioPlate, ch) || ch.crop_uri;
+              downloadCropImage(uri, `char_${String(ch.char_id).padStart(2,'0')}_${ch.char_text || 'glyph'}.png`);
+            }, idx * 140);
           });
           alert(`✅ Downloaded all ${chars.length} characters individually.`);
         }
@@ -3799,7 +4191,8 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
         console.error('Error bundling characters zip:', err);
         alert('Could not generate ZIP automatically. Downloading individually.');
         chars.forEach(ch => {
-          downloadCropImage(ch.crop_uri || activeStudioPlate.crop_src, `char_${String(ch.char_id).padStart(2,'0')}.png`);
+          const uri = getCharacterCropDataUrl(activeStudioPlate, ch) || ch.crop_uri;
+          downloadCropImage(uri, `char_${String(ch.char_id).padStart(2,'0')}.png`);
         });
       } finally {
         if (dlBtn) {
@@ -3809,76 +4202,28 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
       }
     };
 
-    window.copyPlateRegistrationText = function() {
-      if (!activeStudioPlate) return;
-      const text = activeStudioPlate.characters?.map(c => c.char_text).filter(Boolean).join(' ') || activeStudioPlate.plate_text || '';
-      navigator.clipboard.writeText(text);
-      alert(`Copied Registration Number to clipboard: "${text}"`);
-    };
-
-    window.copyCharacterBoxesJson = function() {
-      if (!activeStudioPlate) return;
-      navigator.clipboard.writeText(JSON.stringify(activeStudioPlate.characters || [], null, 2));
-      alert(`Copied character bounding boxes JSON to clipboard!`);
-    };
-
-    window.setPlateStudioZoom = function(z) {
-      studioZoom = z;
-      document.querySelectorAll('#zoomedPlateStudioContainer button[id^="btnZoom"]').forEach(b => {
-        b.classList.toggle('btn-primary', b.innerText.includes(`${z}x`));
-      });
-      if (activeStudioPlate) renderZoomedPlateStudio(activeStudioPlate, activeStudioVeh);
-    };
-
-    window.togglePlateStudioBoxes = function() {
-      studioShowBoxes = !studioShowBoxes;
-      const btn = document.getElementById('btnTogglePlateBoxes');
-      if (btn) btn.classList.toggle('btn-primary', studioShowBoxes);
-      if (activeStudioPlate) renderZoomedPlateStudio(activeStudioPlate, activeStudioVeh);
-    };
-
-    window.togglePlateStudioBadges = function() {
-      studioShowBadges = !studioShowBadges;
-      const btn = document.getElementById('btnTogglePlateBadges');
-      if (btn) btn.classList.toggle('btn-primary', studioShowBadges);
-      if (activeStudioPlate) renderZoomedPlateStudio(activeStudioPlate, activeStudioVeh);
-    };
-
-    window.togglePlateStudioDeblur = function() {
-      studioMode = (studioMode === 'deblur') ? 'ann' : 'deblur';
-      const btn = document.getElementById('btnTogglePlateDeblur');
-      if (btn) btn.classList.toggle('btn-primary', studioMode === 'deblur');
-      if (activeStudioPlate) renderZoomedPlateStudio(activeStudioPlate, activeStudioVeh);
-    };
-
-    window.downloadZoomedPlateStudio = function() {
-      const canv = document.getElementById('zoomedPlateCanvas');
-      if (canv) {
-        const uri = canv.toDataURL('image/png');
-        downloadCropImage(uri, 'zoomed_plate_studio.png');
-      }
-    };
 
     // Toggle between character annotated overlay and clean plate crop
     window.togglePlateOverlay = function(vehId, annotatedSrc, cleanSrc) {
-      const imgEl = document.getElementById(`plate-img-${vehId}`);
-      if (!imgEl) return;
-      const currentMode = imgEl.getAttribute('data-src-mode') || 'ann';
-      if (currentMode === 'ann' && cleanSrc) {
-        imgEl.src = cleanSrc;
-        imgEl.setAttribute('data-src-mode', 'clean');
-      } else if (annotatedSrc) {
-        imgEl.src = annotatedSrc;
-        imgEl.setAttribute('data-src-mode', 'ann');
+      const img = document.getElementById(`plate-img-${vehId}`);
+      if (!img) return;
+      const curMode = img.getAttribute('data-src-mode') || 'ann';
+      if (curMode === 'ann' && cleanSrc) {
+        img.src = cleanSrc;
+        img.setAttribute('data-src-mode', 'clean');
+      } else {
+        img.src = annotatedSrc;
+        img.setAttribute('data-src-mode', 'ann');
       }
     };
 
-    // Helper to Focus a vehicle and open its plate in enlarged modal
     window.focusAndInspectPlate = function(vehId, plateSrc, pW, pH, conf, aspect) {
       highlightVehicle(vehId);
       const v = state.detections.vehicles.find(item => item.vehicle_id === vehId);
       const p = v?.plates?.[0];
       if (p) {
+        activeStudioPlate = p;
+        activeStudioVeh = v;
         renderZoomedPlateStudio(p, v);
         renderCharactersExporter(p, v);
       }
@@ -3886,16 +4231,40 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
       if (studioEl) studioEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     };
 
-    // Download any base64 / blob / image URI
-    window.downloadCropImage = function(uri, filename) {
+    // Download any base64 / blob / image URI reliably across all browsers
+    window.downloadCropImage = async function(uri, filename) {
       if (!uri) return;
-      const a = document.createElement('a');
-      a.href = uri;
-      a.download = filename || 'crop.jpg';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      try {
+        if (uri.startsWith('data:')) {
+          const a = document.createElement('a');
+          a.href = uri;
+          a.download = filename || 'crop.png';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          return;
+        }
+        const resp = await fetch(uri);
+        const blob = await resp.blob();
+        const objUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = objUrl;
+        a.download = filename || 'crop.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(objUrl);
+      } catch (e) {
+        const a = document.createElement('a');
+        a.href = uri;
+        a.download = filename || 'crop.png';
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
     };
+
 
     // Open Enlarged Crop Modal
     window.openImageModal = function(src, title, metaText, downloadFilename) {
@@ -4118,6 +4487,7 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
           vCtx.drawImage(state.image, carX1, carY1, vCanv.width, vCanv.height, 0, 0, vCanv.width, vCanv.height);
           const vCropUri = vCanv.toDataURL('image/jpeg');
 
+          const drawnPlateChars = segmentPlateCharactersClient(drawnCanv);
           state.detections.vehicles.push({
             vehicle_id: state.detections.vehicles.length + 1,
             name: `Targeted Car #${state.detections.vehicles.length + 1}`,
@@ -4142,11 +4512,13 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
                 Number((h / canvas.height).toFixed(6))
               ],
               aspect,
-              crop_src: drawnCropUri
+              crop_src: drawnCropUri,
+              character_count: drawnPlateChars.length,
+              characters: drawnPlateChars
             }]
           });
 
-          statusBadge.innerText = `✅ Targeted plate crop extracted!`;
+          statusBadge.innerText = `✅ Targeted plate crop extracted (${drawnPlateChars.length} characters segmented)!`;
         } else {
           // --- User drew around a vehicle ---
           let foundPlate = null;
@@ -4164,6 +4536,7 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
             const pCtx = pCanv.getContext('2d');
             pCtx.drawImage(state.image, gx1, gy1, plateCandidate.w, plateCandidate.h, 0, 0, plateCandidate.w, plateCandidate.h);
 
+            const foundChars = segmentPlateCharactersClient(pCanv);
             foundPlate = {
               plate_id: 1,
               confidence: Number(plateCandidate.conf.toFixed(3)),
@@ -4175,7 +4548,9 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
                 Number((plateCandidate.h / canvas.height).toFixed(6))
               ],
               aspect: plateCandidate.aspect,
-              crop_src: pCanv.toDataURL('image/jpeg')
+              crop_src: pCanv.toDataURL('image/jpeg'),
+              character_count: foundChars.length,
+              characters: foundChars
             };
           }
 
