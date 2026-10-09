@@ -1,0 +1,260 @@
+{
+  "source_image": "plate_identify/sample.jpg",
+  "image_dimensions": {
+    "width": 960,
+    "height": 540
+  },
+  "vehicle_count": 10,
+  "vehicles": [
+    {
+      "id": 1,
+      "class_id": 2,
+      "class_name": "car",
+      "confidence": 0.8919,
+      "bbox_xyxy": [
+        424,
+        279,
+        742,
+        534
+      ],
+      "bbox_xywh": [
+        424,
+        279,
+        318,
+        255
+      ],
+      "bbox_yolo_norm": [
+        0.607292,
+        0.752778,
+        0.33125,
+        0.472222
+      ],
+      "area_pixels": 81090
+    },
+    {
+      "id": 2,
+      "class_id": 7,
+      "class_name": "truck",
+      "confidence": 0.8202,
+      "bbox_xyxy": [
+        725,
+        112,
+        908,
+        270
+      ],
+      "bbox_xywh": [
+        725,
+        112,
+        183,
+        158
+      ],
+      "bbox_yolo_norm": [
+        0.850521,
+        0.353704,
+        0.190625,
+        0.292593
+      ],
+      "area_pixels": 28914
+    },
+    {
+      "id": 3,
+      "class_id": 2,
+      "class_name": "car",
+      "confidence": 0.7676,
+      "bbox_xyxy": [
+        620,
+        261,
+        780,
+        433
+      ],
+      "bbox_xywh": [
+        620,
+        261,
+        160,
+        172
+      ],
+      "bbox_yolo_norm": [
+        0.729167,
+        0.642593,
+        0.166667,
+        0.318519
+      ],
+      "area_pixels": 27520
+    },
+    {
+      "id": 4,
+      "class_id": 2,
+      "class_name": "car",
+      "confidence": 0.7431,
+      "bbox_xyxy": [
+        63,
+        240,
+        433,
+        528
+      ],
+      "bbox_xywh": [
+        63,
+        240,
+        370,
+        288
+      ],
+      "bbox_yolo_norm": [
+        0.258333,
+        0.711111,
+        0.385417,
+        0.533333
+      ],
+      "area_pixels": 106560
+    },
+    {
+      "id": 5,
+      "class_id": 7,
+      "class_name": "truck",
+      "confidence": 0.6464,
+      "bbox_xyxy": [
+        296,
+        189,
+        480,
+        345
+      ],
+      "bbox_xywh": [
+        296,
+        189,
+        184,
+        156
+      ],
+      "bbox_yolo_norm": [
+        0.404167,
+        0.494444,
+        0.191667,
+        0.288889
+      ],
+      "area_pixels": 28704
+    },
+    {
+      "id": 6,
+      "class_id": 2,
+      "class_name": "car",
+      "confidence": 0.6299,
+      "bbox_xyxy": [
+        0,
+        292,
+        118,
+        509
+      ],
+      "bbox_xywh": [
+        0,
+        292,
+        118,
+        217
+      ],
+      "bbox_yolo_norm": [
+        0.061458,
+        0.741667,
+        0.122917,
+        0.401852
+      ],
+      "area_pixels": 25606
+    },
+    {
+      "id": 7,
+      "class_id": 2,
+      "class_name": "car",
+      "confidence": 0.5191,
+      "bbox_xyxy": [
+        478,
+        229,
+        559,
+        292
+      ],
+      "bbox_xywh": [
+        478,
+        229,
+        81,
+        63
+      ],
+      "bbox_yolo_norm": [
+        0.540104,
+        0.482407,
+        0.084375,
+        0.116667
+      ],
+      "area_pixels": 5103
+    },
+    {
+      "id": 8,
+      "class_id": 2,
+      "class_name": "car",
+      "confidence": 0.4505,
+      "bbox_xyxy": [
+        498,
+        242,
+        619,
+        312
+      ],
+      "bbox_xywh": [
+        498,
+        242,
+        121,
+        70
+      ],
+      "bbox_yolo_norm": [
+        0.581771,
+        0.512963,
+        0.126042,
+        0.12963
+      ],
+      "area_pixels": 8470
+    },
+    {
+      "id": 9,
+      "class_id": 7,
+      "class_name": "truck",
+      "confidence": 0.4273,
+      "bbox_xyxy": [
+        538,
+        164,
+        640,
+        237
+      ],
+      "bbox_xywh": [
+        538,
+        164,
+        102,
+        73
+      ],
+      "bbox_yolo_norm": [
+        0.613542,
+        0.371296,
+        0.10625,
+        0.135185
+      ],
+      "area_pixels": 7446
+    },
+    {
+      "id": 10,
+      "class_id": 2,
+      "class_name": "car",
+      "confidence": 0.4179,
+      "bbox_xyxy": [
+        608,
+        186,
+        703,
+        257
+      ],
+      "bbox_xywh": [
+        608,
+        186,
+        95,
+        71
+      ],
+      "bbox_yolo_norm": [
+        0.682813,
+        0.410185,
+        0.098958,
+        0.131481
+      ],
+      "area_pixels": 6745
+    }
+  ]
+}

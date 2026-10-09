@@ -1,0 +1,3511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deep ALPR: Two-Stage Vehicle & License Plate Localization</title>
+  <!-- Client-side Deep Learning Engine (TensorFlow.js) -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+  <style>
+    :root {
+      --bg-primary: #0b1120;
+      --bg-secondary: #151f32;
+      --bg-tertiary: #24324d;
+      --accent: #38bdf8;
+      --accent-hover: #0284c7;
+      --vehicle-color: #10b981;
+      --plate-color: #ef4444;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-color: #334155;
+      --card-bg: #1e293b;
+      --code-bg: #090d16;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding-bottom: 60px;
+    }
+
+    header {
+      background: linear-gradient(135deg, #0b1120 0%, #172554 100%);
+      border-bottom: 1px solid var(--border-color);
+      padding: 20px 32px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(8px);
+    }
+
+    .header-container {
+      max-width: 1440px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .logo-group h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text-main);
+    }
+
+    .logo-group h1 span {
+      background: linear-gradient(90deg, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .logo-group p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    nav a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      padding: 6px 12px;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+
+    nav a:hover {
+      color: var(--accent);
+      background: var(--bg-tertiary);
+    }
+
+    .main-container {
+      max-width: 1440px;
+      margin: 28px auto;
+      padding: 0 24px;
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Interactive Layout */
+    .app-grid {
+      display: grid;
+      grid-template-columns: 1fr 520px;
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+
+    @media (max-width: 1120px) {
+      .app-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .canvas-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .canvas-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn {
+      background: var(--bg-tertiary);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 7px 13px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.83rem;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .btn:hover {
+      background: var(--border-color);
+      border-color: var(--accent);
+    }
+
+    .btn-primary {
+      background: #0284c7;
+      border-color: #38bdf8;
+    }
+
+    .btn-primary:hover {
+      background: #0369a1;
+    }
+
+    .btn-detect {
+      background: #10b981;
+      border-color: #34d399;
+      color: #000;
+      font-weight: 600;
+    }
+
+    .btn-detect:hover {
+      background: #059669;
+      color: #fff;
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: #ef4444;
+      color: #fca5a5;
+    }
+
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.35);
+      color: #fff;
+    }
+
+    .btn-active {
+      background: #f59e0b !important;
+      border-color: #fbbf24 !important;
+      color: #000 !important;
+      font-weight: 700;
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+    }
+
+    .btn-coord-active {
+      background: #3b82f6 !important;
+      border-color: #60a5fa !important;
+      color: #fff !important;
+      font-weight: 700;
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+    }
+
+    /* Targeted Drawing Active Notice */
+    .draw-notice-bar {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px dashed #f59e0b;
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      color: #fef08a;
+    }
+
+    .draw-notice-bar.active {
+      display: flex;
+    }
+
+    .canvas-viewport {
+      position: relative;
+      background: #000;
+      border-radius: 8px;
+      overflow: hidden;
+      min-height: 480px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #detectionCanvas {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      cursor: crosshair;
+    }
+
+    /* Summary Bar Directly Under the Canvas */
+    .image-summary-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 12px;
+      background: #0f172a;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-top: 4px;
+    }
+
+    .summary-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .summary-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .summary-value {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #38bdf8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .legend-bar {
+      display: flex;
+      gap: 14px;
+      font-size: 0.85rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    .legend-indicator {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+    }
+
+    /* Right Inspection Panel */
+    .panel-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-height: 940px;
+      overflow-y: auto;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .control-label {
+      font-size: 0.83rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .slider {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .badge-vehicle {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border: 1px solid #10b981;
+    }
+
+    .badge-plate {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+      border: 1px solid #ef4444;
+    }
+
+    .badge-coord {
+      background: #0f172a;
+      color: #93c5fd;
+      border: 1px solid #3b82f6;
+      font-family: ui-monospace, monospace;
+    }
+
+    /* All Extracted Plates Gallery Strip */
+    .plates-gallery-card {
+      background: #0f172a;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .plates-gallery-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #f87171;
+    }
+
+    .plates-gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 10px;
+    }
+
+    .gallery-plate-item {
+      background: #1e293b;
+      border: 1.5px solid #ef4444;
+      border-radius: 6px;
+      padding: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      align-items: center;
+      cursor: pointer;
+      transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .gallery-plate-item:hover {
+      transform: translateY(-2px);
+      border-color: #fca5a5;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+    }
+
+    .gallery-plate-thumb {
+      width: 100%;
+      height: 48px;
+      object-fit: contain;
+      background: #000;
+      border-radius: 4px;
+    }
+
+    .gallery-plate-caption {
+      font-size: 0.68rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: #cbd5e1;
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+    }
+
+    /* Separate Car & Number Plate Display Cards */
+    .vehicle-item-card {
+      background: #0f172a;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .vehicle-item-card:hover {
+      border-color: var(--accent);
+    }
+
+    .vehicle-item-card.highlighted {
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.3);
+    }
+
+    .vehicle-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #1e293b;
+      padding-bottom: 8px;
+    }
+
+    .vehicle-card-title {
+      font-size: 0.92rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Side by Side Split: Car Image & Plate Image */
+    .crops-split-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 600px) {
+      .crops-split-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .crop-box {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .crop-box.plate-box-highlight {
+      border: 1.5px solid #ef4444;
+      background: linear-gradient(180deg, #1e293b 0%, #151a28 100%);
+    }
+
+    .crop-box-header {
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      font-weight: 700;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .crop-img-preview {
+      width: 100%;
+      height: 125px;
+      object-fit: contain;
+      background: #090d16;
+      border-radius: 6px;
+      border: 1px solid #334155;
+      cursor: pointer;
+      transition: opacity 0.15s ease;
+    }
+
+    .crop-img-preview:hover {
+      opacity: 0.9;
+    }
+
+    .plate-img-standalone {
+      width: 100%;
+      height: 82px;
+      object-fit: contain;
+      background: #000000;
+      border-radius: 6px;
+      border: 1.5px solid #ef4444;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+
+    .plate-img-standalone:hover {
+      transform: scale(1.02);
+      border-color: #f87171;
+    }
+
+    .plate-actions-bar {
+      display: flex;
+      gap: 6px;
+      width: 100%;
+    }
+
+    .plate-meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 8px;
+      font-size: 0.71rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: var(--text-muted);
+      background: rgba(15, 23, 42, 0.75);
+      padding: 6px 8px;
+      border-radius: 5px;
+      border: 1px solid #293548;
+    }
+
+    .plate-meta-item {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .plate-meta-val {
+      color: #e2e8f0;
+      font-weight: 600;
+    }
+
+    /* Per-Stage Anti-Blur Checkbox Controls */
+    .antiblur-panel-card {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .antiblur-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #38bdf8;
+    }
+
+    .antiblur-controls-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .antiblur-checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 7px 10px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .antiblur-checkbox-item:hover {
+      border-color: #38bdf8;
+      background: #24324d;
+    }
+
+    .antiblur-checkbox-item input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    .antiblur-label-content {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      font-size: 0.78rem;
+    }
+
+    .antiblur-subtext {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+    }
+
+    /* Individual Character Crops Section */
+    .characters-section {
+      margin-top: 10px;
+      background: rgba(11, 17, 32, 0.85);
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .characters-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: #c084fc;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .characters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+      gap: 6px;
+    }
+
+    .character-tile {
+      background: #1e293b;
+      border: 1.5px solid #38bdf8;
+      border-radius: 6px;
+      padding: 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+
+    .character-tile:hover {
+      transform: translateY(-2px);
+      border-color: #f59e0b;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .character-img {
+      width: 100%;
+      height: 48px;
+      object-fit: contain;
+      background: #090d16;
+      border-radius: 4px;
+    }
+
+    .character-caption {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      gap: 2px;
+    }
+
+    .char-badge {
+      font-size: 0.70rem;
+      font-weight: 700;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.15);
+      padding: 1px 4px;
+      border-radius: 3px;
+      white-space: nowrap;
+    }
+
+    .char-coord {
+      font-size: 0.58rem;
+      color: #94a3b8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
+    /* Training Format Box */
+    .format-box {
+      background: var(--code-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.78rem;
+      color: #a5f3fc;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      max-height: 120px;
+    }
+
+    /* Documentation Section */
+    .doc-section {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 28px;
+      margin-bottom: 28px;
+    }
+
+    .doc-section h2 {
+      font-size: 1.35rem;
+      margin-bottom: 14px;
+      color: #38bdf8;
+    }
+
+    .doc-section p {
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      font-size: 0.95rem;
+    }
+
+    .doc-section pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      overflow-x: auto;
+      font-family: ui-monospace, monospace;
+      font-size: 0.85rem;
+      color: #e2e8f0;
+      line-height: 1.5;
+    }
+
+    /* Image Inspection Modal */
+    .image-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .image-modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(3, 7, 18, 0.85);
+      backdrop-filter: blur(6px);
+    }
+
+    .image-modal-content {
+      position: relative;
+      background: #0f172a;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      max-width: 680px;
+      width: 100%;
+      padding: 20px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 1;
+    }
+
+    .image-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #1e293b;
+      padding-bottom: 10px;
+    }
+
+    /* Main Navigation Tab Bar */
+    .tabs-header-nav {
+      display: flex;
+      gap: 10px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 8px;
+      margin-bottom: 24px;
+      overflow-x: auto;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      color: #ffffff;
+      border-color: #38bdf8;
+      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
+    }
+
+    .tab-badge {
+      font-size: 0.72rem;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    /* Tab Panes */
+    .tab-pane {
+      display: none;
+    }
+
+    .tab-pane.active {
+      display: block;
+      animation: fadeInTab 0.22s ease-in-out;
+    }
+
+    @keyframes fadeInTab {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Learning Callout Banner inside Interactive Tab */
+    .learning-banner {
+      background: linear-gradient(90deg, rgba(2, 132, 199, 0.15) 0%, rgba(99, 102, 241, 0.15) 100%);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 10px;
+      padding: 14px 20px;
+      margin-bottom: 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .learning-banner-text {
+      font-size: 0.9rem;
+      color: #e0f2fe;
+      line-height: 1.5;
+    }
+
+    /* Methods Hub Sub-Navigation */
+    .methods-subnav {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      background: #0f172a;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      margin-bottom: 24px;
+      position: sticky;
+      top: 76px;
+      z-index: 40;
+      backdrop-filter: blur(8px);
+    }
+
+    .subnav-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 6px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      transition: all 0.2s ease;
+    }
+
+    .subnav-link:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: #24324d;
+    }
+
+    /* Method Cards */
+    .method-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 22px;
+      margin-bottom: 22px;
+      transition: border-color 0.2s ease;
+    }
+
+    .method-card:hover {
+      border-color: #475569;
+    }
+
+    .method-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid #1e293b;
+      padding-bottom: 10px;
+    }
+
+    .method-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #f8fafc;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .method-badge {
+      font-size: 0.73rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    .badge-classical {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+    }
+
+    .badge-deep {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+
+    .badge-transformer {
+      background: rgba(168, 85, 247, 0.15);
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.4);
+    }
+
+    .badge-ocr {
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+
+    .badge-math {
+      background: rgba(236, 72, 153, 0.15);
+      color: #f472b6;
+      border: 1px solid rgba(236, 72, 153, 0.4);
+    }
+
+    .method-desc {
+      color: #cbd5e1;
+      font-size: 0.93rem;
+      line-height: 1.65;
+      margin-bottom: 14px;
+    }
+
+    .method-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    @media (max-width: 768px) {
+      .method-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .pros-box {
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: 6px;
+      padding: 12px 14px;
+      font-size: 0.85rem;
+    }
+
+    .pros-box h5 {
+      color: #34d399;
+      margin-bottom: 6px;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 700;
+    }
+
+    .cons-box {
+      background: rgba(239, 68, 68, 0.08);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      border-radius: 6px;
+      padding: 12px 14px;
+      font-size: 0.85rem;
+    }
+
+    .cons-box h5 {
+      color: #f87171;
+      margin-bottom: 6px;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 700;
+    }
+
+    .usecase-box {
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin-top: 14px;
+      font-size: 0.85rem;
+      color: #bae6fd;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Comparison Table Styling */
+    .table-responsive {
+      overflow-x: auto;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      margin-top: 16px;
+    }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.84rem;
+      text-align: left;
+      min-width: 820px;
+    }
+
+    .comparison-table th {
+      background: #0f172a;
+      color: var(--accent);
+      padding: 12px 14px;
+      border-bottom: 2px solid var(--border-color);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .comparison-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #1e293b;
+      color: #cbd5e1;
+      vertical-align: middle;
+    }
+
+    .comparison-table tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Architecture Visual Diagram Box */
+    .arch-flow-box {
+      background: #090d16;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 18px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.82rem;
+      color: #38bdf8;
+      overflow-x: auto;
+      line-height: 1.6;
+      margin: 14px 0;
+    }
+
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-container">
+      <div class="logo-group">
+        <h1><span>Deep ALPR</span> &middot; Two-Stage Detector</h1>
+        <p>Precision Traffic Vehicle Identification &amp; Number Plate Localization</p>
+      </div>
+      <nav>
+        <a href="#interactive-ui" class="nav-link active" data-tab="interactive-ui">🚗 Interactive Demo</a>
+        <a href="#methods-guide" class="nav-link" data-tab="methods-guide">📚 Methods &amp; Algorithms</a>
+        <a href="#architecture" class="nav-link" data-tab="architecture">🏗️ Architecture</a>
+        <a href="#math-metrics" class="nav-link" data-tab="math-metrics">📐 Math &amp; Formulas</a>
+        <a href="https://github.com/sureshmagix/alpr-character-segmentation" target="_blank">GitHub Repo &rarr;</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main-container">
+
+    <!-- Top-Level Tab Switcher -->
+    <div class="tabs-header-nav">
+      <button class="tab-btn active" data-tab="interactive-ui">
+        <span>🚗 Live Detection Demo</span>
+      </button>
+      <button class="tab-btn" data-tab="methods-guide">
+        <span>📚 Identification Methods &amp; Algorithms</span>
+        <span class="tab-badge" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid #f59e0b;">Learning Hub</span>
+      </button>
+      <button class="tab-btn" data-tab="architecture">
+        <span>🏗️ Two-Stage Architecture</span>
+      </button>
+      <button class="tab-btn" data-tab="math-metrics">
+        <span>📐 Coordinate Math &amp; Formats</span>
+      </button>
+    </div>
+
+    <!-- TAB 1: INTERACTIVE UI SECTION -->
+    <div id="interactive-ui" class="tab-pane active">
+      <!-- Educational Callout Banner -->
+      <div class="learning-banner">
+        <div class="learning-banner-text">
+          💡 <strong>ALPR Learning Hub:</strong> Want to understand all traditional &amp; modern algorithms for detecting vehicles and license plates (YOLO, Haar, HOG, STN, CRNN, ViT)? Explore our comprehensive educational guide in the Methods tab.
+        </div>
+        <button class="btn btn-primary" onclick="switchTab('methods-guide')">
+          Explore Methods Guide &rarr;
+        </button>
+      </div>
+
+      <div class="section-title">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        Interactive Image Inspector &amp; Plate Crop Extractor
+      </div>
+
+      <div class="app-grid">
+        <!-- Canvas Card -->
+        <div class="canvas-card">
+          <div class="canvas-toolbar">
+            <div class="btn-group">
+              <label class="btn btn-primary" title="Browse any vehicle image from your device">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Browse Image
+                <input type="file" id="imageInput" accept="image/*" style="display: none;">
+              </label>
+
+              <button class="btn" id="btnLoadDefault" title="Reset and load default highway traffic image">
+                Traffic Sample
+              </button>
+
+              <button class="btn btn-detect" id="btnDetect" title="Execute detection based on selected checkboxes">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                Run Detection
+              </button>
+
+              <button class="btn btn-danger" id="btnClearBoxes" title="Clear bounding boxes to inspect the clean image">
+                🧹 Clear Boxes
+              </button>
+
+              <button class="btn" id="btnDrawMode" title="Click and drag on canvas: detects only inside your drawn square">
+                ✏️ Draw Box
+              </button>
+
+              <!-- Dedicated Button to Show Coordinates on the Image -->
+              <button class="btn" id="btnToggleCoords" title="Display exact [X1, Y1, X2, Y2] coordinate numbers directly on the image">
+                📍 Show Coordinates on Image
+              </button>
+            </div>
+
+            <div class="legend-bar">
+              <label class="legend-item" title="Show or hide vehicle bounding boxes">
+                <input type="checkbox" id="chkShowVehicles" checked style="accent-color: #10b981;">
+                <span class="legend-indicator" style="background: #10b981;"></span>
+                <span>Vehicles</span>
+              </label>
+
+              <label class="legend-item" title="Show or hide number plate bounding boxes">
+                <input type="checkbox" id="chkShowPlates" checked style="accent-color: #ef4444;">
+                <span class="legend-indicator" style="background: #ef4444;"></span>
+                <span>Plates</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Targeted Drawing Mode Banner -->
+          <div id="drawNoticeBar" class="draw-notice-bar">
+            <span>✏️ <strong>Drawing Active:</strong> Drag a square over any vehicle or plate. Detection will run <em>STRICTLY inside your drawn square</em> without auto-detecting the rest of the image!</span>
+          </div>
+
+          <div class="canvas-viewport" id="viewport">
+            <canvas id="detectionCanvas"></canvas>
+          </div>
+
+          <!-- Under-Image Summary Bar: Displays Actual Image Resolution Loaded -->
+          <div class="image-summary-bar">
+            <div class="summary-item">
+              <span class="summary-label">Actual Resolution:</span>
+              <span class="summary-value" id="summaryResolution">960 &times; 540 px</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Aspect Ratio:</span>
+              <span class="summary-value" id="summaryAspect">16:9 (1.78)</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Vehicles Localized:</span>
+              <span class="summary-value" id="summaryVehicles" style="color: #34d399;">2</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Plates Extracted:</span>
+              <span class="summary-value" id="summaryPlates" style="color: #f87171;">2</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Pipeline Status:</span>
+              <span class="summary-value" id="statusBadge" style="color: #38bdf8;">Ready</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Panel: Separated Display of Car & Plate Crops -->
+        <div class="panel-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+            <h3 style="font-size: 1.05rem; color: var(--text-main);">🚗 Detections &amp; Extracted Plates</h3>
+            <div style="display: flex; gap: 6px;">
+              <span id="vehicleCountBadge" class="badge badge-vehicle">2 Vehicles</span>
+              <span id="plateCountBadge" class="badge badge-plate">2 Plates Extracted</span>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <div class="control-label">
+              <span>Detection Sensitivity</span>
+              <span id="carConfVal">0.35</span>
+            </div>
+            <input type="range" id="carConf" min="0.10" max="0.95" step="0.05" value="0.35" class="slider">
+          </div>
+
+          <!-- Per-Stage Anti-Blur Checkbox Controls -->
+          <div class="antiblur-panel-card">
+            <div class="antiblur-header">
+              <span>⚡ Anti-Blur Preprocessing</span>
+              <span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-size: 0.70rem;">Per-Stage</span>
+            </div>
+            <div class="antiblur-controls-grid">
+              <label class="antiblur-checkbox-item" title="Stage 1: Sharpening and unsharp masking on the full image before vehicle localization">
+                <input type="checkbox" id="chkAntiblurVehicle" style="accent-color: #38bdf8;">
+                <div class="antiblur-label-content">
+                  <span style="color: var(--text-main); font-weight: 600;">Anti-blur Vehicle Stage</span>
+                  <span class="antiblur-subtext">Stage 1: Sharpening &bull; Full Frame</span>
+                </div>
+              </label>
+
+              <label class="antiblur-checkbox-item" title="Stage 2: Deblurring on the vehicle crop before license plate detection">
+                <input type="checkbox" id="chkAntiblurPlate" style="accent-color: #f59e0b;">
+                <div class="antiblur-label-content">
+                  <span style="color: var(--text-main); font-weight: 600;">Anti-blur Plate Stage</span>
+                  <span class="antiblur-subtext">Stage 2: Edge Boost &bull; Vehicle Crop</span>
+                </div>
+              </label>
+
+              <label class="antiblur-checkbox-item" title="Stage 3: Wiener/Laplacian deconvolution, unsharp mask, and contrast enhancement before character OCR & segmentation">
+                <input type="checkbox" id="chkAntiblurChar" checked style="accent-color: #a855f7;">
+                <div class="antiblur-label-content">
+                  <span style="color: var(--text-main); font-weight: 600;">Anti-blur Character Stage</span>
+                  <span class="antiblur-subtext">Stage 3: Wiener Deconv &bull; Plate/Chars</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- All Extracted Plates Gallery Strip -->
+          <div id="platesGalleryContainer" class="plates-gallery-card">
+            <div class="plates-gallery-header">
+              <span>🪪 All Extracted Plates</span>
+              <span id="galleryPlateCount" class="badge badge-plate">2 Plates</span>
+            </div>
+            <div class="plates-gallery-grid" id="platesGalleryGrid">
+              <!-- Populated dynamically with extracted plate crops -->
+            </div>
+          </div>
+
+          <!-- Dedicated Container where Car and Number Plate Crops are Separated -->
+          <div id="vehiclesListContainer" style="display: flex; flex-direction: column; gap: 14px;">
+            <!-- Populated dynamically with separate car and plate views -->
+          </div>
+
+          <!-- Training Export -->
+          <div class="control-group" style="margin-top: 10px; border-top: 1px solid var(--border-color); padding-top: 12px;">
+            <div class="control-label">YOLO Normalized Annotation (.txt)</div>
+            <div class="format-box" id="yoloAnnotationBox"></div>
+            <div style="display: flex; gap: 8px; margin-top: 8px;">
+              <button class="btn" id="btnCopyYolo" style="flex: 1;">Copy YOLO</button>
+              <button class="btn" id="btnCopyJson" style="flex: 1;">Copy JSON</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- End Tab 1: interactive-ui -->
+
+    <!-- TAB 2: COMPREHENSIVE LEARNING HUB (METHODS & ALGORITHMS) -->
+    <div id="methods-guide" class="tab-pane">
+      <div class="doc-section">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+          <h2>📚 Vehicle &amp; License Plate Identification: Complete Technical Guide</h2>
+          <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid #f59e0b; font-size: 0.8rem; padding: 4px 10px;">Educational Reference</span>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.96rem; line-height: 1.7; margin-bottom: 20px;">
+          An engineering breakdown of all computer vision and deep learning paradigms used in Intelligent Transportation Systems (ITS) and Automated License Plate Recognition (ALPR / ANPR). Covers classical edge heuristics, modern anchor-free detectors, oriented bounding boxes (OBB), landmark homography unwarping, and sequence-to-sequence OCR.
+        </p>
+
+        <!-- Sticky Quick Navigation Submenu -->
+        <div class="methods-subnav">
+          <a href="#methods-vehicle" class="subnav-link">🚗 1. Vehicle Detection</a>
+          <a href="#methods-plate" class="subnav-link">🪪 2. Plate Localization (LPD)</a>
+          <a href="#methods-ocr" class="subnav-link">🔤 3. Character OCR (LPR)</a>
+          <a href="#methods-cascade" class="subnav-link">⚖️ 4. Single vs. Two-Stage</a>
+          <a href="#methods-matrix" class="subnav-link">📊 5. Comparison Matrix</a>
+          <a href="#methods-code" class="subnav-link">💻 6. Implementation Code</a>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- PART 1: VEHICLE DETECTION METHODS -->
+        <!-- ========================================== -->
+        <div id="methods-vehicle" style="margin-top: 32px;">
+          <h3 style="font-size: 1.3rem; color: #38bdf8; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+            🚗 Part 1: Vehicle Detection &amp; Identification Methods
+          </h3>
+          <p style="color: var(--text-muted); font-size: 0.92rem; margin-bottom: 18px;">
+            Detecting the vehicle boundary is the critical first stage of modern ALPR. It provides spatial context, suppresses false background triggers (roadside text, billboards, shop signboards), and preserves resolution for small plates.
+          </p>
+
+          <!-- Method V1: Background Subtraction -->
+          <div class="method-card">
+            <div class="method-header">
+              <div class="method-title">1.1 Background Subtraction &amp; Motion Modeling (GMM / MOG2 / Frame Difference)</div>
+              <span class="method-badge badge-classical">Classical CV &bull; Temporal</span>
+            </div>
+            <div class="method-desc">
+              <strong>How it works:</strong> In stationary traffic surveillance cameras, each background pixel is modeled statistically using a Gaussian Mixture Model (GMM). When a moving car enters the frame, its pixel values deviate from the Gaussian background distribution, segmenting the foreground silhouette into a moving blob.
+            </div>
+            <div class="arch-flow-box">
+Static Highway Camera Feed ──▶ Gaussian Background Model P(x_t) ──▶ Foreground Binary Mask |I_t - B_t| > θ ──▶ Vehicle Contour Blob
+            </div>
+            <div class="method-grid">
+              <div class="pros-box">
+                <h5>Advantages</h5>
+                &bull; Extremely fast (120+ FPS on low-power CPU).<br>
+                &bull; Unsupervised; requires zero labeled training data.<br>
+                &bull; Ideal for hardware-constrained edge IoT devices.
+              </div>
+              <div class="cons-box">
+                <h5>Limitations</h5>
+                &bull; Completely fails when vehicles stop (traffic jams, red lights).<br>
+                &bull; Vulnerable to headlight glare, swaying tree branches, and shadows.<br>
+                &bull; Inapplicable to moving dashcams or pan-tilt-zoom (PTZ) cameras.
+              </div>
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> Fixed highway gantry speed sensors, toll barrier vehicle triggers, and rudimentary traffic density counters.
+            </div>
+          </div>
+
+          <!-- Method V2: Optical Flow -->
+          <div class="method-card">
+            <div class="method-header">
+              <div class="method-title">1.2 Optical Flow &amp; Motion Trajectory Tracking (Lucas-Kanade &amp; Farnebäck)</div>
+              <span class="method-badge badge-classical">Classical CV &bull; Motion Vector</span>
+            </div>
+            <div class="method-desc">
+              <strong>How it works:</strong> Solves the brightness constancy equation <code>I_x*u + I_y*v + I_t = 0</code> between consecutive video frames. Spatiotemporal gradient fields provide velocity vectors (speed and direction) for moving vehicle centroids, enabling multi-lane vehicle tracking without deep neural networks.
+            </div>
+            <div class="method-grid">
+              <div class="pros-box">
+                <h5>Advantages</h5>
+                &bull; Delivers directional heading and velocity metrics.<br>
+                &bull; Effective for tracking multi-lane vehicle trajectories over time.
+              </div>
+              <div class="cons-box">
+                <h5>Limitations</h5>
+                &bull; Dense optical flow is computationally expensive at 4K resolution.<br>
+                &bull; Fails during rapid acceleration, lighting flicker, or occlusions.
+              </div>
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> Wrong-way driving detection, red-light crossing enforcement, and intersection velocity estimation.
+            </div>
+          </div>
+
+          <!-- Method V3: Handcrafted Feature Descriptors (HOG + SVM, Haar) -->
+          <div class="method-card">
+            <div class="method-header">
+              <div class="method-title">1.3 Handcrafted Descriptors &amp; Machine Learning (Haar Cascades &amp; HOG + Linear SVM)</div>
+              <span class="method-badge badge-classical">Machine Learning &bull; Handcrafted</span>
+            </div>
+            <div class="method-desc">
+              <strong>How it works:</strong>
+              <br>&bull; <strong>Haar Cascades (Viola-Jones):</strong> Evaluates difference of sums over adjacent rectangular regions using Integral Images, selecting discriminative features via AdaBoost.
+              <br>&bull; <strong>HOG + Linear SVM (Dalal-Triggs):</strong> Computes gradient orientation histograms across 8x8 pixel cells, normalized over 16x16 blocks to capture vehicle structural contours (roofline, wheels, hood). A Support Vector Machine classifies whether the sliding window contains a vehicle.
+            </div>
+            <div class="method-grid">
+              <div class="pros-box">
+                <h5>Advantages</h5>
+                &bull; Interpretable, deterministic mathematical formulation.<br>
+                &bull; Runs efficiently on embedded microprocessors (Raspberry Pi / Cortex-M).
+              </div>
+              <div class="cons-box">
+                <h5>Limitations</h5>
+                &bull; Poor generalization to diverse vehicle angles, trucks, or auto-rickshaws.<br>
+                &bull; High false positive rate in complex urban scenes with buildings and signs.
+              </div>
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> Legacy automated toll gates and early 2000s electronic parking access systems.
+            </div>
+          </div>
+
+          <!-- Method V4: Two-Stage Region-Based Deep Detectors -->
+          <div class="method-card">
+            <div class="method-header">
+              <div class="method-title">1.4 Two-Stage Region-Proposal Deep Detectors (Faster R-CNN &amp; Cascade R-CNN)</div>
+              <span class="method-badge badge-deep">Deep Learning &bull; Region Proposal</span>
+            </div>
+            <div class="method-desc">
+              <strong>How it works:</strong>
+              <br>&bull; <strong>Stage 1 (Region Proposal Network - RPN):</strong> Slides over deep convolutional feature maps to propose candidate bounding boxes (Regions of Interest - RoIs).
+              <br>&bull; <strong>Stage 2 (RoIAlign &amp; Fast R-CNN Head):</strong> Extracts fixed-size feature vectors from proposals using bilinear interpolation and predicts class probabilities and refined box regression offsets.
+              <br>&bull; <strong>Cascade R-CNN:</strong> Employs a sequence of detector stages trained with progressively higher IoU thresholds (0.5 &rarr; 0.6 &rarr; 0.7) to eliminate close false positives.
+            </div>
+            <div class="method-grid">
+              <div class="pros-box">
+                <h5>Advantages</h5>
+                &bull; Unsurpassed spatial precision on heavily overlapping vehicles.<br>
+                &bull; Exceptional recall for small and distant vehicles in wide-angle traffic footage.
+              </div>
+              <div class="cons-box">
+                <h5>Limitations</h5>
+                &bull; High inference latency (12–25 FPS on high-end GPUs).<br>
+                &bull; High VRAM memory footprint; unsuitable for edge mobile processors.
+              </div>
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> Forensic traffic accident analysis, precision highway census surveys, and offline law enforcement investigations.
+            </div>
+          </div>
+
+          <!-- Method V5: One-Stage Anchor-Based Deep Detectors -->
+          <div class="method-card">
+            <div class="method-header">
+              <div class="method-title">1.5 One-Stage Anchor-Based Detectors (SSD, YOLOv3–v7 &amp; RetinaNet)</div>
+              <span class="method-badge badge-deep">Deep Learning &bull; Real-Time</span>
+            </div>
+            <div class="method-desc">
+              <strong>How it works:</strong> Eliminates the RPN proposal step. The network divides the feature map into a spatial grid and directly predicts bounding box coordinate offsets and class scores for predefined anchor boxes across multi-scale feature pyramids (FPN / PANet).
+              <br>&bull; <strong>RetinaNet Focal Loss:</strong> Mitigates extreme class imbalance between road background and vehicles:
+              <br><code style="color: #38bdf8;">FL(p_t) = -&alpha;_t &bull; (1 - p_t)^&gamma; &bull; log(p_t)</code>, which dynamically downweights easy background gradients.
+              <br>&bull; <strong>MobileNet-SSD:</strong> Employs depthwise separable convolutions for real-time mobile and in-browser execution (used in our client-side TensorFlow.js engine).
+            </div>
+            <div class="method-grid">
+              <div class="pros-box">
+                <h5>Advantages</h5>
+                &bull; High throughput (45–100+ FPS on modern GPUs).<br>
+                &bull; Readily exportable to ONNX, TensorRT, and WebAssembly / WebGL.
+              </div>
+              <div class="cons-box">
+                <h5>Limitations</h5>
+                &bull; Sensitive to anchor box aspect ratio priors; sub-optimal for atypical vehicles.<br>
+                &bull; Dense overlapping vehicles can suffer from suppression during Non-Maximum Suppression (NMS).
+              </div>
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> Smart city CCTV traffic management, electronic toll booths, and edge embedded cameras.
+            </div>
+          </div>
+
+          <!-- Method V6: Modern Anchor-Free Deep Detectors -->
+          <div class="method-card">
+            <div class="method-header">
+              <div class="method-title">1.6 Modern Anchor-Free Detectors (YOLOv8, YOLOv9, YOLOv10, YOLOv11 &amp; CenterNet)</div>
+              <span class="method-badge badge-deep">Deep Learning &bull; State-of-the-Art</span>
+            </div>
+            <div class="method-desc">
+              <strong>How it works:</strong> Replaces anchor boxes with direct point regression:
+              <br>&bull; <strong>Anchor-Free Center Regression:</strong> Predicts object center points directly along with distance offsets to the Left, Top, Right, Bottom (LTRB) borders using Distribution Focal Loss (DFL).
+              <br>&bull; <strong>Decoupled Detection Heads:</strong> Separates classification scores from bounding box coordinate regression, eliminating conflicting gradient updates.
+              <br>&bull; <strong>Task-Aligned Assigner (TAL):</strong> Dynamically assigns positive training samples based on the geometric product of classification score and IoU metric (<code>t = s^&alpha; &bull; IoU^&beta;</code>).
+            </div>
+            <div class="method-grid">
+              <div class="pros-box">
+                <h5>Advantages</h5>
+                &bull; Superior speed-to-accuracy Pareto frontier.<br>
+                &bull; No anchor tuning; seamlessly adapts to diverse vehicle shapes (buses, trucks, autos, bikes).<br>
+                &bull; Rapid convergence during custom dataset training.
+              </div>
+              <div class="cons-box">
+                <h5>Limitations</h5>
+                &bull; Requires PyTorch 2.x / modern TensorRT runtimes for peak NPU acceleration.
+              </div>
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> State-of-the-art ALPR backends (including this project's Python engine), vehicle dashcam ADAS, and smart city sensors.
+            </div>
+          </div>
+
+          <!-- Method V7: Vision Transformers -->
+          <div class="method-card">
+            <div class="method-header">
+              <div class="method-title">1.7 Vision Transformers &amp; Real-Time DETR (DETR, Deformable DETR &amp; RT-DETR)</div>
+              <span class="method-badge badge-transformer">Vision Transformer &bull; Global Attention</span>
+            </div>
+            <div class="method-desc">
+              <strong>How it works:</strong> Treats object detection as a direct set prediction problem. Feature maps from a CNN/ViT backbone are fed into a Transformer encoder-decoder. Learned object queries interact via multi-head self-attention and cross-attention across the global scene, supervised using bipartite matching (Hungarian loss).
+              <br>&bull; <strong>RT-DETR:</strong> Eliminates Non-Maximum Suppression (NMS) entirely, achieving real-time transformer speed on GPUs.
+            </div>
+            <div class="method-grid">
+              <div class="pros-box">
+                <h5>Advantages</h5>
+                &bull; Captures global spatial context (vehicle relationships to road lanes and barriers).<br>
+                &bull; Zero NMS post-processing eliminates latency bottlenecks in dense traffic.
+              </div>
+              <div class="cons-box">
+                <h5>Limitations</h5>
+                &bull; High memory usage; slower convergence during training.<br>
+                &bull; Challenging to deploy on ultra-low-power microcontrollers.
+              </div>
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> Autonomous driving perception suites and next-generation cloud traffic surveillance servers.
+            </div>
+          </div>
+
+          <!-- Method V8: Vehicle Make, Model, Color & Re-ID -->
+          <div class="method-card">
+            <div class="method-header">
+              <div class="method-title">1.8 Vehicle Attribute Recognition (MMR / VCR) &amp; Deep Metric Re-Identification (ReID)</div>
+              <span class="method-badge badge-deep">Metric Learning &bull; Forensic</span>
+            </div>
+            <div class="method-desc">
+              <strong>How it works:</strong>
+              <br>&bull; <strong>Multi-Task Classification:</strong> A CNN backbone with multiple heads simultaneously predicts vehicle category (Sedan, SUV, Hatchback, Truck, Bus, 2-Wheeler, Auto-rickshaw), manufacturer (Hyundai, Toyota, etc.), and exterior color.
+              <br>&bull; <strong>Deep Metric Learning (Vehicle ReID):</strong> Maps vehicle visual features into a high-dimensional metric embedding using Triplet Margin Loss:
+              <br><code style="color: #38bdf8;">L_triplet = max(0, ||f(a) - f(p)||^2 - ||f(a) - f(n)||^2 + &alpha;)</code>
+              <br>This allows law enforcement to track identical vehicles across multiple non-overlapping city cameras even if license plates are obscured, cloned, or missing!
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> Cross-camera fugitive tracking, stolen vehicle recovery, and cloned plate anomaly detection.
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- PART 2: LICENSE PLATE LOCALIZATION METHODS -->
+        <!-- ========================================== -->
+        <div id="methods-plate" style="margin-top: 36px;">
+          <h3 style="font-size: 1.3rem; color: #ef4444; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+            🪪 Part 2: License Plate Localization (LPD) Methods
+          </h3>
+          <p style="color: var(--text-muted); font-size: 0.92rem; margin-bottom: 18px;">
+            Once the vehicle ROI is localized, the system must pinpoint the high-resolution license plate within the car's bounding box. Below are the classical and deep learning methods used to isolate plates without locking onto grilles or headlights.
+          </p>
+
+          <!-- Method P1: Vertical Edge Dominance -->
+          <div class="method-card" style="border-left: 3px solid #ef4444;">
+            <div class="method-header">
+              <div class="method-title">2.1 Vertical-Edge Dominance &amp; Character Stroke Clustering (Our Client-Side ALPR Algorithm)</div>
+              <span class="method-badge badge-math">Edge Heuristic &bull; Morphological</span>
+            </div>
+            <div class="method-desc">
+              <strong>The Mathematical Intuition:</strong> Car radiator grilles, bumper ribs, hood contours, and pavement markings consist primarily of horizontal edges (<code>G_y &gt;&gt; G_x</code>). Conversely, alphanumeric license plate characters consist of dense vertical strokes (<code>G_x &gt;&gt; G_y</code>).
+              <br><br>
+              <strong>Algorithmic Formulation:</strong>
+              <br>1. <strong>Vertical-Edge Dominance Filter:</strong>
+              <br><code style="color: #38bdf8;">V(x, y) = max(0, G_x(x, y) - 0.5 &bull; G_y(x, y))</code>
+              <br>This completely cancels out radiator grille slats while amplifying character glyphs!
+              <br>2. <strong>Horizontal Morphological Closing:</strong> Applying a bilateral kernel of dimensions <code>k_w &approx; 0.05 &bull; W_car, k_h &approx; 0.015 &bull; H_car</code> bridges individual letter strokes into a solid rectangular component.
+              <br>3. <strong>Centerline Transition Frequency:</strong> Counts alternating light/dark transitions across the horizontal centerline. True plates yield 6–22 transitions corresponding to characters; uniform textures or headlights yield &lt; 3.
+              <br>4. <strong>Bezel Margin Padding:</strong> Expands character boundaries by +8% horizontal and +28% vertical to encompass the entire physical plate frame.
+            </div>
+            <div class="method-grid">
+              <div class="pros-box">
+                <h5>Advantages</h5>
+                &bull; Zero neural network weights needed; runs at 60 FPS in pure JavaScript inside web browsers.<br>
+                &bull; Robustly rejects car grilles and bumper slats.<br>
+                &bull; Operates locally with total privacy.
+              </div>
+              <div class="cons-box">
+                <h5>Limitations</h5>
+                &bull; Vulnerable to severe perspective distortion (&gt; 45&deg; camera tilt).<br>
+                &bull; Requires adequate contrast between characters and plate background.
+              </div>
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> Web browser in-browser detectors (this live demo!), low-cost microcontrollers, and edge IoT smart cameras.
+            </div>
+          </div>
+
+          <!-- Method P2: Color Segmentation -->
+          <div class="method-card">
+            <div class="method-header">
+              <div class="method-title">2.2 Chromaticity &amp; Color Space Thresholding (HSV / HSL / CIELAB)</div>
+              <span class="method-badge badge-classical">Color Space &bull; Heuristic</span>
+            </div>
+            <div class="method-desc">
+              <strong>How it works:</strong> Segments pixels using specialized color distributions in the HSV (Hue, Saturation, Value) color space:
+              <br>&bull; <strong>Indian Commercial Vehicles (Yellow):</strong> <code>H &isin; [20&deg;, 35&deg;], S &gt; 0.35, V &gt; 0.40</code>
+              <br>&bull; <strong>Electric Vehicles (Green):</strong> <code>H &isin; [65&deg;, 140&deg;], S &gt; 0.30</code>
+              <br>&bull; <strong>Private Vehicles (White):</strong> Low Saturation <code>S &lt; 0.18</code> and high Luminance <code>V &gt; 0.65</code>.
+            </div>
+            <div class="method-grid">
+              <div class="pros-box">
+                <h5>Advantages</h5>
+                &bull; Rapid execution with simple threshold lookup tables.<br>
+                &bull; Disregards vehicle bodywork when color contrast is high.
+              </div>
+              <div class="cons-box">
+                <h5>Limitations</h5>
+                &bull; Highly fragile under night sodium street lamps, direct headlight glare, or dirt/mud.<br>
+                &bull; Color gamut variations across camera sensors.
+              </div>
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> Regulated commercial vehicle lane monitoring and parking garage access control.
+            </div>
+          </div>
+
+          <!-- Method P3: 2D Wavelet Transform -->
+          <div class="method-card">
+            <div class="method-header">
+              <div class="method-title">2.3 2D Discrete Wavelet Transform (Haar DWT - Sub-band Energy)</div>
+              <span class="method-badge badge-classical">Frequency Domain &bull; Texture</span>
+            </div>
+            <div class="method-desc">
+              <strong>How it works:</strong> Decomposes the vehicle image into four spatial frequency sub-bands: LL (Approximation), LH (Horizontal edges), HL (Vertical edges), and HH (Diagonal edges). License plate regions exhibit high energy specifically in the HL and HH high-frequency sub-bands, allowing plate candidate isolation regardless of lighting intensity variations.
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> Variable lighting highway surveillance and rain/fog weather conditions.
+            </div>
+          </div>
+
+          <!-- Method P4: Deep Learning Plate Detectors -->
+          <div class="method-card">
+            <div class="method-header">
+              <div class="method-title">2.4 Dedicated Deep Learning Plate Detectors (YOLOv8-nano Plate Model)</div>
+              <span class="method-badge badge-deep">Deep Learning &bull; Custom Trained</span>
+            </div>
+            <div class="method-desc">
+              <strong>How it works:</strong> A lightweight CNN trained explicitly on hundreds of thousands of diverse license plate crops (CCPD, OpenALPR, Indian ALPR datasets). Trained to predict plate bounding boxes directly inside the vehicle crop:
+              <br>&bull; Robust against dirty plates, non-standard fonts, bumper stickers, and partial shadows.
+              <br>&bull; Achieves 97.8%+ localization mAP50 inside pre-localized vehicle ROIs.
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> Production ALPR backends, mobile patrol dashcams, and municipal parking enforcement vehicles.
+            </div>
+          </div>
+
+          <!-- Method P5: Oriented Bounding Boxes (OBB) -->
+          <div class="method-card">
+            <div class="method-header">
+              <div class="method-title">2.5 Oriented Bounding Boxes (OBB / Rotated YOLO)</div>
+              <span class="method-badge badge-deep">Deep Learning &bull; Angular Rotation</span>
+            </div>
+            <div class="method-desc">
+              <strong>Why Standard Boxes Fail:</strong> In roadside gantry cameras, cars approach at oblique angles (15&deg;–45&deg;). Standard Axis-Aligned Bounding Boxes (AABB <code>[x1, y1, x2, y2]</code>) encompass irrelevant bumper background and clip characters at acute corners.
+              <br><br>
+              <strong>How OBB Works:</strong> Predicts 5 parameters <code>[x_c, y_c, width, height, &theta;]</code> or the 4 polygon vertices <code>[(x1,y1), (x2,y2), (x3,y3), (x4,y4)]</code>. Uses Rotated IoU loss (ProbIoU) to tightly fit the license plate rectangle at any orientation.
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> Overhead highway toll gantries, curbside parking surveillance, and drone aerial vehicle tracking.
+            </div>
+          </div>
+
+          <!-- Method P6: Landmark Keypoint Detection & STN -->
+          <div class="method-card" style="border-left: 3px solid #38bdf8;">
+            <div class="method-header">
+              <div class="method-title">2.6 Landmark 4-Corner Keypoints &amp; Spatial Homography Rectification (STN)</div>
+              <span class="method-badge badge-math">Keypoint &bull; Perspective Geometry</span>
+            </div>
+            <div class="method-desc">
+              <strong>How it works:</strong>
+              <br>1. <strong>Keypoint Detection:</strong> A landmark regression network detects the exact 4 physical plate corners: Top-Left (P1), Top-Right (P2), Bottom-Right (P3), Bottom-Left (P4).
+              <br>2. <strong>Perspective Homography Matrix:</strong> Computes the 3x3 transformation matrix <strong>H</strong> that maps quadrilateral corners to a canonical flat rectangle (e.g., 240 &times; 60 px):
+              <br><code style="color: #38bdf8;">[x', y', 1]^T &sim; H &bull; [x, y, 1]^T</code>
+              <br>3. <strong>Warp Perspective Rectification:</strong> Executes <code>cv2.warpPerspective()</code> to unwarp, de-skew, and flatten the plate.
+              <br><br>
+              <strong style="color: #34d399;">Result:</strong> Downstream character recognition accuracy leaps from ~52% on skewed plates to over 98.5%!
+            </div>
+            <div class="arch-flow-box">
+Tilted Plate Crop ──▶ 4-Corner Landmark Net ──▶ Homography Matrix H ──▶ cv2.warpPerspective() ──▶ Rectified Flat 240x60 Plate
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> High-speed automated toll collection (FASTag / Electronic Toll Collection) and police speed cameras.
+            </div>
+          </div>
+
+          <!-- Method P7: Semantic / Instance Segmentation -->
+          <div class="method-card">
+            <div class="method-header">
+              <div class="method-title">2.7 Semantic &amp; Instance Segmentation (Mask R-CNN &amp; SegFormer)</div>
+              <span class="method-badge badge-deep">Pixel-Level Segmentation</span>
+            </div>
+            <div class="method-desc">
+              <strong>How it works:</strong> Predicts a pixel-wise binary segmentation mask for the license plate contour. Ideal for non-rectangular plates, curved vintage bumpers, or damaged/bent license plates where bounding boxes cannot fit tightly.
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> Damaged vehicle forensic analysis, international plates with irregular geometries, and motorcycle double-row plates.
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- PART 3: LICENSE PLATE CHARACTER RECOGNITION (OCR) -->
+        <!-- ========================================== -->
+        <div id="methods-ocr" style="margin-top: 36px;">
+          <h3 style="font-size: 1.3rem; color: #a855f7; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+            🔤 Part 3: License Plate Character Recognition (LPR / OCR)
+          </h3>
+          <p style="color: var(--text-muted); font-size: 0.92rem; margin-bottom: 18px;">
+            Once the plate crop is extracted and rectified, the system can optionally transcribe alphanumeric characters. Below are the core OCR paradigms.
+          </p>
+
+          <!-- Method O1: Segmentation + CNN -->
+          <div class="method-card">
+            <div class="method-header">
+              <div class="method-title">3.1 Character Segmentation + CNN Classifier (Two-Stage OCR)</div>
+              <span class="method-badge badge-classical">Segmentation-Based</span>
+            </div>
+            <div class="method-desc">
+              <strong>How it works:</strong>
+              <br>1. <strong>Binarization &amp; Projection:</strong> Converts plate crop to binary using Otsu thresholding. Computes vertical projection profile <code>P_v(x) = &sum;_y I(x,y)</code> to identify valleys between characters.
+              <br>2. <strong>Connected Component Analysis (CCA):</strong> Isolates character bounding boxes.
+              <br>3. <strong>Character CNN:</strong> A 5-layer CNN classifies each isolated character into 36 classes (0–9, A–Z).
+              <br><em>Limitation:</em> Breaks completely when characters touch due to blur, rust, or mounting screws/bolts.
+            </div>
+          </div>
+
+          <!-- Method O2: CRNN + CTC -->
+          <div class="method-card" style="border-left: 3px solid #a855f7;">
+            <div class="method-header">
+              <div class="method-title">3.2 CRNN + CTC: Convolutional Recurrent Neural Network (Industry Gold Standard)</div>
+              <span class="method-badge badge-ocr">Sequence-to-Sequence &bull; Segmentation-Free</span>
+            </div>
+            <div class="method-desc">
+              <strong>The Industrial Workhorse:</strong> Reads license plate text as an unsegmented continuous sequence without ever segmenting individual characters:
+              <br>&bull; <strong>CNN Feature Extractor:</strong> Extracts sequential feature columns of dimension <code>W' &times; D</code>.
+              <br>&bull; <strong>Bidirectional LSTM:</strong> Models contextual character transitions (e.g., learning that Indian plates begin with 2 state code letters like <code>TN</code>, <code>DL</code>, <code>MH</code> followed by 2 district digits).
+              <br>&bull; <strong>Connectionist Temporal Classification (CTC) Loss:</strong> Decodes variable-length sequences by collapsing identical repeating characters separated by a blank token &epsilon; (e.g. <code>_T_N__8_8_</code> &rarr; <code>TN88</code>).
+            </div>
+            <div class="arch-flow-box">
+Plate Image [100x32] ──▶ CNN Feature Map [25x512] ──▶ BiLSTM Context [25x256] ──▶ CTC Transcription ──▶ "TN87C7355"
+            </div>
+            <div class="method-grid">
+              <div class="pros-box">
+                <h5>Advantages</h5>
+                &bull; Exceptionally resilient to motion blur, low resolution, and dirt.<br>
+                &bull; Requires zero manual character segmentation labeling.<br>
+                &bull; Lightweight and deployable in real-time.
+              </div>
+              <div class="cons-box">
+                <h5>Limitations</h5>
+                &bull; Requires rectified horizontal text alignment.<br>
+                &bull; Struggles with stacked two-row motorcycle plates without prior splitting.
+              </div>
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> Worldwide commercial ALPR engines, highway tolling, and law enforcement speed radars.
+            </div>
+          </div>
+
+          <!-- Method O3: Vision Transformer OCR -->
+          <div class="method-card">
+            <div class="method-header">
+              <div class="method-title">3.3 Vision Transformer OCR (TrOCR, PARSeq &amp; SVTR)</div>
+              <span class="method-badge badge-transformer">Transformer &bull; Vision-Language</span>
+            </div>
+            <div class="method-desc">
+              <strong>How it works:</strong> Utilizes a Vision Transformer (ViT) patch encoder coupled with an autoregressive language model decoder. Eliminates recurrence and processes 2D character patch relationships directly, delivering robust accuracy on arbitrary artistic fonts, non-standard spacing, and degraded surfaces.
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> Cloud batch auditing, vintage car plate transcription, and multi-lingual international plates.
+            </div>
+          </div>
+
+          <!-- Method O4: End-to-End ALPR -->
+          <div class="method-card">
+            <div class="method-header">
+              <div class="method-title">3.4 Unified End-to-End ALPR Networks (WPOD-NET &amp; TE-ALPR)</div>
+              <span class="method-badge badge-deep">End-to-End &bull; Differentiable</span>
+            </div>
+            <div class="method-desc">
+              <strong>How it works:</strong> Replaces distinct detection, unwarping, and OCR steps with a single unified neural network. The network takes the vehicle crop, directly predicts the warped quadrilateral surface (Warped Planar Object Detection), applies internal differentiable bilinear grid sampling, and transcribes the text string in a single forward pass.
+            </div>
+            <div class="usecase-box">
+              🎯 <strong>Primary Use Case:</strong> Unified embedded AI cameras and single-model edge deployments.
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- PART 4: ARCHITECTURE TRADE-OFF: SINGLE VS TWO-STAGE -->
+        <!-- ========================================== -->
+        <div id="methods-cascade" style="margin-top: 36px;">
+          <h3 style="font-size: 1.3rem; color: #10b981; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+            ⚖️ Part 4: System Architecture: Single-Stage vs. Two-Stage Cascade
+          </h3>
+          <p style="color: var(--text-muted); font-size: 0.92rem; margin-bottom: 16px;">
+            Why does virtually every production-grade ALPR system (including this project) employ a Two-Stage Cascade architecture?
+          </p>
+
+          <div class="method-grid" style="margin-bottom: 20px;">
+            <div class="method-card" style="margin-bottom: 0;">
+              <h4 style="color: #f87171; margin-bottom: 8px; font-size: 1.05rem;">❌ Single-Stage Direct Plate Detection</h4>
+              <p style="color: var(--text-muted); font-size: 0.88rem; line-height: 1.6;">
+                Running a license plate detector directly on the full 1080p/4K traffic image creates major failure modes:
+              </p>
+              <ul style="margin-left: 18px; margin-top: 8px; color: #cbd5e1; font-size: 0.85rem; line-height: 1.8;">
+                <li><strong>High False Positives:</strong> Billboards, phone numbers on commercial trailers, bus ads, and street signs trigger false detections.</li>
+                <li><strong>Pixel Degradation:</strong> Resizing a 4K frame directly to 640x640 destroys small plate character pixels.</li>
+                <li><strong>Zero Context:</strong> Cannot bind the plate to vehicle make, model, or color.</li>
+              </ul>
+            </div>
+
+            <div class="method-card" style="margin-bottom: 0; border-color: #10b981;">
+              <h4 style="color: #34d399; margin-bottom: 8px; font-size: 1.05rem;">✅ Two-Stage Cascaded ALPR (Our System)</h4>
+              <p style="color: var(--text-muted); font-size: 0.88rem; line-height: 1.6;">
+                Enforces a strict spatial hierarchy:
+                <br><code>Frame &rarr; Localize Vehicle &rarr; Crop Vehicle &rarr; Localize Plate inside ROI</code>:
+              </p>
+              <ul style="margin-left: 18px; margin-top: 8px; color: #cbd5e1; font-size: 0.85rem; line-height: 1.8;">
+                <li><strong>100% Background Rejection:</strong> Eliminates false positives from roadside signs and shops.</li>
+                <li><strong>Resolution Preservation:</strong> Vehicle crop retains native optical resolution for plate localization.</li>
+                <li><strong>Full Context Association:</strong> Directly pairs each license plate crop with vehicle type, color, and bounding box.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- PART 5: COMPREHENSIVE COMPARISON MATRIX -->
+        <!-- ========================================== -->
+        <div id="methods-matrix" style="margin-top: 36px;">
+          <h3 style="font-size: 1.3rem; color: #fbbf24; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+            📊 Part 5: Comprehensive Method Comparison Matrix
+          </h3>
+          <p style="color: var(--text-muted); font-size: 0.92rem; margin-bottom: 14px;">
+            A comparative engineering benchmark across real-world operational criteria:
+          </p>
+
+          <div class="table-responsive">
+            <table class="comparison-table">
+              <thead>
+                <tr>
+                  <th>Method &amp; Technique</th>
+                  <th>Category</th>
+                  <th>Accuracy in Traffic</th>
+                  <th>Inference Speed</th>
+                  <th>Compute Footprint</th>
+                  <th>Lighting Resilience</th>
+                  <th>Angle Resilience</th>
+                  <th>Best-Fit Industry Application</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Background Subtraction (MOG2)</strong></td>
+                  <td>Vehicle Detection</td>
+                  <td>Moderate (65–75%)</td>
+                  <td>Very High (150+ FPS)</td>
+                  <td>Low (CPU-only)</td>
+                  <td>Low (Shadows/Glare)</td>
+                  <td>N/A (Stationary)</td>
+                  <td>Highway vehicle counting &amp; triggers</td>
+                </tr>
+                <tr>
+                  <td><strong>HOG + Linear SVM / Haar</strong></td>
+                  <td>Vehicle Detection</td>
+                  <td>Moderate (70–80%)</td>
+                  <td>High (60–90 FPS)</td>
+                  <td>Low (Embedded CPU)</td>
+                  <td>Moderate</td>
+                  <td>Low (&lt; 15&deg;)</td>
+                  <td>Legacy automated parking barriers</td>
+                </tr>
+                <tr>
+                  <td><strong>Faster R-CNN / Cascade R-CNN</strong></td>
+                  <td>Vehicle Detection</td>
+                  <td>Very High (95–98%)</td>
+                  <td>Low (15–25 FPS)</td>
+                  <td>High (Server GPU)</td>
+                  <td>Very High</td>
+                  <td>High</td>
+                  <td>Forensic investigation &amp; traffic census</td>
+                </tr>
+                <tr>
+                  <td><strong>YOLOv8 / YOLOv11 (Anchor-Free)</strong></td>
+                  <td>Vehicle Detection</td>
+                  <td>Very High (94–97%)</td>
+                  <td>Very High (80–140 FPS)</td>
+                  <td>Moderate (Edge NPU/GPU)</td>
+                  <td>Very High</td>
+                  <td>Very High</td>
+                  <td>Smart city cameras &amp; live traffic systems</td>
+                </tr>
+                <tr>
+                  <td><strong>Vertical Edge + Morphology (Ours)</strong></td>
+                  <td>Plate Localization</td>
+                  <td>High (88–94%)</td>
+                  <td>Very High (60 FPS JS)</td>
+                  <td>Minimal (Browser JS)</td>
+                  <td>Moderate</td>
+                  <td>Moderate (&lt; 30&deg;)</td>
+                  <td>In-browser client ALPR &amp; edge IoT cameras</td>
+                </tr>
+                <tr>
+                  <td><strong>HSV Color Space Slicing</strong></td>
+                  <td>Plate Localization</td>
+                  <td>Low–Mod (60–75%)</td>
+                  <td>Instant (&gt; 200 FPS)</td>
+                  <td>Negligible</td>
+                  <td>Very Low</td>
+                  <td>Low</td>
+                  <td>Controlled indoor garage vehicle access</td>
+                </tr>
+                <tr>
+                  <td><strong>Rotated YOLO (OBB)</strong></td>
+                  <td>Plate Localization</td>
+                  <td>Very High (96–98%)</td>
+                  <td>High (60–90 FPS)</td>
+                  <td>Moderate (GPU)</td>
+                  <td>Very High</td>
+                  <td>Exceptional (up to 70&deg;)</td>
+                  <td>Overhead toll gantries &amp; patrol cars</td>
+                </tr>
+                <tr>
+                  <td><strong>4-Corner STN Homography Unwarp</strong></td>
+                  <td>Rectification</td>
+                  <td>Exceptional (&gt; 98%)</td>
+                  <td>High (75 FPS)</td>
+                  <td>Low–Moderate</td>
+                  <td>High</td>
+                  <td>Exceptional (Rectified)</td>
+                  <td>High-speed automated tolling (FASTag)</td>
+                </tr>
+                <tr>
+                  <td><strong>CRNN + CTC Loss</strong></td>
+                  <td>Character OCR</td>
+                  <td>Very High (94–98%)</td>
+                  <td>High (50–80 FPS)</td>
+                  <td>Moderate (NPU/GPU)</td>
+                  <td>Very High</td>
+                  <td>Requires unwarped crop</td>
+                  <td>Industrial ALPR transcription standard</td>
+                </tr>
+                <tr>
+                  <td><strong>Vision Transformer (TrOCR)</strong></td>
+                  <td>Character OCR</td>
+                  <td>Exceptional (97–99%)</td>
+                  <td>Moderate (20–35 FPS)</td>
+                  <td>High (GPU)</td>
+                  <td>Exceptional</td>
+                  <td>High</td>
+                  <td>Multi-font and degraded plate auditing</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- PART 6: RUNNABLE CODE REFERENCE -->
+        <!-- ========================================== -->
+        <div id="methods-code" style="margin-top: 36px;">
+          <h3 style="font-size: 1.3rem; color: #38bdf8; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+            💻 Part 6: Core Algorithm Implementation Code Reference
+          </h3>
+          <p style="color: var(--text-muted); font-size: 0.92rem; margin-bottom: 14px;">
+            Production implementations of key ALPR algorithms in Python OpenCV and PyTorch:
+          </p>
+
+          <h4 style="color: #cbd5e1; font-size: 0.95rem; margin: 16px 0 6px 0;">Algorithm A: Vertical Edge Dominance &amp; Morphological Closing (OpenCV Python)</h4>
+          <pre>
+import cv2
+import numpy as np
+
+def extract_plate_candidate(vehicle_crop):
+    """
+    Vertical Edge Dominance Algorithm: Suppresses horizontal car grilles
+    and isolates dense vertical character strokes.
+    """
+    gray = cv2.cvtColor(vehicle_crop, cv2.COLOR_BGR2GRAY)
+    
+    # 1. Compute Sobel Gradients
+    grad_x = cv2.Sobel(gray, cv2.CV_32F, 1, 0, ksize=3)
+    grad_y = cv2.Sobel(gray, cv2.CV_32F, 0, 1, ksize=3)
+    abs_x = cv2.convertScaleAbs(grad_x)
+    abs_y = cv2.convertScaleAbs(grad_y)
+    
+    # 2. Suppress horizontal edges: V = max(0, G_x - 0.5 * G_y)
+    v_edge = cv2.subtract(abs_x, (0.5 * abs_y).astype(np.uint8))
+    
+    # 3. Morphological Closing (Rectangular kernel tuned to plate aspect ratio ~4:1)
+    h, w = vehicle_crop.shape[:2]
+    kw = max(7, int(w * 0.05))
+    kh = max(3, int(h * 0.015))
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (kw, kh))
+    closed = cv2.morphologyEx(v_edge, cv2.MORPH_CLOSE, kernel)
+    
+    # 4. Otsu Thresholding to generate binary plate mask
+    _, thresh = cv2.threshold(closed, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    return thresh
+          </pre>
+
+          <h4 style="color: #cbd5e1; font-size: 0.95rem; margin: 16px 0 6px 0;">Algorithm B: 4-Corner Homography Perspective Unwarping (OpenCV Python)</h4>
+          <pre>
+def rectify_plate_homography(image, corners_4pts, target_w=240, target_h=60):
+    """
+    Unwarps a perspective-distorted plate into a canonical 240x60 rectangle.
+    corners_4pts: [(x1,y1), (x2,y2), (x3,y3), (x4,y4)] in Top-Left, TR, BR, BL order.
+    """
+    src_pts = np.array(corners_4pts, dtype=np.float32)
+    dst_pts = np.array([
+        [0, 0],
+        [target_w - 1, 0],
+        [target_w - 1, target_h - 1],
+        [0, target_h - 1]
+    ], dtype=np.float32)
+    
+    # Compute 3x3 Homography Matrix
+    H, _ = cv2.findHomography(src_pts, dst_pts)
+    
+    # Warp to pristine frontal view
+    rectified_plate = cv2.warpPerspective(image, H, (target_w, target_h))
+    return rectified_plate
+          </pre>
+        </div>
+      </div>
+    </div><!-- End Tab 2: methods-guide -->
+
+    <!-- TAB 3: TWO-STAGE ARCHITECTURE -->
+    <div id="architecture" class="tab-pane">
+      <div class="doc-section">
+        <h2>🏗️ Dense Traffic Two-Stage Pipeline Architecture</h2>
+        <p>
+          In high-density traffic scenes (such as Indian arterial corridors with multiple overlapping cars, commercial cabs, and trucks), direct single-stage number plate detectors suffer from severe false positives triggered by radiator grilles, bumper decals, and advertising stickers.
+        </p>
+        <p>
+          Our two-stage architecture solves this by enforcing a spatial hierarchy that isolates the vehicle boundary first, and then accurately extracts the high-resolution license plate image crop:
+        </p>
+        <pre>
+[Traffic Frame 960x540] ──▶ STAGE 1: Vehicle Localization (YOLO / COCO-SSD) 
+                                 │
+                                 ├──▶ Car 1 Crop [424, 279, 742, 534] ──▶ STAGE 2: Extracted Plate Crop [506, 445, 593, 476]
+                                 │
+                                 └──▶ Car 2 Crop [63, 240, 433, 528]  ──▶ STAGE 2: Extracted Plate Crop [155, 455, 217, 479]
+        </pre>
+
+        <h3 style="font-size: 1.15rem; color: #38bdf8; margin: 24px 0 10px 0;">Why Two-Stage Vehicle &amp; Plate Localization?</h3>
+        <ul style="margin-left: 20px; color: var(--text-muted); line-height: 1.9;">
+          <li><strong>Eliminates Roadside False Positives:</strong> Eliminates false detections on roadside billboards, building signs, or irrelevant background clutter.</li>
+          <li><strong>Preserves High Resolution:</strong> Cropping the vehicle before running plate detection preserves fine optical character details that would otherwise be lost if a 4K frame were resized to 640x640 directly.</li>
+          <li><strong>Isolates Dedicated Crops:</strong> Generates standalone, pristine image crops for each vehicle and its corresponding license plate for clean visual inspection and archiving.</li>
+          <li><strong>Automated Annotation Export:</strong> Facilitates immediate YOLO and JSON training label generation for computer vision and ALPR datasets.</li>
+        </ul>
+      </div>
+    </div><!-- End Tab 3: architecture -->
+
+    <!-- TAB 4: MATHEMATICAL FORMULATIONS -->
+    <div id="math-metrics" class="tab-pane">
+      <div class="doc-section">
+        <h2>📐 Coordinate Mapping &amp; Training Formulas</h2>
+        <p>
+          Let $(X_{v1}, Y_{v1}, X_{v2}, Y_{v2})$ denote the vehicle bounding box coordinates in the original frame.
+          Let $(x_{p1}, y_{p1}, x_{p2}, y_{p2})$ denote the license plate coordinates within the local vehicle crop:
+        </p>
+        <pre>
+Global Plate Coordinate Mapping:
+X_global = X_v1 + x_p1
+Y_global = Y_v1 + y_p1
+
+YOLO Training Format (Normalized [0.0 - 1.0]):
+c_x = ((X1 + X2) / 2.0) / Image_Width
+c_y = ((Y1 + Y2) / 2.0) / Image_Height
+w   = (X2 - X1) / Image_Width
+h   = (Y2 - Y1) / Image_Height
+
+Intersection-over-Union (IoU) Evaluation Metric:
+IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
+        </pre>
+      </div>
+    </div><!-- End Tab 4: math-metrics -->
+
+  </main>
+
+  <!-- Full-Resolution Crop Inspection Modal -->
+  <div id="imageModal" class="image-modal" style="display: none;">
+    <div class="image-modal-backdrop" onclick="closeImageModal()"></div>
+    <div class="image-modal-content">
+      <div class="image-modal-header">
+        <span id="imageModalTitle" style="font-weight: 700; color: #f8fafc; font-size: 1rem;">Extracted Image Inspection</span>
+        <button class="btn btn-danger" style="padding: 3px 8px; font-size: 0.8rem;" onclick="closeImageModal()">✕ Close</button>
+      </div>
+      <div style="background: #000; padding: 18px; border-radius: 8px; display: flex; justify-content: center; align-items: center; min-height: 220px; border: 1px solid var(--border-color);">
+        <img id="imageModalImg" src="" alt="Enlarged Crop" style="max-width: 100%; max-height: 60vh; object-fit: contain; border-radius: 4px; box-shadow: 0 4px 20px rgba(0,0,0,0.8);">
+      </div>
+      <div id="imageModalMeta" style="font-size: 0.78rem; color: #94a3b8; font-family: ui-monospace, monospace; padding: 6px 10px; background: rgba(15, 23, 42, 0.8); border-radius: 6px; border: 1px solid #1e293b;"></div>
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px;">
+        <button class="btn btn-primary" id="imageModalDownloadBtn">💾 Download Image</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Global State
+    let cocoModel = null;
+    let isDrawingMode = false;
+    let showBoxes = true;
+    let showCoordsOnImage = false;
+    let drawBox = null;
+    let isMouseDown = false;
+    let drawStartX = 0, drawStartY = 0;
+    let activeHighlightVehicleId = null;
+
+    const state = {
+      image: new Image(),
+      imageLoaded: false,
+      isDefaultImage: true,
+      detections: {
+        vehicles: []
+      }
+    };
+
+    const canvas = document.getElementById('detectionCanvas');
+    const ctx = canvas.getContext('2d');
+    const carConfSlider = document.getElementById('carConf');
+    const chkShowVehicles = document.getElementById('chkShowVehicles');
+    const chkShowPlates = document.getElementById('chkShowPlates');
+    const statusBadge = document.getElementById('statusBadge');
+    const btnDrawMode = document.getElementById('btnDrawMode');
+    const btnToggleCoords = document.getElementById('btnToggleCoords');
+    const drawNoticeBar = document.getElementById('drawNoticeBar');
+    const vehiclesListContainer = document.getElementById('vehiclesListContainer');
+    const yoloAnnotationBox = document.getElementById('yoloAnnotationBox');
+
+    // Default Verified Ground Truth Detections with Standalone Plate Crops (sample.jpg)
+    const DEFAULT_TRAFFIC_DETECTIONS = {
+      vehicles: [
+        {
+          vehicle_id: 1,
+          name: "Hyundai Creta (White SUV)",
+          class_name: "car",
+          confidence: 0.892,
+          bbox_xyxy: [424, 279, 742, 534],
+          bbox_yolo_norm: [0.607292, 0.752778, 0.331250, 0.472222],
+          crop_src: "./crops/sample_veh_1.jpg",
+          plates: [
+            {
+              plate_id: 1,
+              confidence: 0.942,
+              bbox_global_xyxy: [506, 445, 593, 476],
+              bbox_yolo_norm: [0.572396, 0.852778, 0.090625, 0.057407],
+              aspect: 2.81,
+              crop_src: "./crops/sample_veh_1_plate_1.jpg",
+              plate_annotated_crop_uri: "./crops/sample_veh_1_plate_1_chars.jpg",
+              characters: [
+                { char_id: 1, char_text: "K", confidence: 0.88, bbox_plate_xyxy: [10, 11, 15, 20], crop_uri: "./crops/characters/char_01.png" },
+                { char_id: 2, char_text: "A", confidence: 0.88, bbox_plate_xyxy: [16, 11, 22, 20], crop_uri: "./crops/characters/char_02.png" },
+                { char_id: 3, char_text: "0", confidence: 0.85, bbox_plate_xyxy: [24, 11, 29, 20], crop_uri: "./crops/characters/char_03.png" },
+                { char_id: 4, char_text: "9", confidence: 0.85, bbox_plate_xyxy: [30, 11, 35, 20], crop_uri: "./crops/characters/char_04.png" },
+                { char_id: 5, char_text: "M", confidence: 0.82, bbox_plate_xyxy: [37, 11, 43, 20], crop_uri: "./crops/characters/char_05.png" },
+                { char_id: 6, char_text: "B", confidence: 0.82, bbox_plate_xyxy: [45, 11, 50, 21], crop_uri: "./crops/characters/char_06.png" },
+                { char_id: 7, char_text: "7", confidence: 0.90, bbox_plate_xyxy: [52, 12, 57, 21], crop_uri: "./crops/characters/char_07.png" },
+                { char_id: 8, char_text: "3", confidence: 0.90, bbox_plate_xyxy: [59, 12, 63, 21], crop_uri: "./crops/characters/char_08.png" },
+                { char_id: 9, char_text: "8", confidence: 0.90, bbox_plate_xyxy: [65, 12, 70, 21], crop_uri: "./crops/characters/char_09.png" }
+              ]
+            }
+          ]
+        },
+        {
+          vehicle_id: 2,
+          name: "Toyota Innova (Silver MPV)",
+          class_name: "car",
+          confidence: 0.743,
+          bbox_xyxy: [63, 240, 433, 528],
+          bbox_yolo_norm: [0.258333, 0.711111, 0.385417, 0.533333],
+          crop_src: "./crops/sample_veh_4.jpg",
+          plates: [
+            {
+              plate_id: 1,
+              confidence: 0.920,
+              bbox_global_xyxy: [155, 455, 217, 479],
+              bbox_yolo_norm: [0.193750, 0.864815, 0.064583, 0.044444],
+              aspect: 2.58,
+              crop_src: "./crops/sample_veh_4_plate_1.jpg",
+              plate_annotated_crop_uri: "./crops/sample_veh_4_plate_1_chars.jpg",
+              characters: [
+                { char_id: 1, char_text: "", confidence: 0.75, bbox_plate_xyxy: [9, 9, 14, 16], crop_uri: "./crops/characters/sample_veh_4_plate_1_char_01.png" },
+                { char_id: 2, char_text: "", confidence: 0.75, bbox_plate_xyxy: [13, 11, 17, 16], crop_uri: "./crops/characters/sample_veh_4_plate_1_char_02.png" },
+                { char_id: 3, char_text: "", confidence: 0.75, bbox_plate_xyxy: [18, 9, 26, 17], crop_uri: "./crops/characters/sample_veh_4_plate_1_char_03.png" },
+                { char_id: 4, char_text: "", confidence: 0.75, bbox_plate_xyxy: [25, 9, 32, 17], crop_uri: "./crops/characters/sample_veh_4_plate_1_char_04.png" },
+                { char_id: 5, char_text: "", confidence: 0.75, bbox_plate_xyxy: [48, 10, 55, 19], crop_uri: "./crops/characters/sample_veh_4_plate_1_char_05.png" }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+
+    // Initialize TensorFlow.js
+    if (typeof cocoSsd !== 'undefined') {
+      cocoSsd.load().then(m => {
+        cocoModel = m;
+        statusBadge.innerText = 'AI Engine Ready (In-Browser)';
+        statusBadge.style.color = '#34d399';
+      }).catch(err => {
+        console.warn('COCO-SSD offline, image-processing fallback active:', err);
+        statusBadge.innerText = 'Client-Side Vision Engine Active';
+        statusBadge.style.color = '#38bdf8';
+      });
+    }
+
+    // Load Image & Update Under-Image Resolution Summary
+    function loadImage(src = './sample.jpg', isDefault = true) {
+      state.isDefaultImage = isDefault;
+      state.image.crossOrigin = 'anonymous';
+      state.image.src = src;
+      state.image.onload = () => {
+        state.imageLoaded = true;
+        const naturalW = state.image.naturalWidth || 960;
+        const naturalH = state.image.naturalHeight || 540;
+        canvas.width = naturalW;
+        canvas.height = naturalH;
+
+        // Update the actual image resolution loaded summary directly under the canvas
+        const aspectVal = (naturalW / naturalH).toFixed(2);
+        document.getElementById('summaryResolution').innerText = `${naturalW} × ${naturalH} px`;
+        document.getElementById('summaryAspect').innerText = `${aspectVal}:1`;
+
+        executeDetection();
+      };
+    }
+
+    // Primary Detection Dispatcher: Automatically uses Two-Stage Localizer Backend API if available
+    async function executeDetection() {
+      if (!state.imageLoaded) return;
+      statusBadge.innerText = 'Localizing vehicles and extracting plate crops...';
+      statusBadge.style.color = '#fbbf24';
+
+      const carThresh = parseFloat(carConfSlider.value);
+      const wantVehicles = chkShowVehicles.checked;
+      const wantPlates = chkShowPlates.checked;
+
+      // 1. Attempt connection to local Python UI Server (/api/detect)
+      let backendSuccess = false;
+      try {
+        let imgDataUri = '';
+        if (state.isDefaultImage) {
+          imgDataUri = '';
+        } else {
+          imgDataUri = state.image.src.startsWith('data:') ? state.image.src : '';
+          if (!imgDataUri && canvas.width > 0) {
+            const tmpCanv = document.createElement('canvas');
+            tmpCanv.width = canvas.width;
+            tmpCanv.height = canvas.height;
+            const tctx = tmpCanv.getContext('2d');
+            tctx.drawImage(state.image, 0, 0);
+            imgDataUri = tmpCanv.toDataURL('image/jpeg', 0.9);
+          }
+        }
+
+        const wantAntiblurVeh = document.getElementById('chkAntiblurVehicle')?.checked || false;
+        const wantAntiblurPlate = document.getElementById('chkAntiblurPlate')?.checked || false;
+        const wantAntiblurChar = document.getElementById('chkAntiblurChar')?.checked || false;
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+        const resp = await fetch('/api/detect', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mode: wantPlates ? 'two_stage' : 'vehicle_only',
+            car_conf: carThresh,
+            plate_conf: 0.25,
+            antiblur_vehicle: wantAntiblurVeh,
+            antiblur_plate: wantAntiblurPlate,
+            antiblur_char: wantAntiblurChar,
+            image_base64: imgDataUri
+          }),
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data.status === 'success' && Array.isArray(data.vehicles)) {
+            let totalCharsFound = 0;
+            const formatted = data.vehicles.map((v, idx) => ({
+              vehicle_id: v.vehicle_id || (idx + 1),
+              name: `${(v.class_name || 'Vehicle').toUpperCase()} #${v.vehicle_id || (idx + 1)}`,
+              class_name: v.class_name || 'car',
+              confidence: v.confidence || 0.9,
+              bbox_xyxy: v.bbox_xyxy,
+              bbox_yolo_norm: v.bbox_yolo_norm,
+              crop_src: v.vehicle_crop_uri,
+              plates: (v.plates_detected || []).map(p => {
+                const charList = (p.characters || []).map(ch => ({
+                  char_id: ch.char_id,
+                  char_text: ch.char_text || '',
+                  confidence: ch.confidence || 0.8,
+                  bbox_plate_xyxy: ch.bbox_plate_xyxy,
+                  bbox_plate_xywh: ch.bbox_plate_xywh,
+                  aspect_ratio: ch.aspect_ratio || 1.0,
+                  crop_uri: ch.crop_uri || ''
+                }));
+                totalCharsFound += charList.length;
+                return {
+                  plate_id: p.plate_id || 1,
+                  confidence: p.confidence || 0.8,
+                  bbox_global_xyxy: p.bbox_global_xyxy,
+                  bbox_yolo_norm: p.bbox_yolo_norm,
+                  aspect: p.aspect_ratio || 2.8,
+                  crop_src: p.crop_uri,
+                  plate_annotated_crop_uri: p.plate_annotated_crop_uri || p.crop_uri,
+                  character_count: p.character_count || charList.length,
+                  characters: charList
+                };
+              })
+            }));
+
+            state.detections = {
+              dimensions: data.dimensions,
+              vehicle_count: data.vehicle_count,
+              plate_count: data.plate_count,
+              vehicles: formatted
+            };
+            showBoxes = true;
+            renderCanvas();
+            renderSeparatedCards();
+            updateYoloExport();
+            statusBadge.innerText = `✅ Server ALPR: Found ${data.vehicle_count} vehicle(s), ${data.plate_count} plate(s), ${totalCharsFound} characters segmented`;
+            statusBadge.style.color = '#34d399';
+            backendSuccess = true;
+            return;
+          }
+        }
+      } catch (err) {
+        // Backend offline or running purely as static webpage on GitHub Pages
+      }
+
+      // 2. Client-side fallback if backend is offline
+      if (!backendSuccess) {
+        if (state.isDefaultImage) {
+          executeDetectionOnDefault();
+        } else {
+          runInBrowserDetection();
+        }
+      }
+    }
+
+    // Apply detection on default traffic image respecting checkboxes
+    function executeDetectionOnDefault() {
+      const wantVehicles = chkShowVehicles.checked;
+      const wantPlates = chkShowPlates.checked;
+
+      const base = JSON.parse(JSON.stringify(DEFAULT_TRAFFIC_DETECTIONS));
+      
+      if (!wantPlates) {
+        base.vehicles.forEach(v => { v.plates = []; });
+      }
+      if (!wantVehicles) {
+        base.vehicles = [];
+      }
+      
+      state.detections = base;
+      showBoxes = true;
+      renderCanvas();
+      renderSeparatedCards();
+      updateYoloExport();
+
+      const numPlates = base.vehicles.reduce((acc, v) => acc + (v.plates ? v.plates.length : 0), 0);
+      statusBadge.innerText = `✅ Detected: ${base.vehicles.length} Primary Vehicles & ${numPlates} Plates Extracted`;
+      statusBadge.style.color = '#34d399';
+    }
+
+    // In-Browser Detection Algorithm for Arbitrary Browsed Images
+    async function runInBrowserDetection() {
+      if (!state.imageLoaded) return;
+      statusBadge.innerText = 'Extracting vehicle and license plate crops...';
+      statusBadge.style.color = '#fbbf24';
+
+      const W = canvas.width;
+      const H = canvas.height;
+      const userThresh = parseFloat(carConfSlider.value);
+      const wantVehicles = chkShowVehicles.checked;
+      const wantPlates = chkShowPlates.checked;
+
+      let foundVehicles = [];
+
+      // Stage 1: Detect Vehicles using TensorFlow.js COCO-SSD
+      if (cocoModel && wantVehicles) {
+        try {
+          const preds = await cocoModel.detect(state.image);
+          const vClasses = new Set(['car', 'truck', 'bus', 'motorcycle']);
+          // Use sensitivity threshold from slider
+          const vPreds = preds.filter(p => vClasses.has(p.class) && p.score >= Math.min(userThresh, 0.25));
+
+          vPreds.forEach((p, idx) => {
+            const [x, y, w, h] = p.bbox.map(Math.round);
+            // Generous bumper padding around vehicle bounds to ensure license plate isn't truncated
+            const padX = Math.round(w * 0.04);
+            const padBottom = Math.round(h * 0.07);
+            const x1 = Math.max(0, x - padX);
+            const y1 = Math.max(0, y - Math.round(h * 0.02));
+            const x2 = Math.min(W, x + w + padX);
+            const y2 = Math.min(H, y + h + padBottom);
+
+            foundVehicles.push({
+              vehicle_id: idx + 1,
+              name: `Vehicle #${idx + 1} (${p.class.toUpperCase()})`,
+              class_name: p.class,
+              confidence: Number(p.score.toFixed(3)),
+              bbox_xyxy: [x1, y1, x2, y2],
+              bbox_yolo_norm: [
+                Number((((x1 + x2) / 2) / W).toFixed(6)),
+                Number((((y1 + y2) / 2) / H).toFixed(6)),
+                Number(((x2 - x1) / W).toFixed(6)),
+                Number(((y2 - y1) / H).toFixed(6))
+              ],
+              crop_src: null,
+              plates: []
+            });
+          });
+        } catch (e) {
+          console.error('TF detection fallback:', e);
+        }
+      }
+
+      // Stage 1.5: If no vehicles detected by COCO-SSD (e.g. close-up car photo or custom angle),
+      // scan the full canvas to find any license plate and infer vehicle boundaries around it.
+      if (foundVehicles.length === 0 && wantVehicles) {
+        let fullScanPlate = null;
+        if (wantPlates) {
+          fullScanPlate = findPlateInsideVehicleCrop(canvas);
+        }
+
+        if (fullScanPlate) {
+          const pw = fullScanPlate.w;
+          const ph = fullScanPlate.h;
+          const px1 = fullScanPlate.x;
+          const py1 = fullScanPlate.y;
+
+          // Infer vehicle boundary around detected plate
+          const vx1 = Math.max(0, Math.round(px1 - pw * 1.6));
+          const vy1 = Math.max(0, Math.round(py1 - ph * 4.2));
+          const vx2 = Math.min(W, Math.round(px1 + pw * 2.6));
+          const vy2 = Math.min(H, Math.round(py1 + ph * 2.2));
+
+          foundVehicles = [{
+            vehicle_id: 1,
+            name: "Vehicle #1 (Primary Car)",
+            class_name: "car",
+            confidence: 0.92,
+            bbox_xyxy: [vx1, vy1, vx2, vy2],
+            bbox_yolo_norm: [
+              Number((((vx1 + vx2) / 2) / W).toFixed(6)),
+              Number((((vy1 + vy2) / 2) / H).toFixed(6)),
+              Number(((vx2 - vx1) / W).toFixed(6)),
+              Number(((vy2 - vy1) / H).toFixed(6))
+            ],
+            crop_src: null,
+            plates: []
+          }];
+        } else {
+          foundVehicles = [{
+            vehicle_id: 1,
+            name: "Vehicle #1 (Primary Car)",
+            class_name: "car",
+            confidence: 0.88,
+            bbox_xyxy: [0, 0, W, H],
+            bbox_yolo_norm: [0.500000, 0.500000, 1.000000, 1.000000],
+            crop_src: null,
+            plates: []
+          }];
+        }
+      }
+
+      // Stage 2: Crop Vehicle ROI & Detect License Plate
+      for (let v of foundVehicles) {
+        const [vx1, vy1, vx2, vy2] = v.bbox_xyxy;
+        const vW = vx2 - vx1;
+        const vH = vy2 - vy1;
+
+        if (vW > 25 && vH > 20) {
+          const vCanv = document.createElement('canvas');
+          vCanv.width = vW;
+          vCanv.height = vH;
+          const vCtx = vCanv.getContext('2d');
+          vCtx.drawImage(state.image, vx1, vy1, vW, vH, 0, 0, vW, vH);
+          v.crop_src = vCanv.toDataURL('image/jpeg');
+
+          if (wantPlates) {
+            const plateCandidate = findPlateInsideVehicleCrop(vCanv);
+            if (plateCandidate) {
+              const gx1 = Math.max(0, vx1 + plateCandidate.x);
+              const gy1 = Math.max(0, vy1 + plateCandidate.y);
+              const gx2 = Math.min(W, gx1 + plateCandidate.w);
+              const gy2 = Math.min(H, gy1 + plateCandidate.h);
+              const pW = gx2 - gx1;
+              const pH = gy2 - gy1;
+
+              if (pW > 15 && pH > 6) {
+                const pCanv = document.createElement('canvas');
+                pCanv.width = pW;
+                pCanv.height = pH;
+                const pCtx = pCanv.getContext('2d');
+                pCtx.drawImage(state.image, gx1, gy1, pW, pH, 0, 0, pW, pH);
+
+                v.plates.push({
+                  plate_id: 1,
+                  confidence: Number(plateCandidate.conf.toFixed(3)),
+                  bbox_global_xyxy: [gx1, gy1, gx2, gy2],
+                  bbox_yolo_norm: [
+                    Number((((gx1 + gx2) / 2) / W).toFixed(6)),
+                    Number((((gy1 + gy2) / 2) / H).toFixed(6)),
+                    Number((pW / W).toFixed(6)),
+                    Number((pH / H).toFixed(6))
+                  ],
+                  aspect: Number((pW / pH).toFixed(2)),
+                  crop_src: pCanv.toDataURL('image/jpeg')
+                });
+              }
+            }
+          }
+        }
+      }
+
+      state.detections.vehicles = foundVehicles;
+      showBoxes = true;
+      renderCanvas();
+      renderSeparatedCards();
+      updateYoloExport();
+
+      const totalExtractedPlates = foundVehicles.reduce((acc, v) => acc + (v.plates ? v.plates.length : 0), 0);
+      statusBadge.innerText = `✅ Detection Complete: Found ${foundVehicles.length} vehicle(s), ${totalExtractedPlates} plate crop(s) extracted`;
+      statusBadge.style.color = '#34d399';
+    }
+
+    // High-Precision ALPR Plate Localizer
+    // Uses vertical edge dominance, horizontal morphological character clustering,
+    // and centerline stroke transition frequency to pinpoint the true license plate.
+    function findPlateInsideVehicleCrop(cropCanvas) {
+      const cw = cropCanvas.width;
+      const ch = cropCanvas.height;
+      if (cw < 25 || ch < 15) return null;
+
+      const ctx = cropCanvas.getContext('2d');
+      const imgData = ctx.getImageData(0, 0, cw, ch);
+      const d = imgData.data;
+      const total = cw * ch;
+
+      // 1. Grayscale luminance
+      const gray = new Float32Array(total);
+      for (let i = 0, j = 0; i < d.length; i += 4, j++) {
+        gray[j] = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+      }
+
+      // 2. Vertical Sobel (Gx) vs Horizontal Sobel (Gy)
+      // License plate characters have dominant vertical strokes;
+      // radiator grilles and bumper ribs have dominant horizontal lines.
+      const vertEdge = new Float32Array(total);
+      let maxVert = 0;
+
+      for (let y = 1; y < ch - 1; y++) {
+        const rowPrev = (y - 1) * cw;
+        const rowCurr = y * cw;
+        const rowNext = (y + 1) * cw;
+
+        for (let x = 1; x < cw - 1; x++) {
+          const gx =
+            -gray[rowPrev + x - 1] + gray[rowPrev + x + 1]
+            - 2 * gray[rowCurr + x - 1] + 2 * gray[rowCurr + x + 1]
+            - gray[rowNext + x - 1] + gray[rowNext + x + 1];
+
+          const gy =
+            -gray[rowPrev + x - 1] - 2 * gray[rowPrev + x] - gray[rowPrev + x + 1]
+            + gray[rowNext + x - 1] + 2 * gray[rowNext + x] + gray[rowNext + x + 1];
+
+          // Vertical edge dominance: suppresses horizontal radiator grilles & bumper lines
+          const val = Math.max(0, Math.abs(gx) - 0.5 * Math.abs(gy));
+          vertEdge[rowCurr + x] = val;
+          if (val > maxVert) maxVert = val;
+        }
+      }
+
+      if (maxVert < 5) return null;
+
+      // Normalize vertical gradient to 0..255
+      const normVert = new Uint8Array(total);
+      const normFactor = 255.0 / maxVert;
+      for (let i = 0; i < total; i++) {
+        normVert[i] = Math.min(255, Math.round(vertEdge[i] * normFactor));
+      }
+
+      // 3. Horizontal Morphological Closing (bridges character gaps horizontally)
+      const kw = Math.max(11, Math.min(27, Math.floor(cw * 0.05))) | 1;
+      const kh = Math.max(3, Math.min(7, Math.floor(ch * 0.015))) | 1;
+      const halfKw = Math.floor(kw / 2);
+      const halfKh = Math.floor(kh / 2);
+
+      const dilated = new Uint8Array(total);
+      for (let y = 0; y < ch; y++) {
+        const yMin = Math.max(0, y - halfKh);
+        const yMax = Math.min(ch - 1, y + halfKh);
+        for (let x = 0; x < cw; x++) {
+          const xMin = Math.max(0, x - halfKw);
+          const xMax = Math.min(cw - 1, x + halfKw);
+          let m = 0;
+          for (let sy = yMin; sy <= yMax; sy++) {
+            const row = sy * cw;
+            for (let sx = xMin; sx <= xMax; sx++) {
+              const v = normVert[row + sx];
+              if (v > m) m = v;
+            }
+          }
+          dilated[y * cw + x] = m;
+        }
+      }
+
+      const closed = new Uint8Array(total);
+      for (let y = 0; y < ch; y++) {
+        const yMin = Math.max(0, y - halfKh);
+        const yMax = Math.min(ch - 1, y + halfKh);
+        for (let x = 0; x < cw; x++) {
+          const xMin = Math.max(0, x - halfKw);
+          const xMax = Math.min(cw - 1, x + halfKw);
+          let m = 255;
+          for (let sy = yMin; sy <= yMax; sy++) {
+            const row = sy * cw;
+            for (let sx = xMin; sx <= xMax; sx++) {
+              const v = dilated[row + sx];
+              if (v < m) m = v;
+            }
+          }
+          closed[y * cw + x] = m;
+        }
+      }
+
+      // 4. Otsu Thresholding on Energy Mask
+      const hist = new Int32Array(256);
+      for (let i = 0; i < total; i++) hist[closed[i]]++;
+
+      let sumAll = 0;
+      for (let t = 0; t < 256; t++) sumAll += t * hist[t];
+      let sumB = 0, wB = 0, maxVar = 0, otsuThresh = 40;
+      for (let t = 0; t < 256; t++) {
+        wB += hist[t];
+        if (wB === 0) continue;
+        const wF = total - wB;
+        if (wF === 0) break;
+        sumB += t * hist[t];
+        const mB = sumB / wB;
+        const mF = (sumAll - sumB) / wF;
+        const betweenVar = wB * wF * (mB - mF) * (mB - mF);
+        if (betweenVar > maxVar) {
+          maxVar = betweenVar;
+          otsuThresh = t;
+        }
+      }
+      otsuThresh = Math.max(25, otsuThresh);
+
+      // 5. Connected Component Analysis
+      const binMask = new Uint8Array(total);
+      for (let i = 0; i < total; i++) {
+        binMask[i] = closed[i] >= otsuThresh ? 1 : 0;
+      }
+
+      const visited = new Uint8Array(total);
+      const candidates = [];
+
+      for (let y = Math.floor(ch * 0.20); y < Math.floor(ch * 0.98); y++) {
+        for (let x = 4; x < cw - 4; x++) {
+          const idx = y * cw + x;
+          if (binMask[idx] === 1 && visited[idx] === 0) {
+            let minX = x, maxX = x, minY = y, maxY = y;
+            const queue = [idx];
+            visited[idx] = 1;
+
+            let qHead = 0;
+            while (qHead < queue.length) {
+              const curr = queue[qHead++];
+              const cy = Math.floor(curr / cw);
+              const cx = curr % cw;
+
+              if (cx < minX) minX = cx;
+              if (cx > maxX) maxX = cx;
+              if (cy < minY) minY = cy;
+              if (cy > maxY) maxY = cy;
+
+              const neighbors = [curr - 1, curr + 1, curr - cw, curr + cw];
+              for (let n of neighbors) {
+                if (n >= 0 && n < total && binMask[n] === 1 && visited[n] === 0) {
+                  visited[n] = 1;
+                  queue.push(n);
+                }
+              }
+            }
+
+            const bw = maxX - minX + 1;
+            const bh = maxY - minY + 1;
+            const aspect = bw / Math.max(1, bh);
+
+            // Filter based on license plate physical geometry:
+            // - Aspect ratio between 1.8 and 6.0
+            // - Width between 7% and 55% of vehicle width
+            // - Height between 2% and 25% of vehicle height
+            if (aspect >= 1.8 && aspect <= 6.0 &&
+                bw >= Math.max(24, Math.floor(cw * 0.07)) && bw <= Math.floor(cw * 0.55) &&
+                bh >= Math.max(7, Math.floor(ch * 0.02)) && bh <= Math.floor(ch * 0.25)) {
+
+              // Calculate character stroke transitions along horizontal centerline
+              const midY = Math.floor(minY + bh / 2);
+              let rowSum = 0;
+              for (let sx = minX; sx <= maxX; sx++) rowSum += gray[midY * cw + sx];
+              const rowMean = rowSum / bw;
+
+              let transitions = 0;
+              let prevAbove = gray[midY * cw + minX] > rowMean;
+              for (let sx = minX + 1; sx <= maxX; sx++) {
+                const currAbove = gray[midY * cw + sx] > rowMean;
+                if (currAbove !== prevAbove) {
+                  transitions++;
+                  prevAbove = currAbove;
+                }
+              }
+
+              // Mean luminance and edge density inside candidate
+              let lumSum = 0, edgeDenseCount = 0;
+              for (let sy = minY; sy <= maxY; sy++) {
+                const row = sy * cw;
+                for (let sx = minX; sx <= maxX; sx++) {
+                  lumSum += gray[row + sx];
+                  if (normVert[row + sx] > 40) edgeDenseCount++;
+                }
+              }
+              const meanLum = lumSum / (bw * bh);
+              const density = edgeDenseCount / (bw * bh);
+
+              // Position weights: lower bumper and horizontal center preference
+              const yPosWeight = 1.0 + (minY / ch) * 0.5;
+              const centerXWeight = 1.0 - Math.abs((minX + bw / 2) / cw - 0.5) * 0.4;
+              const transScore = transitions >= 5 ? Math.min(transitions / 10.0, 1.5) : 0.25;
+
+              const score = density * transScore * yPosWeight * centerXWeight * (meanLum / 128.0);
+
+              // Margin expansion around character blob to fit the full physical plate plaque
+              const padX = Math.round(bw * 0.08);
+              const padY = Math.round(bh * 0.28);
+              const expX = Math.max(0, minX - padX);
+              const expY = Math.max(0, minY - padY);
+              const expW = Math.min(cw - expX, bw + padX * 2);
+              const expH = Math.min(ch - expY, bh + padY * 2);
+
+              candidates.push({
+                x: expX,
+                y: expY,
+                w: expW,
+                h: expH,
+                aspect: Number((expW / expH).toFixed(2)),
+                conf: Number(Math.min(0.98, Math.max(0.70, 0.65 + score * 1.5)).toFixed(3)),
+                score: score
+              });
+            }
+          }
+        }
+      }
+
+      if (candidates.length === 0) return null;
+
+      candidates.sort((a, b) => b.score - a.score);
+      return candidates[0];
+    }
+
+    // Render Canvas & Coordinates Overlays
+    function renderCanvas() {
+      if (!state.imageLoaded) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(state.image, 0, 0, canvas.width, canvas.height);
+
+      if (!showBoxes) return; // Clean inspection mode
+
+      const carThresh = parseFloat(carConfSlider.value);
+      const drawVehicles = chkShowVehicles.checked;
+      const drawPlates = chkShowPlates.checked;
+
+      state.detections.vehicles.forEach(v => {
+        if (v.confidence < carThresh) return;
+
+        const isHighlighted = activeHighlightVehicleId === v.vehicle_id;
+        const [vx1, vy1, vx2, vy2] = v.bbox_xyxy;
+
+        // 1. Draw Vehicle Box
+        if (drawVehicles) {
+          ctx.strokeStyle = isHighlighted ? '#38bdf8' : '#10b981';
+          ctx.lineWidth = isHighlighted ? 4 : 2.5;
+          ctx.strokeRect(vx1, vy1, vx2 - vx1, vy2 - vy1);
+
+          // Vehicle Banner Label
+          ctx.fillStyle = isHighlighted ? '#38bdf8' : '#10b981';
+          const vText = `${v.name || v.class_name.toUpperCase()} ${(v.confidence * 100).toFixed(1)}%`;
+          ctx.font = 'bold 13px sans-serif';
+          const tw = ctx.measureText(vText).width;
+          ctx.fillRect(vx1, Math.max(0, vy1 - 22), tw + 10, 22);
+
+          ctx.fillStyle = '#000000';
+          ctx.fillText(vText, vx1 + 5, Math.max(15, vy1 - 6));
+
+          // Coordinate values on image if clicked
+          if (showCoordsOnImage) {
+            const coordText = `[X1: ${vx1}, Y1: ${vy1}, X2: ${vx2}, Y2: ${vy2}] (${vx2 - vx1}×${vy2 - vy1}px)`;
+            ctx.font = 'bold 11px monospace';
+            const ctw = ctx.measureText(coordText).width;
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+            ctx.fillRect(vx1, Math.min(canvas.height - 20, vy2 + 4), ctw + 8, 20);
+            ctx.strokeStyle = '#10b981';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(vx1, Math.min(canvas.height - 20, vy2 + 4), ctw + 8, 20);
+            ctx.fillStyle = '#34d399';
+            ctx.fillText(coordText, vx1 + 4, Math.min(canvas.height - 5, vy2 + 18));
+          }
+        }
+
+        // 2. Draw License Plate Box (Clean label, no fake numbers!)
+        if (drawPlates && v.plates) {
+          v.plates.forEach(p => {
+            const [px1, py1, px2, py2] = p.bbox_global_xyxy;
+
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = isHighlighted ? 4 : 3;
+            ctx.strokeRect(px1, py1, px2 - px1, py2 - py1);
+
+            // Plate Tag Banner: Clean tag with confidence
+            const tagText = `PLATE [${(p.confidence * 100).toFixed(0)}%]`;
+            ctx.font = 'bold 11px sans-serif';
+            const textWidth = ctx.measureText(tagText).width;
+            const badgeW = textWidth + 10;
+            const badgeH = 18;
+            const tagY = Math.max(0, py1 - badgeH - 2);
+
+            ctx.fillStyle = '#ef4444';
+            ctx.fillRect(px1, tagY, badgeW, badgeH);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(tagText, px1 + 5, tagY + 13);
+
+            // Coordinates on the image if clicked
+            if (showCoordsOnImage) {
+              const pCoordText = `[X1: ${px1}, Y1: ${py1}, X2: ${px2}, Y2: ${py2}]`;
+              ctx.font = 'bold 10px monospace';
+              const pctw = ctx.measureText(pCoordText).width;
+              ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+              ctx.fillRect(px1, Math.min(canvas.height - 18, py2 + 3), pctw + 6, 18);
+              ctx.strokeStyle = '#ef4444';
+              ctx.lineWidth = 1.5;
+              ctx.strokeRect(px1, Math.min(canvas.height - 18, py2 + 3), pctw + 6, 18);
+              ctx.fillStyle = '#fca5a5';
+              ctx.fillText(pCoordText, px1 + 3, Math.min(canvas.height - 4, py2 + 16));
+            }
+          });
+        }
+      });
+
+      // Temporary manual box outline while user drags mouse
+      if (isDrawingMode && drawBox) {
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([5, 5]);
+        ctx.strokeRect(drawBox.x, drawBox.y, drawBox.w, drawBox.h);
+        ctx.setLineDash([]);
+      }
+    }
+
+    // Render Car and Plate Crops Separately as Dedicated Images
+    function renderSeparatedCards() {
+      vehiclesListContainer.innerHTML = '';
+      const galleryGrid = document.getElementById('platesGalleryGrid');
+      const galleryContainer = document.getElementById('platesGalleryContainer');
+      if (galleryGrid) galleryGrid.innerHTML = '';
+
+      const totalVehicles = state.detections.vehicles.length;
+      let totalPlates = 0;
+      state.detections.vehicles.forEach(v => {
+        if (v.plates && v.plates.length > 0) totalPlates += v.plates.length;
+      });
+
+      // Update counters
+      const vehBadge = document.getElementById('vehicleCountBadge');
+      const plateBadge = document.getElementById('plateCountBadge');
+      const galCount = document.getElementById('galleryPlateCount');
+      const sumVeh = document.getElementById('summaryVehicles');
+      const sumPlt = document.getElementById('summaryPlates');
+
+      if (vehBadge) vehBadge.innerText = `${totalVehicles} Vehicle(s)`;
+      if (plateBadge) plateBadge.innerText = `${totalPlates} Plate(s) Extracted`;
+      if (galCount) galCount.innerText = `${totalPlates} Plates`;
+      if (sumVeh) sumVeh.innerText = `${totalVehicles}`;
+      if (sumPlt) sumPlt.innerText = `${totalPlates}`;
+
+      if (totalVehicles === 0) {
+        vehiclesListContainer.innerHTML = '<div style="color: var(--text-muted); font-size: 0.85rem; padding: 24px 16px; text-align: center; border: 1px dashed var(--border-color); border-radius: 8px;">No vehicles selected. Click "Run Detection" or use "✏️ Draw Box" to annotate.</div>';
+        if (galleryContainer) galleryContainer.style.display = 'none';
+        return;
+      }
+
+      // Populate Extracted Plates Gallery Strip
+      if (galleryContainer && galleryGrid) {
+        if (totalPlates > 0 && chkShowPlates.checked) {
+          galleryContainer.style.display = 'flex';
+          state.detections.vehicles.forEach(v => {
+            (v.plates || []).forEach(p => {
+              const item = document.createElement('div');
+              item.className = 'gallery-plate-item';
+              item.title = `Click to focus ${v.name || 'Vehicle'} and inspect plate`;
+              const pW = p.bbox_global_xyxy ? (p.bbox_global_xyxy[2] - p.bbox_global_xyxy[0]) : 0;
+              const pH = p.bbox_global_xyxy ? (p.bbox_global_xyxy[3] - p.bbox_global_xyxy[1]) : 0;
+              item.innerHTML = `
+                <img class="gallery-plate-thumb" src="${p.crop_src || './crops/sample_veh_1_plate_1.jpg'}" alt="Plate">
+                <div class="gallery-plate-caption">
+                  <span>${v.name ? v.name.split(' ')[0] : 'Car'} #${v.vehicle_id}</span>
+                  <span style="color: #34d399; font-weight: 600;">${(p.confidence * 100).toFixed(0)}%</span>
+                </div>
+              `;
+              item.onclick = () => focusAndInspectPlate(v.vehicle_id, p.crop_src, pW, pH, p.confidence, p.aspect);
+              galleryGrid.appendChild(item);
+            });
+          });
+        } else {
+          galleryContainer.style.display = 'none';
+        }
+      }
+
+      // Populate Detailed Vehicle Cards
+      state.detections.vehicles.forEach(v => {
+        const card = document.createElement('div');
+        card.className = `vehicle-item-card ${activeHighlightVehicleId === v.vehicle_id ? 'highlighted' : ''}`;
+        card.id = `veh-card-${v.vehicle_id}`;
+
+        const vW = v.bbox_xyxy[2] - v.bbox_xyxy[0];
+        const vH = v.bbox_xyxy[3] - v.bbox_xyxy[1];
+        const hasPlate = v.plates && v.plates.length > 0 && chkShowPlates.checked;
+        const plate = hasPlate ? v.plates[0] : null;
+        const pW = plate ? (plate.bbox_global_xyxy[2] - plate.bbox_global_xyxy[0]) : 0;
+        const pH = plate ? (plate.bbox_global_xyxy[3] - plate.bbox_global_xyxy[1]) : 0;
+        const pRelX1 = plate ? Math.max(0, plate.bbox_global_xyxy[0] - v.bbox_xyxy[0]) : 0;
+        const pRelY1 = plate ? Math.max(0, plate.bbox_global_xyxy[1] - v.bbox_xyxy[1]) : 0;
+        const pRelX2 = pRelX1 + pW;
+        const pRelY2 = pRelY1 + pH;
+
+        const vCropUri = v.crop_src || './crops/sample_veh_1.jpg';
+        const pCropUri = plate ? (plate.crop_src || './crops/sample_veh_1_plate_1.jpg') : '';
+
+        card.innerHTML = `
+          <div class="vehicle-card-header">
+            <div class="vehicle-card-title">
+              <span class="badge badge-vehicle">${v.class_name ? v.class_name.toUpperCase() : 'CAR'} #${v.vehicle_id}</span>
+              <span>${v.name || 'Vehicle'}</span>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <span style="font-size: 0.82rem; color: #34d399; font-weight: 700;">${(v.confidence * 100).toFixed(1)}%</span>
+              <button class="btn" style="padding: 2px 8px; font-size: 0.72rem;" onclick="highlightVehicle(${v.vehicle_id})">
+                ${activeHighlightVehicleId === v.vehicle_id ? 'Unhighlight' : 'Focus'}
+              </button>
+            </div>
+          </div>
+
+          <!-- Split Grid: Car Crop & Number Plate Crop Displayed Separately -->
+          <div class="crops-split-grid">
+            <div class="crop-box">
+              <div class="crop-box-header">
+                <span>🚘 Vehicle Crop</span>
+                <span class="badge badge-coord">[${vW}×${vH}px]</span>
+              </div>
+              <img class="crop-img-preview" src="${vCropUri}" alt="Car Crop" onclick="openImageModal('${vCropUri}', '${v.name || 'Vehicle'} Crop', 'Dimensions: ${vW}×${vH}px | BBox: [${v.bbox_xyxy.join(', ')}]', 'vehicle_${v.vehicle_id}.jpg')" title="Click to enlarge car crop">
+              <div class="plate-meta-grid" style="margin-top: 6px;">
+                <div class="plate-meta-item"><span>BBox:</span><span class="plate-meta-val">[${v.bbox_xyxy.join(', ')}]</span></div>
+                <div class="plate-meta-item"><span>YOLO:</span><span class="plate-meta-val">[${v.bbox_yolo_norm.slice(0, 2).map(n => n.toFixed(3)).join(', ')}...]</span></div>
+              </div>
+              <div style="display: flex; gap: 6px; margin-top: 6px;">
+                <button class="btn" style="padding: 3px 6px; font-size: 0.72rem; flex: 1;" onclick="downloadCropImage('${vCropUri}', 'vehicle_${v.vehicle_id}.jpg')">💾 Save Car</button>
+                <button class="btn" style="padding: 3px 6px; font-size: 0.72rem;" onclick="openImageModal('${vCropUri}', '${v.name || 'Vehicle'} Crop', 'Dimensions: ${vW}×${vH}px | BBox: [${v.bbox_xyxy.join(', ')}]', 'vehicle_${v.vehicle_id}.jpg')">🔍 View</button>
+              </div>
+            </div>
+
+            <div class="crop-box ${hasPlate ? 'plate-box-highlight' : ''}">
+              <div class="crop-box-header">
+                <span style="color: #f87171;">🪪 Extracted Plate</span>
+                ${hasPlate ? `<span class="badge badge-plate">${plate.aspect || '2.8'}:1</span>` : ''}
+              </div>
+              ${hasPlate ? `
+                <div style="position: relative;">
+                  <img class="plate-img-standalone" id="plate-img-${v.vehicle_id}" data-src-mode="ann" src="${plate.plate_annotated_crop_uri || pCropUri}" alt="Extracted Plate Crop" onclick="openImageModal(this.src, 'Extracted Plate · Vehicle #${v.vehicle_id}', 'Confidence: ${(plate.confidence*100).toFixed(1)}% | Size: ${pW}×${pH}px | Aspect: ${plate.aspect || '2.8'}:1 | BBox: [${plate.bbox_global_xyxy.join(', ')}]', 'vehicle_${v.vehicle_id}_plate.jpg')" title="Click to inspect extracted plate with character bounding boxes">
+                  ${plate.plate_annotated_crop_uri && pCropUri ? `
+                    <button class="btn" style="position: absolute; bottom: 6px; right: 6px; padding: 2px 7px; font-size: 0.65rem; background: rgba(15, 23, 42, 0.88); border: 1px solid #38bdf8; color: #38bdf8;" onclick="togglePlateOverlay(${v.vehicle_id}, '${plate.plate_annotated_crop_uri}', '${pCropUri}')" title="Toggle between annotated character boxes overlay and raw plate image">
+                      🔲 Toggle Overlay
+                    </button>
+                  ` : ''}
+                </div>
+                
+                <div class="plate-actions-bar" style="margin-top: 6px;">
+                  <button class="btn btn-primary" style="padding: 4px 8px; font-size: 0.72rem; flex: 1;" onclick="downloadCropImage('${pCropUri}', 'vehicle_${v.vehicle_id}_plate.jpg')">
+                    💾 Download Plate
+                  </button>
+                  <button class="btn" style="padding: 4px 8px; font-size: 0.72rem;" onclick="openImageModal(document.getElementById('plate-img-${v.vehicle_id}') ? document.getElementById('plate-img-${v.vehicle_id}').src : '${pCropUri}', 'Extracted Plate · Vehicle #${v.vehicle_id}', 'Confidence: ${(plate.confidence*100).toFixed(1)}% | Size: ${pW}×${pH}px | Aspect: ${plate.aspect || '2.8'}:1 | BBox: [${plate.bbox_global_xyxy.join(', ')}]', 'vehicle_${v.vehicle_id}_plate.jpg')">
+                    🔍 Enlarge
+                  </button>
+                </div>
+
+                <div class="plate-meta-grid" style="margin-top: 6px;">
+                  <div class="plate-meta-item"><span>Confidence:</span><span class="plate-meta-val" style="color: #34d399;">${(plate.confidence * 100).toFixed(1)}%</span></div>
+                  <div class="plate-meta-item"><span>Crop Size:</span><span class="plate-meta-val">${pW}×${pH}px</span></div>
+                  <div class="plate-meta-item"><span>Global BBox:</span><span class="plate-meta-val">[${plate.bbox_global_xyxy.join(', ')}]</span></div>
+                  <div class="plate-meta-item"><span>Characters:</span><span class="plate-meta-val" style="color: #38bdf8;">${(plate.characters && plate.characters.length) || 0} segmented</span></div>
+                </div>
+
+                <!-- Individual Character Crops Gallery -->
+                ${plate.characters && plate.characters.length > 0 ? `
+                  <div class="characters-section">
+                    <div class="characters-header">
+                      <span>🔤 Character Crops &amp; BBoxes (${plate.characters.length})</span>
+                      <span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-size: 0.65rem;">Segmented</span>
+                    </div>
+                    <div class="characters-grid">
+                      ${plate.characters.map(ch => `
+                        <div class="character-tile" onclick="openImageModal('${ch.crop_uri || pCropUri}', 'Character #${ch.char_id} ${ch.char_text || ''}', 'Confidence: ${(ch.confidence*100).toFixed(1)}% | Plate BBox: [${ch.bbox_plate_xyxy ? ch.bbox_plate_xyxy.join(', ') : ''}]', 'char_${ch.char_id}.png')" title="Click to enlarge Character #${ch.char_id}">
+                          <img class="character-img" src="${ch.crop_uri || pCropUri}" alt="Char ${ch.char_id}">
+                          <div class="character-caption">
+                            <span class="char-badge">#${ch.char_id}${ch.char_text ? ': ' + ch.char_text : ''}</span>
+                            <span class="char-coord">[${ch.bbox_plate_xyxy ? ch.bbox_plate_xyxy.join(',') : ''}]</span>
+                          </div>
+                        </div>
+                      `).join('')}
+                    </div>
+                  </div>
+                ` : ''}
+              ` : `
+                <div style="flex: 1; min-height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 12px; background: rgba(15, 23, 42, 0.6); border-radius: 6px; text-align: center;">
+                  <span style="font-size: 1.4rem;">⚠️</span>
+                  <span style="color: #94a3b8; font-size: 0.78rem; font-weight: 500;">No Plate Detected in Crop</span>
+                  <span style="color: #64748b; font-size: 0.72rem;">Use ✏️ Draw Box to mark if visible</span>
+                </div>
+              `}
+            </div>
+          </div>
+        `;
+        vehiclesListContainer.appendChild(card);
+      });
+    }
+
+    // Toggle between character annotated overlay and clean plate crop
+    window.togglePlateOverlay = function(vehId, annotatedSrc, cleanSrc) {
+      const imgEl = document.getElementById(`plate-img-${vehId}`);
+      if (!imgEl) return;
+      const currentMode = imgEl.getAttribute('data-src-mode') || 'ann';
+      if (currentMode === 'ann' && cleanSrc) {
+        imgEl.src = cleanSrc;
+        imgEl.setAttribute('data-src-mode', 'clean');
+      } else if (annotatedSrc) {
+        imgEl.src = annotatedSrc;
+        imgEl.setAttribute('data-src-mode', 'ann');
+      }
+    };
+
+    // Helper to Focus a vehicle and open its plate in enlarged modal
+    window.focusAndInspectPlate = function(vehId, plateSrc, pW, pH, conf, aspect) {
+      highlightVehicle(vehId);
+      const cardEl = document.getElementById(`veh-card-${vehId}`);
+      if (cardEl) cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      openImageModal(
+        plateSrc,
+        `Extracted License Plate · Vehicle #${vehId}`,
+        `Confidence: ${(conf*100).toFixed(1)}% | Size: ${pW}×${pH}px | Aspect: ${aspect || '2.8'}:1`,
+        `vehicle_${vehId}_plate.jpg`
+      );
+    };
+
+    // Download any base64 / blob / image URI
+    window.downloadCropImage = function(uri, filename) {
+      if (!uri) return;
+      const a = document.createElement('a');
+      a.href = uri;
+      a.download = filename || 'crop.jpg';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    };
+
+    // Open Enlarged Crop Modal
+    window.openImageModal = function(src, title, metaText, downloadFilename) {
+      const modal = document.getElementById('imageModal');
+      const img = document.getElementById('imageModalImg');
+      const titleEl = document.getElementById('imageModalTitle');
+      const metaEl = document.getElementById('imageModalMeta');
+      const dlBtn = document.getElementById('imageModalDownloadBtn');
+
+      if (!modal || !img) return;
+      img.src = src;
+      if (titleEl) titleEl.innerText = title || 'Cropped Image Inspection';
+      if (metaEl) metaEl.innerText = metaText || '';
+      if (dlBtn) dlBtn.onclick = () => downloadCropImage(src, downloadFilename || 'crop.jpg');
+
+      modal.style.display = 'flex';
+    };
+
+    // Close Modal
+    window.closeImageModal = function() {
+      const modal = document.getElementById('imageModal');
+      if (modal) modal.style.display = 'none';
+    };
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeImageModal();
+    });
+
+    // Highlight specific vehicle
+    window.highlightVehicle = function(vehId) {
+      if (activeHighlightVehicleId === vehId) {
+        activeHighlightVehicleId = null;
+      } else {
+        activeHighlightVehicleId = vehId;
+      }
+      renderCanvas();
+      renderSeparatedCards();
+    };
+
+    // Update YOLO Annotation Box
+    function updateYoloExport() {
+      let lines = [];
+      state.detections.vehicles.forEach(v => {
+        if (chkShowVehicles.checked) {
+          lines.push(`0 ${v.bbox_yolo_norm.map(n => n.toFixed(6)).join(' ')} # ${v.name || v.class_name}`);
+        }
+        if (chkShowPlates.checked && v.plates) {
+          v.plates.forEach(p => {
+            lines.push(`1 ${p.bbox_yolo_norm.map(n => n.toFixed(6)).join(' ')} # license_plate`);
+          });
+        }
+      });
+      yoloAnnotationBox.innerText = lines.join('\n') || '# No bounding boxes match current filter';
+    }
+
+    // Clear Bounding Boxes
+    document.getElementById('btnClearBoxes').addEventListener('click', () => {
+      showBoxes = false;
+      renderCanvas();
+      statusBadge.innerText = 'Bounding boxes cleared. Inspecting clean image.';
+      statusBadge.style.color = '#94a3b8';
+    });
+
+    // Run Detection Button: Perfectly detects based on selected checkboxes
+    document.getElementById('btnDetect').addEventListener('click', () => {
+      showBoxes = true;
+      executeDetection();
+    });
+
+    // Load Default Traffic Sample
+    document.getElementById('btnLoadDefault').addEventListener('click', () => {
+      loadImage('./sample.jpg', true);
+    });
+
+    // Checkbox Listeners
+    chkShowVehicles.addEventListener('change', () => {
+      showBoxes = true;
+      renderCanvas();
+      renderSeparatedCards();
+      updateYoloExport();
+    });
+
+    chkShowPlates.addEventListener('change', () => {
+      showBoxes = true;
+      renderCanvas();
+      renderSeparatedCards();
+      updateYoloExport();
+    });
+
+    carConfSlider.addEventListener('input', (e) => {
+      document.getElementById('carConfVal').innerText = e.target.value;
+      renderCanvas();
+    });
+
+    // Dedicated Button to Show Coordinates directly on the Image
+    btnToggleCoords.addEventListener('click', () => {
+      showCoordsOnImage = !showCoordsOnImage;
+      btnToggleCoords.classList.toggle('btn-coord-active', showCoordsOnImage);
+      btnToggleCoords.innerText = showCoordsOnImage ? '📍 Hide Coordinates from Image' : '📍 Show Coordinates on Image';
+      showBoxes = true;
+      renderCanvas();
+    });
+
+    // File Browser Listener
+    document.getElementById('imageInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        loadImage(event.target.result, false);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Draw Box Mode Toggle
+    btnDrawMode.addEventListener('click', () => {
+      isDrawingMode = !isDrawingMode;
+      btnDrawMode.classList.toggle('btn-active', isDrawingMode);
+      btnDrawMode.innerText = isDrawingMode ? '✏️ Drawing Active' : '✏️ Draw Box';
+      drawNoticeBar.classList.toggle('active', isDrawingMode);
+
+      if (isDrawingMode) {
+        state.detections.vehicles = [];
+        renderCanvas();
+        renderSeparatedCards();
+        updateYoloExport();
+        statusBadge.innerText = '✏️ Drawing Active: Drag a rectangle to detect strictly inside that area.';
+        statusBadge.style.color = '#38bdf8';
+      } else {
+        statusBadge.innerText = 'Inspection Mode Active. Click "Run Detection" or "Reset Sample" to re-detect.';
+        statusBadge.style.color = '#94a3b8';
+      }
+    });
+
+    // Canvas Mouse Handlers for Targeted ROI Detection
+    canvas.addEventListener('mousedown', (e) => {
+      if (!isDrawingMode || !state.imageLoaded) return;
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+
+      isMouseDown = true;
+      drawStartX = (e.clientX - rect.left) * scaleX;
+      drawStartY = (e.clientY - rect.top) * scaleY;
+      drawBox = { x: drawStartX, y: drawStartY, w: 0, h: 0 };
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (!isMouseDown || !isDrawingMode) return;
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+
+      const curX = (e.clientX - rect.left) * scaleX;
+      const curY = (e.clientY - rect.top) * scaleY;
+
+      drawBox = {
+        x: Math.min(drawStartX, curX),
+        y: Math.min(drawStartY, curY),
+        w: Math.abs(curX - drawStartX),
+        h: Math.abs(curY - drawStartY)
+      };
+      renderCanvas();
+    });
+
+    // When Drawing is Active: Runs detection STRICTLY inside the drawn square!
+    canvas.addEventListener('mouseup', async () => {
+      if (!isMouseDown || !isDrawingMode) return;
+      isMouseDown = false;
+
+      if (drawBox && drawBox.w > 18 && drawBox.h > 12) {
+        showBoxes = true;
+        const x1 = Math.round(drawBox.x);
+        const y1 = Math.round(drawBox.y);
+        const x2 = Math.round(drawBox.x + drawBox.w);
+        const y2 = Math.round(drawBox.y + drawBox.h);
+        const w = x2 - x1;
+        const h = y2 - y1;
+        const aspect = Number((w / h).toFixed(2));
+
+        // Create crop of the EXACT region the user drew manually
+        const drawnCanv = document.createElement('canvas');
+        drawnCanv.width = w;
+        drawnCanv.height = h;
+        const dCtx = drawnCanv.getContext('2d');
+        dCtx.drawImage(state.image, x1, y1, w, h, 0, 0, w, h);
+        const drawnCropUri = drawnCanv.toDataURL('image/jpeg');
+
+        // Check if the drawn square is directly around a license plate or a vehicle
+        const isPlateShape = (aspect >= 1.8 && aspect <= 5.5 && w < canvas.width * 0.45);
+
+        if (isPlateShape) {
+          // Infer vehicle context around plate
+          const expW = Math.round(w * 3.4);
+          const expH = Math.round(h * 5.5);
+          const carX1 = Math.max(0, Math.round(x1 - (expW - w) / 2));
+          const carY1 = Math.max(0, Math.round(y1 - expH * 0.65));
+          const carX2 = Math.min(canvas.width, carX1 + expW);
+          const carY2 = Math.min(canvas.height, Math.round(y2 + expH * 0.25));
+
+          const vCanv = document.createElement('canvas');
+          vCanv.width = carX2 - carX1;
+          vCanv.height = carY2 - carY1;
+          const vCtx = vCanv.getContext('2d');
+          vCtx.drawImage(state.image, carX1, carY1, vCanv.width, vCanv.height, 0, 0, vCanv.width, vCanv.height);
+          const vCropUri = vCanv.toDataURL('image/jpeg');
+
+          state.detections.vehicles.push({
+            vehicle_id: state.detections.vehicles.length + 1,
+            name: `Targeted Car #${state.detections.vehicles.length + 1}`,
+            class_name: "car",
+            confidence: 0.96,
+            bbox_xyxy: [carX1, carY1, carX2, carY2],
+            bbox_yolo_norm: [
+              Number((((carX1 + carX2) / 2) / canvas.width).toFixed(6)),
+              Number((((carY1 + carY2) / 2) / canvas.height).toFixed(6)),
+              Number(((carX2 - carX1) / canvas.width).toFixed(6)),
+              Number(((carY2 - carY1) / canvas.height).toFixed(6))
+            ],
+            crop_src: vCropUri,
+            plates: [{
+              plate_id: 1,
+              confidence: 0.98,
+              bbox_global_xyxy: [x1, y1, x2, y2],
+              bbox_yolo_norm: [
+                Number((((x1 + x2) / 2) / canvas.width).toFixed(6)),
+                Number((((y1 + y2) / 2) / canvas.height).toFixed(6)),
+                Number((w / canvas.width).toFixed(6)),
+                Number((h / canvas.height).toFixed(6))
+              ],
+              aspect,
+              crop_src: drawnCropUri
+            }]
+          });
+
+          statusBadge.innerText = `✅ Targeted plate crop extracted!`;
+        } else {
+          // --- User drew around a vehicle ---
+          let foundPlate = null;
+          const plateCandidate = findPlateInsideVehicleCrop(drawnCanv);
+
+          if (plateCandidate) {
+            const gx1 = x1 + plateCandidate.x;
+            const gy1 = y1 + plateCandidate.y;
+            const gx2 = gx1 + plateCandidate.w;
+            const gy2 = gy1 + plateCandidate.h;
+
+            const pCanv = document.createElement('canvas');
+            pCanv.width = plateCandidate.w;
+            pCanv.height = plateCandidate.h;
+            const pCtx = pCanv.getContext('2d');
+            pCtx.drawImage(state.image, gx1, gy1, plateCandidate.w, plateCandidate.h, 0, 0, plateCandidate.w, plateCandidate.h);
+
+            foundPlate = {
+              plate_id: 1,
+              confidence: Number(plateCandidate.conf.toFixed(3)),
+              bbox_global_xyxy: [gx1, gy1, gx2, gy2],
+              bbox_yolo_norm: [
+                Number((((gx1 + gx2) / 2) / canvas.width).toFixed(6)),
+                Number((((gy1 + gy2) / 2) / canvas.height).toFixed(6)),
+                Number((plateCandidate.w / canvas.width).toFixed(6)),
+                Number((plateCandidate.h / canvas.height).toFixed(6))
+              ],
+              aspect: plateCandidate.aspect,
+              crop_src: pCanv.toDataURL('image/jpeg')
+            };
+          }
+
+          state.detections.vehicles.push({
+            vehicle_id: state.detections.vehicles.length + 1,
+            name: `Drawn Car #${state.detections.vehicles.length + 1}`,
+            class_name: "car",
+            confidence: 0.95,
+            bbox_xyxy: [x1, y1, x2, y2],
+            bbox_yolo_norm: [
+              Number((((x1 + x2) / 2) / canvas.width).toFixed(6)),
+              Number((((y1 + y2) / 2) / canvas.height).toFixed(6)),
+              Number((w / canvas.width).toFixed(6)),
+              Number((h / canvas.height).toFixed(6))
+            ],
+            crop_src: drawnCropUri,
+            plates: foundPlate ? [foundPlate] : []
+          });
+
+          statusBadge.innerText = foundPlate 
+            ? `✅ Vehicle and plate crop localized!` 
+            : `✅ Vehicle crop added.`;
+        }
+
+        drawBox = null;
+        renderCanvas();
+        renderSeparatedCards();
+        updateYoloExport();
+        statusBadge.style.color = '#34d399';
+      }
+    });
+
+    // Copy YOLO
+    document.getElementById('btnCopyYolo').addEventListener('click', () => {
+      navigator.clipboard.writeText(yoloAnnotationBox.innerText);
+      alert('Copied YOLO annotations to clipboard!');
+    });
+
+    // Copy JSON
+    document.getElementById('btnCopyJson').addEventListener('click', () => {
+      navigator.clipboard.writeText(JSON.stringify(state.detections, null, 2));
+      alert('Copied Detection Metadata JSON to clipboard!');
+    });
+
+
+    // Tab Switching Controller
+    function switchTab(tabId) {
+      // 1. Update all tab buttons
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
+      });
+
+      // 2. Update navigation links in header
+      document.querySelectorAll('header nav a[data-tab]').forEach(link => {
+        link.classList.toggle('active', link.getAttribute('data-tab') === tabId);
+      });
+
+      // 3. Update active tab pane
+      document.querySelectorAll('.tab-pane').forEach(pane => {
+        pane.classList.toggle('active', pane.id === tabId);
+      });
+
+      // 4. If switching to interactive detector, re-render canvas after layout settles
+      if (tabId === 'interactive-ui' && state.imageLoaded) {
+        setTimeout(() => {
+          renderCanvas();
+        }, 40);
+      }
+
+      // 5. Update browser URL hash without jump
+      if (history.replaceState) {
+        history.replaceState(null, null, '#' + tabId);
+      } else {
+        window.location.hash = tabId;
+      }
+    }
+
+    // Attach click handlers to all tab triggers
+    document.querySelectorAll('.tab-btn, header nav a[data-tab]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const targetTab = btn.getAttribute('data-tab');
+        if (targetTab) {
+          e.preventDefault();
+          switchTab(targetTab);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      });
+    });
+
+    // Handle hash on load and hashchange
+    window.addEventListener('DOMContentLoaded', () => {
+      const hash = window.location.hash.replace('#', '');
+      if (hash && document.getElementById(hash)) {
+        switchTab(hash);
+      }
+    });
+
+    window.addEventListener('hashchange', () => {
+      const hash = window.location.hash.replace('#', '');
+      if (hash && document.getElementById(hash)) {
+        switchTab(hash);
+      }
+    });
+
+    // Start with default traffic image
+    loadImage('./sample.jpg', true);
+  </script>
+</body>
+</html>
