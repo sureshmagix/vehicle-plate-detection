@@ -1,13 +1,13 @@
 # ALPR: Two-Stage Vehicle & License Plate Detection with Character Segmentation
 
-[![GitHub Pages](https://img.shields.io/badge/Demo-Live%20on%20GitHub%20Pages-brightgreen)](https://sureshmagix.github.io/alpr-character-segmentation/)
+[![GitHub Pages](https://img.shields.io/badge/Demo-Live%20on%20GitHub%20Pages-brightgreen)](https://sureshmagix.github.io/vehicle-plate-detection/)
 [![Ultralytics YOLO](https://img.shields.io/badge/YOLO-Ultralytics%20v8-blue)](https://github.com/ultralytics/ultralytics)
 [![TensorFlow.js](https://img.shields.io/badge/Browser%20AI-TensorFlow.js-orange)](https://www.tensorflow.org/js)
 [![License Plate Character OCR](https://img.shields.io/badge/OCR-EasyOCR%20%7C%20PyTesseract-purple)](https://github.com/JaidedAI/EasyOCR)
 
 A high-performance ALPR (Automated License Plate Recognition) pipeline, character-level bounding box segmentation engine, and interactive dataset annotation suite built for dense, real-world traffic scenes.
 
-👉 **Live Interactive Demo**: **[https://sureshmagix.github.io/alpr-character-segmentation/](https://sureshmagix.github.io/alpr-character-segmentation/)**
+👉 **Live Interactive Demo**: **[https://sureshmagix.github.io/vehicle-plate-detection/](https://sureshmagix.github.io/vehicle-plate-detection/)**
 
 ---
 
