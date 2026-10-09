@@ -1533,7 +1533,7 @@
           <!-- ========================================================
                1. DEDICATED ZOOMED LICENSE PLATE STUDIO
                ======================================================== -->
-          <div id="zoomedPlateStudioContainer" class="zoomed-plate-studio" style="display: none;">
+          <div id="zoomedPlateStudioContainer" class="zoomed-plate-studio">
             <div class="zoomed-plate-header">
               <div class="zoomed-plate-title">
                 <span style="color: #38bdf8;">🔍 Zoomed License Plate Studio</span>
@@ -1556,7 +1556,7 @@
                 <button class="btn btn-primary" id="btnTogglePlateBoxes" style="font-size: 0.74rem;" onclick="togglePlateStudioBoxes()">
                   🔲 Toggle Number Boxes
                 </button>
-                <button class="btn" id="btnTogglePlateBadges" style="font-size: 0.74rem;" onclick="togglePlateStudioBadges()">
+                <button class="btn btn-primary" id="btnTogglePlateBadges" style="font-size: 0.74rem;" onclick="togglePlateStudioBadges()">
                   🏷️ Toggle Number Labels
                 </button>
                 <button class="btn" id="btnTogglePlateDeblur" style="font-size: 0.74rem;" onclick="togglePlateStudioDeblur()">
@@ -1579,7 +1579,7 @@
           <!-- ========================================================
                2. DEDICATED CHARACTER CUTTING & 1-CLICK BATCH EXPORTER
                ======================================================== -->
-          <div id="charactersExporterContainer" class="characters-exporter-card" style="display: none;">
+          <div id="charactersExporterContainer" class="characters-exporter-card">
             <div class="characters-exporter-header">
               <div style="display: flex; align-items: center; gap: 8px;">
                 <span style="font-weight: 700; color: #c084fc; font-size: 0.95rem;">✂️ Character Cutting &amp; 1-Click Exporter</span>
@@ -2452,6 +2452,7 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
     let studioShowBoxes = true;
     let studioShowBadges = true;
     let studioMode = 'ann'; // 'ann', 'deblur', 'raw'
+    let activeHighlightVehicleId = null;
     window.activeHoverCharId = null;
 
     const state = {
@@ -2861,7 +2862,7 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
 
     // Helper: Generates a base64 Data URL for a character crop directly from plate canvas
     function getCharacterCropDataUrl(plate, ch) {
-      if (ch.crop_uri && ch.crop_uri.startsWith('data:image/')) {
+      if (ch.crop_uri && ch.crop_uri.trim().length > 0) {
         return ch.crop_uri;
       }
       const canv = document.getElementById('zoomedPlateCanvas');
@@ -2870,21 +2871,25 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
       const origH = (plate.bbox_global_xyxy ? (plate.bbox_global_xyxy[3] - plate.bbox_global_xyxy[1]) : 31);
       const w = ox2 - ox1;
       const h = oy2 - oy1;
-      if (w <= 0 || h <= 0) return ch.crop_uri || '';
+      if (w <= 0 || h <= 0) return plate.crop_src || '';
 
-      const cCanv = document.createElement('canvas');
-      cCanv.width = Math.max(24, w * 3);
-      cCanv.height = Math.max(36, h * 3);
-      const cctx = cCanv.getContext('2d');
-      cctx.imageSmoothingEnabled = false;
+      try {
+        const cCanv = document.createElement('canvas');
+        cCanv.width = Math.max(24, w * 3);
+        cCanv.height = Math.max(36, h * 3);
+        const cctx = cCanv.getContext('2d');
+        cctx.imageSmoothingEnabled = false;
 
-      if (canv && canv.width > 0) {
-        const scaleX = canv.width / origW;
-        const scaleY = canv.height / origH;
-        cctx.drawImage(canv, ox1 * scaleX, oy1 * scaleY, w * scaleX, h * scaleY, 0, 0, cCanv.width, cCanv.height);
-        return cCanv.toDataURL('image/png');
+        if (canv && canv.width > 0 && canv.height > 0) {
+          const scaleX = canv.width / origW;
+          const scaleY = canv.height / origH;
+          cctx.drawImage(canv, ox1 * scaleX, oy1 * scaleY, w * scaleX, h * scaleY, 0, 0, cCanv.width, cCanv.height);
+          return cCanv.toDataURL('image/png');
+        }
+      } catch (e) {
+        console.warn('Canvas character extraction fallback:', e);
       }
-      return ch.crop_uri || '';
+      return plate.crop_src || '';
     }
 
     function updateAntiblurUI() {
@@ -3803,7 +3808,7 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
     // ========================================================
     // ZOOMED LICENSE PLATE STUDIO RENDERER & NUMBER BOUNDING BOXES
     // ========================================================
-    window.renderZoomedPlateStudio = function(plate, veh) {
+    function renderZoomedPlateStudio(plate, veh) {
       if (!plate) return;
       activeStudioPlate = plate;
       activeStudioVeh = veh;
@@ -4023,12 +4028,13 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
           drawStudio(fbCanv);
         }
       };
-    };
+    }
+    window.renderZoomedPlateStudio = renderZoomedPlateStudio;
 
     // ========================================================
     // CHARACTER CUTTING & 1-CLICK BATCH EXPORTER
     // ========================================================
-    window.renderCharactersExporter = function(plate, veh) {
+    function renderCharactersExporter(plate, veh) {
       if (!plate) return;
       const exporterContainer = document.getElementById('charactersExporterContainer');
       const grid = document.getElementById('glyphCardsGrid');
@@ -4058,8 +4064,8 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
 
         // Ensure character crop is high-res and never broken
         let cropSrc = ch.crop_uri;
-        if (!cropSrc || !cropSrc.startsWith('data:')) {
-          cropSrc = getCharacterCropDataUrl(plate, ch) || ch.crop_uri || plate.crop_src;
+        if (!cropSrc) {
+          cropSrc = getCharacterCropDataUrl(plate, ch) || plate.crop_src || '';
         }
 
         const card = document.createElement('div');
@@ -4098,7 +4104,135 @@ IoU = Area(Box_A &cap; Box_B) / Area(Box_A &cup; Box_B)
 
         grid.appendChild(card);
       });
-    };
+    }
+    window.renderCharactersExporter = renderCharactersExporter;
+
+    // ========================================================
+    // ZOOMED STUDIO INTERACTION CONTROLLERS
+    // ========================================================
+    function setPlateStudioZoom(zoom) {
+      studioZoom = parseFloat(zoom) || 4.0;
+      const btnMap = {
+        '2.5': 'btnZoom2x',
+        '4': 'btnZoom4x',
+        '6': 'btnZoom6x',
+        '8': 'btnZoom8x'
+      };
+      Object.entries(btnMap).forEach(([z, id]) => {
+        const btn = document.getElementById(id);
+        if (btn) {
+          if (Math.abs(parseFloat(z) - studioZoom) < 0.1) {
+            btn.classList.add('btn-primary');
+          } else {
+            btn.classList.remove('btn-primary');
+          }
+        }
+      });
+      if (activeStudioPlate) {
+        renderZoomedPlateStudio(activeStudioPlate, activeStudioVeh);
+      }
+    }
+    window.setPlateStudioZoom = setPlateStudioZoom;
+
+    function togglePlateStudioBoxes() {
+      studioShowBoxes = !studioShowBoxes;
+      const btn = document.getElementById('btnTogglePlateBoxes');
+      if (btn) btn.classList.toggle('btn-primary', studioShowBoxes);
+      if (activeStudioPlate) {
+        renderZoomedPlateStudio(activeStudioPlate, activeStudioVeh);
+      }
+    }
+    window.togglePlateStudioBoxes = togglePlateStudioBoxes;
+
+    function togglePlateStudioBadges() {
+      studioShowBadges = !studioShowBadges;
+      const btn = document.getElementById('btnTogglePlateBadges');
+      if (btn) btn.classList.toggle('btn-primary', studioShowBadges);
+      if (activeStudioPlate) {
+        renderZoomedPlateStudio(activeStudioPlate, activeStudioVeh);
+      }
+    }
+    window.togglePlateStudioBadges = togglePlateStudioBadges;
+
+    function togglePlateStudioDeblur() {
+      if (studioMode === 'ann') studioMode = 'deblur';
+      else if (studioMode === 'deblur') studioMode = 'raw';
+      else studioMode = 'ann';
+      const btn = document.getElementById('btnTogglePlateDeblur');
+      if (btn) {
+        btn.innerText = studioMode === 'deblur' ? '⚡ Deblurred (Active)' : (studioMode === 'raw' ? '⚡ Raw (No Boxes)' : '⚡ Raw vs Deblurred');
+        btn.classList.toggle('btn-primary', studioMode === 'deblur');
+      }
+      if (activeStudioPlate) {
+        renderZoomedPlateStudio(activeStudioPlate, activeStudioVeh);
+      }
+    }
+    window.togglePlateStudioDeblur = togglePlateStudioDeblur;
+
+    function downloadZoomedPlateStudio() {
+      const canv = document.getElementById('zoomedPlateCanvas');
+      if (!canv) return;
+      try {
+        const dataUrl = canv.toDataURL('image/png');
+        downloadCropImage(dataUrl, `license_plate_zoomed_${studioZoom}x.png`);
+      } catch (err) {
+        console.warn('Canvas export fallback:', err);
+        if (activeStudioPlate && activeStudioPlate.crop_src) {
+          downloadCropImage(activeStudioPlate.crop_src, 'plate_crop.png');
+        }
+      }
+    }
+    window.downloadZoomedPlateStudio = downloadZoomedPlateStudio;
+
+    function copyPlateRegistrationText() {
+      if (!activeStudioPlate) return;
+      const chars = activeStudioPlate.characters || [];
+      const text = chars.map(c => c.char_text).filter(Boolean).join('') || activeStudioPlate.plate_text || '';
+      if (!text) {
+        alert('No plate text detected to copy.');
+        return;
+      }
+      if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          alert(`📋 Copied plate registration "${text}" to clipboard!`);
+        }).catch(() => {
+          alert(`Plate Text: ${text}`);
+        });
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); alert(`📋 Copied plate registration "${text}" to clipboard!`); }
+        catch (e) { alert(`Plate Text: ${text}`); }
+        document.body.removeChild(ta);
+      }
+    }
+    window.copyPlateRegistrationText = copyPlateRegistrationText;
+
+    function copyCharacterBoxesJson() {
+      if (!activeStudioPlate || !activeStudioPlate.characters) {
+        alert('No character bounding boxes to copy.');
+        return;
+      }
+      const data = JSON.stringify(activeStudioPlate.characters, null, 2);
+      if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(data).then(() => {
+          alert(`📊 Copied ${activeStudioPlate.characters.length} character bounding boxes (JSON) to clipboard!`);
+        }).catch(() => {
+          alert(`Characters:\n${data}`);
+        });
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = data;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); alert(`📊 Copied character boxes JSON to clipboard!`); }
+        catch (e) { alert(`Characters:\n${data}`); }
+        document.body.removeChild(ta);
+      }
+    }
+    window.copyCharacterBoxesJson = copyCharacterBoxesJson;
 
     // ========================================================
     // 1-CLICK BATCH DOWNLOAD OF ALL CHARACTERS (.ZIP)
